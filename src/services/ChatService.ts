@@ -2,12 +2,23 @@ import HttpService from "./HttpService";
 import Chat from "../models/Chat";
 import Message from "../models/Message";
 import { RANDOM_CHAT_AVATAR_URL } from "../util/Constants";
+import { LoremIpsum, Avatar } from 'react-lorem-ipsum';
+import { loremIpsum, name, surname, fullname, username } from 'react-lorem-ipsum';
+
+export interface ChatRequestDTO {
+    userId: number | string | null;
+    threshold?: Date | null;
+    chatIdThreshold?: number | string | null;
+    direction?: number | null;
+    count?: number | null;
+}
 
 class ChatService {
     // TODO: coordinate backend and frontend API
 
     private static _instance: ChatService;
     private static readonly URL = '/chats';
+    private readonly MAX_PAGES_COUNT = 5;
 
     private constructor() {
 
@@ -18,29 +29,31 @@ class ChatService {
         return this._instance || (this._instance = new this());      
     }
 
+    private randomIntFromInterval(min: number, max: number) { // min and max included 
+        return Math.floor(Math.random() * (max - min + 1) + min)
+      }
+
     async getChat(id: string | number): Promise<Chat> {
         const data = (await HttpService.get(ChatService.URL + `/${id}`)) as Chat;
-        return new Chat(data.id, data.name, data.isPrivate, data.avatar, data.participants, data.messages);
+        return new Chat(data.id, data.name, data.isPrivate, data.avatar, data.lastChanged, data.participants, data.messages);
     }
 
     // TODO
-    async getChatsByUser(userId?: number | string): Promise<any[]> {
-        //return await HttpService.get(`/users/${userId}/chats`) as Chat[];
-        // Return without await?
+    async getChatsByUser(dto: ChatRequestDTO): Promise<Chat[]> {
         return new Promise((resolve, reject) => {
             setTimeout(() => {
-                const size =Math.floor(Math.random() * (10));
-                const arr = new Array(size);
-                for (let i=0; i< size; i++) {
-                    arr[i] = i + 1;
+                if ((typeof dto.chatIdThreshold === 'number') && dto.chatIdThreshold > this.MAX_PAGES_COUNT) {
+                    resolve([]);
                 }
-                const data = Array.from(arr, (index: number) => new Chat(index +1, `Name ${index}`, false, RANDOM_CHAT_AVATAR_URL + '100/100'));
+                const data = Array.from({length: 10}).map((element, index) => {
+                    const date = new Date();
+                    const id = this.randomIntFromInterval(1, 1000000) + "__" + new Date(); 
+                    return new Chat(id, `Chat with id: ${id}, number: ${index + 1}`, false, RANDOM_CHAT_AVATAR_URL + '100/100', date);
+                });
                 resolve(data);
             }, 1000);
         });
-        // return await HttpService.get(`/chats`, {
-        //     'userId': userId,
-        // }) as Chat[];
+        //return HttpService.get(ChatService.URL, dto);
     }
 
     async createChat(chat: Chat): Promise<void> {

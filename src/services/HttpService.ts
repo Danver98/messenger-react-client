@@ -98,7 +98,7 @@ class HttpService {
         }
     }
 
-    async get(url: string = '', data: object = {}): Promise<object> {
+    async get(url: string = '', data: object = {}): Promise<any> {
         const info: RequestInit = this._prepareRequest('GET', data, {
             'Content-Type': 'application/json'
         });

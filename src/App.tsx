@@ -4,7 +4,7 @@ import Layout from './components/Layout';
 import Home from './components/Home';
 import Register from './components/Register/Register';
 import Login from './components/Login/Login';
-import Chats from './components/Chats';
+import Chats from './components/Chat/Chats';
 import Intro from './components/Intro';
 import ProtectedRoute from './middleware/ProtectedRoute';
 
@@ -16,7 +16,7 @@ function App() {
         <Route path='/' element={<Layout />}>
           <Route path='/secured' element={<ProtectedRoute />}>
             <Route element={<Home />}></Route>
-            <Route path='/secured/chats' element={<Chats />}></Route>
+            <Route path='/secured/chats' element={<Chats userId={100}/>}></Route>
           </Route>
           <Route path='/intro' element={<Intro />}/>
           <Route path='/register' element={<Register />}></Route>
