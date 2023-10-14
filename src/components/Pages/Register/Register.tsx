@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
-import AuthService from "../../services/AuthService";
+import AuthService from "../../../services/AuthService";
 import './Register.css';
+import { Pages } from "../../../util/Constants";
 
 export default function Register({ onRegister }: { onRegister?: (result: object) => {} }) {
     const navigate = useNavigate();
@@ -16,7 +17,7 @@ export default function Register({ onRegister }: { onRegister?: (result: object)
         };
         const result = await AuthService.register(data);
         onRegister?.(result);
-        navigate('/login', { replace: true });
+        navigate(Pages.LOGIN_PAGE, { replace: true });
     }
 
     return (

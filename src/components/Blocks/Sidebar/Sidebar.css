@@ -1,0 +1,6 @@
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    min-width: 250px;
+    background-color: rgb(240, 202, 202);
+}

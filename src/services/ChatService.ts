@@ -45,10 +45,11 @@ class ChatService {
                 if ((typeof dto.chatIdThreshold === 'number') && dto.chatIdThreshold > this.MAX_PAGES_COUNT) {
                     resolve([]);
                 }
-                const data = Array.from({length: 10}).map((element, index) => {
+                const data = Array.from({length: 30}).map((element, index) => {
                     const date = new Date();
-                    const id = this.randomIntFromInterval(1, 1000000) + "__" + new Date(); 
-                    return new Chat(id, `Chat with id: ${id}, number: ${index + 1}`, false, RANDOM_CHAT_AVATAR_URL + '100/100', date);
+                    const id = this.randomIntFromInterval(1, 1000000) + "__" + new Date();
+                    const image = this.randomIntFromInterval(80, 120)
+                    return new Chat(id, `Chat with id: ${id}, number: ${index + 1}`, false, RANDOM_CHAT_AVATAR_URL + `${image}/${image}`, date);
                 });
                 resolve(data);
             }, 1000);

@@ -1,0 +1,25 @@
+.chats-page {
+    display: flex;
+    flex-direction: column;
+    background-color: rgb(236, 209, 149);
+}
+
+.chats-list {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0px;
+    overflow-y: auto;
+    background-color: rgb(204, 150, 255);
+}
+
+.chat-list-item {
+    display: flex;
+}
+
+.chat-list-item__image {
+    display: inline-block;
+    height: 70px;
+    width: 70px;
+    border-radius: 50%;
+}

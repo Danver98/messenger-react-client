@@ -1,4 +1,5 @@
-import AuthService from "../../services/AuthService"
+import AuthService from "../../../services/AuthService"
+import { SecuredPages } from "../../../util/Constants";
 import "./Login.css";
 import { useNavigate } from "react-router-dom";
 
@@ -13,7 +14,7 @@ export default function Login() {
             'password': formData.get('password'),
         };
         if (await AuthService.login(data)) {
-            navigate('/home', {replace: true});
+            navigate(SecuredPages.HOME_PAGE, {replace: true});
         };
         // Check if success and navigate to '/home'
     }

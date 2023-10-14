@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import Chat from "../../models/Chat";
-import ChatService from "../../services/ChatService";
+import Chat from "../../../models/Chat";
+import ChatService from "../../../services/ChatService";
 
 export default function FetchChats(userId: number | string, time?:  Date | null, chatId?: number | string | null,
     direction?: number | null, count?: number | null) {

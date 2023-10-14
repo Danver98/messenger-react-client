@@ -1,0 +1,7 @@
+.content {
+    display: flex;
+    flex-grow: 1;
+    flex-shrink: 1;
+    justify-content: center;
+    background-color: rgb(213, 255, 255);
+}

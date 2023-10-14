@@ -1,0 +1,12 @@
+.header {
+    display: flex;
+    background-color: rgb(29, 128, 226);
+    align-items: center;
+    padding: 16px;
+}
+
+.UserInfo__block {
+    display: flex;
+    justify-content: space-between;
+    margin-left: auto;
+}

@@ -1,0 +1,6 @@
+.UserInfo__image-rounded {
+    display: inline-block;
+    height: 30px;
+    width: 30px;
+    border-radius: 50%;
+}

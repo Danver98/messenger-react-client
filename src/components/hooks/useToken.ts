@@ -47,6 +47,6 @@ export function getToken(key: string): string {
   return token?.token
 }
 
-export function setToken(key: string, token: object): void {
+export function setToken(key: string, token: object | null): void {
   localStorage.setItem(key, JSON.stringify(token));
 }
