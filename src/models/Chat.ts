@@ -34,6 +34,10 @@ class Chat implements Chat {
     toString(): string {
         return `id: ${this.id}, name: ${this.name}, isPrivate: ${this.isPrivate}, avatar: ${this.avatar}, lastChanged: ${this.lastChanged}`;
     }
+
+    dateToString(): string | undefined {
+        return this.lastChanged?.getTime().toString();
+    }
 }
 
 export default Chat;

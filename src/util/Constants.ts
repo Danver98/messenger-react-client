@@ -28,5 +28,5 @@ export class SecuredPages {
     static readonly CHATS_PAGE = '/secured/chats';
     static readonly HOME_PAGE = '/secured/home';
     // Chat dialog itself
-    static readonly CHAT_ROOM_PAGE = 'secured/chat-room';
+    static readonly CHAT_ROOM_PAGE = '/secured/chats/room';
 };

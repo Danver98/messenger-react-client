@@ -1,20 +1,26 @@
-.chats-page {
+.chat-page {
     display: flex;
     flex-direction: column;
+    flex: 1 1 auto;
     background-color: rgb(236, 209, 149);
 }
 
-.chats-list {
+.chat-list {
     display: flex;
     flex: 1 1 auto;
     flex-direction: column;
     min-height: 0px;
     overflow-y: auto;
-    background-color: rgb(204, 150, 255);
+    margin-bottom: 0px;
+    padding-left: 0px;
 }
 
 .chat-list-item {
     display: flex;
+    align-items: center;
+    padding: 4px 16px 4px 8px;
+    background-color:aliceblue;
+    box-shadow: 5px 5px 10px 10px rgb(213, 218, 217);
 }
 
 .chat-list-item__image {
@@ -22,4 +28,11 @@
     height: 70px;
     width: 70px;
     border-radius: 50%;
+}
+
+.chat-list-item__name {
+    display: flex;
+    flex-grow: 1;
+    margin-left: 8px;
+    background-color: aqua;
 }

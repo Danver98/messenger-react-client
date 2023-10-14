@@ -47,7 +47,7 @@ class ChatService {
                 }
                 const data = Array.from({length: 30}).map((element, index) => {
                     const date = new Date();
-                    const id = this.randomIntFromInterval(1, 1000000) + "__" + new Date();
+                    const id = this.randomIntFromInterval(1, 1000000);
                     const image = this.randomIntFromInterval(80, 120)
                     return new Chat(id, `Chat with id: ${id}, number: ${index + 1}`, false, RANDOM_CHAT_AVATAR_URL + `${image}/${image}`, date);
                 });
