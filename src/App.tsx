@@ -8,23 +8,30 @@ import Chats from './components/Pages/Chats/Chats';
 import Intro from './components/Pages/Intro';
 import ProtectedRoute from './middleware/ProtectedRoute';
 import ChatRoom from './components/Pages/Chats/ChatRoom';
+import AuthProvider from './middleware/AuthProvider';
+import Routing from './routing/Routing';
 
 function App() {
-
   return (
-      <Routes>
-        <Route path='/' element={<Layout />}>
-          <Route path='/secured' element={<ProtectedRoute />}>
-            <Route element={<Home />}></Route>
-            <Route path='/secured/chats' element={<Chats userId={100}/>}></Route>
-            <Route path='/secured/chats/room' element={<ChatRoom />}></Route>
-          </Route>
-          <Route path='/intro' element={<Intro />}/>
-          <Route path='/register' element={<Register />}></Route>
-          <Route path='/login' element={<Login />}></Route>
-        </Route>
-      </Routes>
-  );
+    <AuthProvider>
+      <Routing />
+    </AuthProvider>
+  )
+
+  // return (
+  //     <Routes>
+  //       <Route path='/' element={<Layout />}>
+  //         <Route path='/secured' element={<ProtectedRoute />}>
+  //           <Route element={<Home />}></Route>
+  //           <Route path='/secured/chats' element={<Chats />}></Route>
+  //           <Route path='/secured/chats/room' element={<ChatRoom />}></Route>
+  //         </Route>
+  //         <Route path='/intro' element={<Intro />}/>
+  //         <Route path='/register' element={<Register />}></Route>
+  //         <Route path='/login' element={<Login />}></Route>
+  //       </Route>
+  //     </Routes>
+  // );
 }
 
 export default App;

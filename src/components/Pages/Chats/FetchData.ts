@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import Chat from "../../../models/Chat";
-import ChatService from "../../../services/ChatService";
+import MessengerService from "../../../services/MessengerService";
 import Message from "../../../models/Message";
 
 export function FetchChats(userId: number | string, time?:  Date | null, chatId?: number | string | null,
@@ -24,7 +24,7 @@ export function FetchChats(userId: number | string, time?:  Date | null, chatId?
                 'direction': direction,
                 'count': count
             };
-            const newChats = await ChatService.getChatsByUser(dto);
+            const newChats = await MessengerService.getChatsByUser(dto);
             setChats([...chats, ...newChats]);
             setIsLoading(false);
             setHasMore(newChats && newChats.length > 0);
@@ -46,19 +46,19 @@ export function FetchMessages(chatId: number | string, time?:  Date | null, mess
             if (isLoading) return;
             setIsLoading(true);
             const dto = {
-                'chatrId': chatId,
+                'chatId': chatId,
                 'threshold': time,
                 'messageIdThreshold': messageId,
                 'direction': direction,
                 'count': count
             };
-            const newMessages = await ChatService.getMessages();
+            const newMessages = await MessengerService.getMessages(dto);
             setMessages([...messages, ...newMessages]);
             setIsLoading(false);
             setHasMore(newMessages && newMessages.length > 0);
         };
         fetchMessages();
-    }, []); // once {time, chatId}
+    }, []); // once {time, messageId}
 
     return { messages, loading: isLoading, hasMore, error };
 }

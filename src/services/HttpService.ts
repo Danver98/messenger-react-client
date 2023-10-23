@@ -10,7 +10,6 @@ class HttpService {
 
     // Should it be imported from Constants
     private static readonly BASE_URL = 'https://localhost:8443/messenger/api/v1';
-    static readonly RANDOM_AVATAR_URL = 'https://i.pravatar.cc/';
 
     protected _defaultHeaders: object = {
     };
@@ -48,13 +47,14 @@ class HttpService {
         ResponseInterceptor.process(response);
     }
 
-    protected _prepareRequest(method = 'GET', data = {}, headers?: HeadersInit): RequestInit {
+    protected _prepareRequest(method = 'GET', data = {}, headers?: HeadersInit, signal?: AbortSignal | null): RequestInit {
 
         const info: RequestInit = {
             method: method,
             headers: this._getHeaders(headers),
             credentials: 'include',
-            body: JSON.stringify(data)
+            body: method !== 'GET' && data && Object.keys(data).length > 0 ? JSON.stringify(data) : null,
+            signal: signal
         }
         return info;
     }
@@ -82,7 +82,7 @@ class HttpService {
                 throw new Error(`Request failed: status code - ${response.status}`);
             }
             this._afterResponse(response);
-            this._checkType(response, "application/json");
+            //this._checkType(response, "application/json");
             return await response.json();
             // process your data further
         } catch (error) {
@@ -98,36 +98,36 @@ class HttpService {
         }
     }
 
-    async get(url: string = '', data: object = {}): Promise<any> {
+    async get(url: string = '', data: object = {}, signal?: AbortSignal | null): Promise<any> {
         const info: RequestInit = this._prepareRequest('GET', data, {
             'Content-Type': 'application/json'
-        });
+        }, signal);
         return this._fetchJSON(HttpService.BASE_URL + url, info);
     }
 
-    async post(url: string = '', data: object = {}): Promise<object> {
+    async post(url: string = '', data: object = {}, signal?: AbortSignal | null): Promise<object> {
         const info: RequestInit = this._prepareRequest('POST', data, {
             'Content-Type': 'application/json'
-        });
+        }, signal);
         return this._fetchJSON(HttpService.BASE_URL + url, info);
     }
 
-    async put(url: string = '', data: object = {}): Promise<object> {
+    async put(url: string = '', data: object = {}, signal?: AbortSignal | null): Promise<object> {
         const info: RequestInit = this._prepareRequest('PUT', data, {
             'Content-Type': 'application/json'
-        });
+        }, signal);
         return this._fetchJSON(HttpService.BASE_URL + url, info);
     }
 
-    async patch(url: string = '', data: object = {}): Promise<object> {
+    async patch(url: string = '', data: object = {}, signal?: AbortSignal | null): Promise<object> {
         const info: RequestInit = this._prepareRequest('PATCH', data, {
             'Content-Type': 'application/json'
-        });
+        }, signal);
         return this._fetchJSON(HttpService.BASE_URL + url, info);
     }
 
-    async delete(url: string = '', data: object = {}): Promise<object> {
-        const info: RequestInit = this._prepareRequest('DELETE', data);
+    async delete(url: string = '', data: object = {}, signal?: AbortSignal | null): Promise<object> {
+        const info: RequestInit = this._prepareRequest('DELETE', data, {}, signal);
         return this._fetchJSON(HttpService.BASE_URL + url, info);
     }
 }

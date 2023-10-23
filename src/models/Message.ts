@@ -1,13 +1,13 @@
 import User from "./User";
 
-enum MessageDataType {
+export enum MessageDataType {
     TEXT = 1,
     IMAGE,
     VIDEO,
     FILE,
 }
 
-interface MessageData {
+export interface MessageData {
     type: MessageDataType;
     data?: any;
 }
@@ -15,6 +15,7 @@ interface MessageData {
 
 interface Message {
     id: string;
+    chatId: number | string;
     time?: Date | null;
     data?: MessageData;
     author?: User;
@@ -22,12 +23,14 @@ interface Message {
 
 class Message implements Message {
     id: string;
+    chatId: number | string;
     time?: Date | null;
     data?: MessageData;
     author?: User;
 
-    constructor(id: string, time?: Date | null, data?: MessageData, author?: User) {
+    constructor(id: string, chatId: number | string, data: MessageData, author: User, time?: Date | null) {
         this.id = id;
+        this.chatId = chatId;
         this.time = time;
         this.data = data;
         this.author = author;

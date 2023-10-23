@@ -1,6 +1,17 @@
 .UserInfo__image-rounded {
     display: inline-block;
-    height: 30px;
-    width: 30px;
+    height: 40px;
+    width: 40px;
     border-radius: 50%;
+    background-color: red;
+    margin-right: 8px;
+}
+
+.UserInfo__block {
+    display: flex;
+    align-items: center;
+}
+
+.UserInfo__credentials {
+    margin-right: 8px;
 }

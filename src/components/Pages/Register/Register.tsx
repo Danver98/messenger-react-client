@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import AuthService from "../../../services/AuthService";
 import './Register.css';
-import { Pages } from "../../../util/Constants";
+import { Pages, RANDOM_AVATAR_URL, RANDOM_CHAT_AVATAR_URL } from "../../../util/Constants";
 
 export default function Register({ onRegister }: { onRegister?: (result: object) => {} }) {
     const navigate = useNavigate();
@@ -14,6 +14,7 @@ export default function Register({ onRegister }: { onRegister?: (result: object)
             'surname': formData.get('surname'),
             'email': formData.get('email'),
             'password': formData.get('password'),
+            'avatar': RANDOM_CHAT_AVATAR_URL + `/${100}`
         };
         const result = await AuthService.register(data);
         onRegister?.(result);

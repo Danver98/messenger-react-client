@@ -1,7 +1,7 @@
 interface User {
     id: number | string;
-    name: string;
-    surname: string;
+    name?: string;
+    surname?: string;
     login?: string;
     avatar?: string;
     password?: string;
@@ -9,13 +9,13 @@ interface User {
 
 class User implements User {
     id: number | string;
-    name: string;
-    surname: string;
+    name?: string;
+    surname?: string;
     login?: string;
     avatar?: string;
     password?: string;
 
-    constructor(id: number | string, name: string, surname: string, login?: string, avatar?: string, password?: string) {
+    constructor(id: number | string, name?: string, surname?: string, login?: string, avatar?: string, password?: string) {
         this.id = id;
         this.name = name;
         this.surname = surname;

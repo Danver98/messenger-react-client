@@ -2,40 +2,43 @@ import { useContext } from "react"
 import AuthContext from "../../../../contexts/AuthContext";
 import './UserInfo.css';
 import { useNavigate } from "react-router-dom";
-import { ACCESS_TOKEN, Pages } from "../../../../util/Constants";
-import AuthContextData from "../../../../contexts/AuthContextData";
-import { setToken } from "../../../hooks/useToken";
+import { Pages } from "../../../../util/Constants";
 import AuthService from "../../../../services/AuthService";
+import { useAuthContextData } from "../../../../middleware/AuthProvider";
+import { Button, TextField } from "@mui/material";
 
 
 export default function UserInfo() {
-    const authContext = useContext(AuthContext);
+    //const authContext = useAuthContextData();
+    const {user, setUser, getAccessToken, setToken } = useAuthContextData();
     const navigate = useNavigate();
 
-    const logout = async (context: AuthContextData) => {
-        // Clear AuthContext
-        if (context.clear) {
-            context.clear();
-        } else {
-            // At least clear token in storage;
-            setToken(ACCESS_TOKEN, null);
-        }
-        if (!context.user) {
+    const logout = async () => {
+        // At least clear token in storage;
+        setToken?.(null);
+        setUser?.(null);
+        if (!user) {
             return;
         }
-        await AuthService.logout(context.user.id);
+        await AuthService.logout(user.id);
         navigate(Pages.LOGIN_PAGE, {replace: true})
     }
 
     return (
         <>
             {
-                authContext.user && authContext.token ?
-                    <div>
+                user && getAccessToken?.() ?
+                    <div className="UserInfo__block">
                         {/* Logged in */}
-                        <img className="UserInfo__image-rounded" src={authContext.user.avatar} />
-                        <div> {authContext.user.name} {authContext.user.surname}</div>
-                        <button onClick={ () => {logout(authContext)}}></button>
+                        <img className="UserInfo__image-rounded" src={user.avatar} />
+                        <label className="UserInfo__credentials">
+                            {user.name + ' ' + user.surname}
+                        </label>
+                        <Button
+                            size="small"
+                            variant="contained"
+                            onClick={ () => {logout()}}>Logout
+                        </Button>
                     </div>
                     :
                     'Not logged'

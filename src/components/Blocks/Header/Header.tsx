@@ -4,10 +4,8 @@ export default function Header() {
     return (
         <>
             <div className="header">
-                <div>This is Header</div>
-                <div className="UserInfo__block">
-                    <UserInfo />
-                </div>
+                <div>Messenger App</div>
+                <UserInfo />
             </div>
         </>
     )

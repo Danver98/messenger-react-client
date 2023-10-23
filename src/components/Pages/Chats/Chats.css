@@ -1,3 +1,5 @@
+@import "/src/index.css";
+
 .chat-page {
     display: flex;
     flex-direction: column;
@@ -35,4 +37,145 @@
     flex-grow: 1;
     margin-left: 8px;
     background-color: aqua;
+}
+
+.chat-room-page {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    align-items: center;
+}
+
+.chat-room-page-header {
+    display: flex;
+    flex: 1 1 auto;
+    width: 60%;
+    justify-content: center;
+    margin: 8px 0px 0px 24px;
+}
+
+.chat-room-page-header__ChatName {
+    display: flex;
+    font-size: 18px;
+    flex-grow: 2;
+    align-items: center;
+    justify-content: center;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    background-color: burlywood;
+    margin-right: 8px;
+}
+
+.chat-room-page__AddParticipantsBtn {
+    display: flex;
+    height: 55px;
+    width: 55px;
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+}
+
+.chat-room-message-list {
+    display: flex;
+    flex-direction: column-reverse;
+    flex: 1 1 auto;
+    min-height: 0px;
+    overflow-y: auto;
+    margin-bottom: 0px;
+    width: 60%;
+    /* padding-left: 0px; */
+}
+
+.message-list-item {
+    display: flex;
+    padding: 0px 16px 0px 0px;
+    box-shadow: 3px 0px 5px 1px rgb(213, 218, 217);
+}
+
+.message-list-item_container {
+    display: flex;
+    flex: 1 1 auto;
+    padding: 8px 0px 8px 0px;
+}
+
+.align-items-left {
+    display: flex;
+    align-items: flex-start;
+}
+
+.align-items-right {
+    display: flex;
+    align-items: flex-end;
+}
+
+.message-list-item__userBlock {
+    display: flex;
+    height: 100%;
+    align-items: end;
+    margin-right: 16px;
+}
+
+.message-list-item__userImage {
+    display: inline-block;
+    height: 50px;
+    width: 50px;
+    border-radius: 50%;
+}
+
+.message-list-item__messageBlock {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+}
+
+.message-list-item__messageBlock-date {
+    display: flex;
+    flex: 1 1 auto;
+    justify-content: flex-end;
+}
+
+.message-list-item__UserName {
+    font: bold 1.0rem "Roboto", sans-serif;
+}
+
+.message-list-item__messageData {
+    margin: 0px;
+}
+
+.chat-room-message-sender {
+    display: flex;
+    flex: 1 1 auto;
+    width: 60%;
+    justify-content: center;
+    padding: 8px 0px 8px 16px;
+}
+
+.chat-room-message-sender__FormContainer {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+}
+
+.chat-room-message-sender__Form {
+    display: flex;
+    flex: 1 1 auto;
+    justify-content: center;
+    align-items: center;
+}
+
+.chat-room-message-sender__TextArea {
+    display: flex;
+    flex: 1 1 auto;
+    margin: 0px 16px 0px 8px;
+    border-radius: 5px;
+}
+
+.chat-room-message-sender__SendButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 60%;
+    min-width: 100px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px 1px #46dffa;
+    background: linear-gradient(#46dffa , #8aedff);
 }

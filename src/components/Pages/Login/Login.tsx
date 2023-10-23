@@ -1,10 +1,14 @@
+import { useAuthContextData } from "../../../middleware/AuthProvider";
+import User from "../../../models/User";
 import AuthService from "../../../services/AuthService"
 import { SecuredPages } from "../../../util/Constants";
+import { useAccessToken } from "../../hooks/useToken";
 import "./Login.css";
 import { useNavigate } from "react-router-dom";
 
 export default function Login() {
     const navigate = useNavigate();
+    const authContext = useAuthContextData();
 
     const handleSubmit = async (event: any) => {
         const formData = new FormData(event.currentTarget);
@@ -13,7 +17,9 @@ export default function Login() {
             'email': formData.get('email'),
             'password': formData.get('password'),
         };
-        if (await AuthService.login(data)) {
+        const user: User = await AuthService.login(data);
+        if (user) {
+            authContext.setUser?.(user);
             navigate(SecuredPages.HOME_PAGE, {replace: true});
         };
         // Check if success and navigate to '/home'

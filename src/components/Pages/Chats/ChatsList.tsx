@@ -17,22 +17,22 @@ const ItemBody = ({ chat }: { chat: Chat }) => {
                 <b>{chat.name}</b>
             </p>
             <div className="chat-list-item__date">
-                <span>{chat.lastChanged?.toLocaleTimeString("ru")}</span>
+                <span>{chat.time?.toLocaleTimeString("ru")}</span>
                 <br />
-                <span>{chat.lastChanged?.toLocaleDateString("ru")}</span>
+                <span>{chat.time?.toLocaleDateString("ru")}</span>
             </div>
         </>
     )
 }
 
 const ChatListItem = forwardRef(({ chat, isLast, clickHandler }: 
-    { chat: Chat, isLast: boolean, clickHandler?: (id: any) => void }, ref?: any) => {
+    { chat: Chat, isLast: boolean, clickHandler?: (chat: Chat) => void }, ref?: any) => {
     if (isLast) {
         return (
             <li
                 key={chat.id}
                 ref={ref}
-                onClick={() => {clickHandler?.(chat.id)}}
+                onClick={() => {clickHandler?.(chat)}}
                 className="chat-list-item"
             >
                 <ItemBody chat={chat} />
@@ -42,7 +42,7 @@ const ChatListItem = forwardRef(({ chat, isLast, clickHandler }:
     return (
         <li
             key={chat.id}
-            onClick={() => {clickHandler?.(chat.id)}}
+            onClick={() => {clickHandler?.(chat)}}
             className="chat-list-item"
         >
             <ItemBody chat={chat} />
@@ -53,10 +53,10 @@ const ChatListItem = forwardRef(({ chat, isLast, clickHandler }:
 const ChatsList = forwardRef(({ chats }: { chats: Chat[] }, ref: any) => {
     const navigate = useNavigate();
 
-    const itemClickHandler = (chatId: number | string) => {
+    const itemClickHandler = (chat: Chat) => {
         navigate(SecuredPages.CHAT_ROOM_PAGE, {
             state: {
-                chatId
+                chat
             }
         });
     }

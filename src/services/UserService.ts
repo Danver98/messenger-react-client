@@ -1,6 +1,10 @@
 import HttpService from "./HttpService";
 import User from "../models/User";
 
+export interface UserRequestDTO {
+    search?: string;
+}
+
 class UserService {
     // TODO: coordinate backend and frontend API
     private static _instance: UserService;
@@ -30,6 +34,10 @@ class UserService {
 
     async delete(id: number | string): Promise<any> {
         return HttpService.delete(`/users/${id}`);
+    }
+
+    async list(dto: UserRequestDTO, controller?: AbortController | null): Promise<User[]> {
+        return HttpService.get(`/users/`, dto, controller?.signal);
     }
 }
 
