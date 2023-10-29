@@ -15,11 +15,11 @@ export class AuthService {
     }
 
     async register(data: object): Promise<any> {
-        return HttpService.post(AuthService.URL + '/register', data);
+        return HttpService.postJson(AuthService.URL + '/register', data);
     }
 
     async login(data: object): Promise<any> {
-        return HttpService.post(AuthService.URL + '/login', data);
+        return HttpService.postJson(AuthService.URL + '/login', data);
     }
 
     async logout(userId: number | string): Promise<any> {

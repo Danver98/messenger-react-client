@@ -14,6 +14,7 @@ export class ServiceUrl {
     static readonly AUTH_BASE = '/auth';
     static readonly MESSENGER_BASE = '/chats';
     static readonly USER_BASE = '/users';
+    static readonly WEB_SOCKETS = ServiceUrl.BACKEND_SERVICE_BASE_URL + '/ws'
 }
 
 export class Headers {

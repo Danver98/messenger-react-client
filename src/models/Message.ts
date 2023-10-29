@@ -1,7 +1,8 @@
 import User from "./User";
 
 export enum MessageDataType {
-    TEXT = 1,
+    DEFAULT = 1,
+    TEXT,
     IMAGE,
     VIDEO,
     FILE,
@@ -12,28 +13,41 @@ export interface MessageData {
     data?: any;
 }
 
+export enum MessageType {
+    CHAT = 1,
+    JOIN,
+    LEAVE
+}
+
 
 interface Message {
-    id: string;
+    id: string | null;
     chatId: number | string;
+    type?: MessageType | null;
     time?: Date | null;
-    data?: MessageData;
-    author?: User;
+    data?: MessageData | null;
+    author?: User | null;
 }
 
 class Message implements Message {
-    id: string;
+    id: string | null;
     chatId: number | string;
+    type?: MessageType | null;
     time?: Date | null;
-    data?: MessageData;
-    author?: User;
+    data?: MessageData | null;
+    author?: User | null;
 
-    constructor(id: string, chatId: number | string, data: MessageData, author: User, time?: Date | null) {
+    constructor(id: string | null, chatId: number | string, type?: MessageType | null, data?: MessageData | null, author?: User | null, time?: Date | null) {
         this.id = id;
         this.chatId = chatId;
-        this.time = time;
+        this.type = type;
+        this.time = time instanceof Date ? time : time == null ? null : new Date(time); // from backend it comes often as timestamp
         this.data = data;
         this.author = author;
+    }
+
+    getTime(): Date | null {
+        return this.time instanceof Date ? this.time : this.time == null ? null : new Date(this.time);
     }
 }
 

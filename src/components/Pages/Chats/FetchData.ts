@@ -3,7 +3,7 @@ import Chat from "../../../models/Chat";
 import MessengerService from "../../../services/MessengerService";
 import Message from "../../../models/Message";
 
-export function FetchChats(userId: number | string, time?:  Date | null, chatId?: number | string | null,
+export function FetchChats(userId: number | string, time?: Date | null, chatId?: number | string | null,
     direction?: number | null, count?: number | null) {
     const [chats, setChats] = useState<Chat[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -19,12 +19,12 @@ export function FetchChats(userId: number | string, time?:  Date | null, chatId?
             setIsLoading(true);
             const dto = {
                 'userId': userId,
-                'threshold': time,
-                'chatIdThreshold': chatId,
+                'time': time,
+                'chatId': chatId,
                 'direction': direction,
                 'count': count
             };
-            const newChats = await MessengerService.getChatsByUser(dto);
+            const newChats = await MessengerService.getChatsByUser(dto) || [];
             setChats([...chats, ...newChats]);
             setIsLoading(false);
             setHasMore(newChats && newChats.length > 0);
@@ -35,7 +35,7 @@ export function FetchChats(userId: number | string, time?:  Date | null, chatId?
     return { chats, loading: isLoading, hasMore, error };
 }
 
-export function FetchMessages(chatId: number | string, time?:  Date | null, messageId?: number | string | null,
+export function FetchMessages(chatId: number | string, time?: Date | null, messageId?: number | string | null,
     direction?: number | null, count?: number | null) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -43,12 +43,14 @@ export function FetchMessages(chatId: number | string, time?:  Date | null, mess
     const [error, setError] = useState();
     useEffect(() => {
         const fetchMessages = async () => {
+            console.log(`useEffect() with fetchMessages() called! isLoading: ${isLoading}, hasMore: ${hasMore}, chatId: ${chatId},
+            time: ${time}, messageId: ${messageId}, direction: ${direction}, count: ${count}`)
             if (isLoading) return;
             setIsLoading(true);
             const dto = {
                 'chatId': chatId,
-                'threshold': time,
-                'messageIdThreshold': messageId,
+                'time': time,
+                'messageId': messageId,
                 'direction': direction,
                 'count': count
             };

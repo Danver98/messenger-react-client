@@ -3,12 +3,6 @@ import Message, { MessageDataType } from "../../../models/Message";
 import User from "../../../models/User";
 import "./Chats.css";
 
-const MessageData = ({ message }: { message: Message }) => {
-    return (
-        <>
-        </>
-    )
-};
 
 const MessageBody = ({ message, user }: { message: Message, user?: User | null}) => {
     // Currently assuming we only have text messages;
@@ -64,7 +58,13 @@ const MessageListItem = forwardRef(({ message, user, isLast, clickHandler }:
 });
 
 const MessageList = forwardRef(({ messages, user }: { messages?: Message[], user?: User | null }, ref?: any) => {
-
+    if (messages == null || messages.length == 0) {
+        return (
+            <>
+                No messages!
+            </>
+        )
+    }
     const listItems = messages?.map((message, index) =>
         <MessageListItem message={message} user={user} isLast={index - 1 == messages.length} ref={ref} />)
 

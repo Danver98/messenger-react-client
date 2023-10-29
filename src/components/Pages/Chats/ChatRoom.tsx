@@ -1,15 +1,15 @@
 import { useLocation } from "react-router-dom";
 import { useContext, useState, useEffect, useRef } from "react";
-import AuthContext from "../../../contexts/AuthContext";
 import MessageList from "./MessagesList";
 import { FetchMessages } from "./FetchData";
-import { DIRECTION } from "../../../util/Constants";
+import { DIRECTION, ServiceUrl } from "../../../util/Constants";
 import Chat from "../../../models/Chat";
-import Message, { MessageDataType } from "../../../models/Message";
+import Message, { MessageDataType, MessageType } from "../../../models/Message";
 import MessengerService from "../../../services/MessengerService";
 import User from "../../../models/User";
 import UserSelectionDialog from "./UserSelectionDialog";
 import { useAuthContextData } from "../../../middleware/AuthProvider";
+import { Button, TextareaAutosize } from "@mui/material";
 
 function MessageSender({ chat, user }: { chat: Chat, user: User }) {
     const handleSubmit = async (event: any) => {
@@ -19,13 +19,14 @@ function MessageSender({ chat, user }: { chat: Chat, user: User }) {
         const messageData = {
             type: MessageDataType.TEXT,
             data: formData.get('messageData')
-        }
+        };
+        const type = MessageType.CHAT;
         const author: User = {
             id: user.id,
             name: user.name,
             surname: user.surname
         };
-        const message = new Message(crypto.randomUUID(), chat.id, messageData, author);
+        const message = new Message(null, chat.id, type, messageData, author);
         MessengerService.sendMessage(message);
     }
     return (
@@ -36,8 +37,22 @@ function MessageSender({ chat, user }: { chat: Chat, user: User }) {
                 className="chat-room-message-sender__FormContainer"
             >
                 <div className="chat-room-message-sender__Form">
-                    <textarea name="messageData" rows={3} className="chat-room-message-sender__TextArea"></textarea>
-                    <button type="submit" onClick={() => { }} className="chat-room-message-sender__SendButton">Send</button>
+                    <TextareaAutosize
+                        aria-label="minimum height"
+                        name="messageData"
+                        minRows={4}
+                        maxRows={4}
+                        placeholder="Enter your message"
+                        className="chat-room-message-sender__TextArea"
+                    />
+                    <Button
+                        variant="contained"
+                        type="submit"
+                        size="medium"
+                        className=""
+                    >
+                        Send
+                    </Button>
                 </div>
             </form>
         </div>
@@ -58,6 +73,7 @@ export default function ChatRoom() {
         hasMore,
         error
     } = FetchMessages(chat.id, time, messageId, DIRECTION.PAST);
+
 
     useEffect(() => {
         observerRef.current = new IntersectionObserver(
@@ -85,12 +101,14 @@ export default function ChatRoom() {
 
     return (
         <div className="chat-room-page">
-            <div className="chat-room-page-header">
-                <div className="chat-room-page-header__ChatName">{chat.name}</div>
-                <UserSelectionDialog chat={chat}/>
+            <div className="chat-room-page__CentralBlock">
+                <div className="chat-room-page-header">
+                    <div className="chat-room-page-header__ChatName">{chat.name}</div>
+                    <UserSelectionDialog chat={chat} />
+                </div>
+                <MessageList messages={messages} user={authContext.user} ref={setLastElementRef} />
+                <MessageSender chat={chat} user={authContext.user as User} />
             </div>
-            <MessageList messages={messages} user={authContext.user} ref={setLastElementRef} />
-            <MessageSender chat={chat} user={authContext.user as User} />
         </div>
     )
 }

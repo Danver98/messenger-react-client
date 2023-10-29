@@ -2,14 +2,11 @@ import RequestInterceptor from "../middleware/RequestInterceptor";
 import ResponseInterceptor from "../middleware/ResponseInterceptor";
 import { Headers } from "../util/Constants";
 import { getToken } from "../components/hooks/useToken";
-import { ACCESS_TOKEN } from "../util/Constants";
+import { ACCESS_TOKEN, ServiceUrl } from "../util/Constants";
 
 class HttpService {
 
     private static _instance: HttpService;
-
-    // Should it be imported from Constants
-    private static readonly BASE_URL = 'https://localhost:8443/messenger/api/v1';
 
     protected _defaultHeaders: object = {
     };
@@ -83,6 +80,7 @@ class HttpService {
             }
             this._afterResponse(response);
             //this._checkType(response, "application/json");
+            if (response.headers.get('content-length') == '0') return null;
             return await response.json();
             // process your data further
         } catch (error) {
@@ -98,37 +96,64 @@ class HttpService {
         }
     }
 
-    async get(url: string = '', data: object = {}, signal?: AbortSignal | null): Promise<any> {
+    async getJson(url: string = '', data: object = {}, signal?: AbortSignal | null): Promise<any> {
         const info: RequestInit = this._prepareRequest('GET', data, {
             'Content-Type': 'application/json'
         }, signal);
-        return this._fetchJSON(HttpService.BASE_URL + url, info);
+        return this._fetchJSON(ServiceUrl.BACKEND_SERVICE_BASE_URL + url, info);
     }
 
-    async post(url: string = '', data: object = {}, signal?: AbortSignal | null): Promise<object> {
+    async postJson(url: string = '', data: object = {}, signal?: AbortSignal | null): Promise<any> {
         const info: RequestInit = this._prepareRequest('POST', data, {
             'Content-Type': 'application/json'
         }, signal);
-        return this._fetchJSON(HttpService.BASE_URL + url, info);
+        return this._fetchJSON(ServiceUrl.BACKEND_SERVICE_BASE_URL + url, info);
     }
 
-    async put(url: string = '', data: object = {}, signal?: AbortSignal | null): Promise<object> {
+    async putJson(url: string = '', data: object = {}, signal?: AbortSignal | null): Promise<any> {
         const info: RequestInit = this._prepareRequest('PUT', data, {
             'Content-Type': 'application/json'
         }, signal);
-        return this._fetchJSON(HttpService.BASE_URL + url, info);
+        return this._fetchJSON(ServiceUrl.BACKEND_SERVICE_BASE_URL + url, info);
     }
 
-    async patch(url: string = '', data: object = {}, signal?: AbortSignal | null): Promise<object> {
+    async patchJson(url: string = '', data: object = {}, signal?: AbortSignal | null): Promise<any> {
         const info: RequestInit = this._prepareRequest('PATCH', data, {
             'Content-Type': 'application/json'
         }, signal);
-        return this._fetchJSON(HttpService.BASE_URL + url, info);
+        return this._fetchJSON(ServiceUrl.BACKEND_SERVICE_BASE_URL + url, info);
     }
 
-    async delete(url: string = '', data: object = {}, signal?: AbortSignal | null): Promise<object> {
+    async deleteJson(url: string = '', data: object = {}, signal?: AbortSignal | null): Promise<any> {
         const info: RequestInit = this._prepareRequest('DELETE', data, {}, signal);
-        return this._fetchJSON(HttpService.BASE_URL + url, info);
+        return this._fetchJSON(ServiceUrl.BACKEND_SERVICE_BASE_URL + url, info);
+    }
+
+    // =================================================================================
+
+    async get(url: string = '', data: object = {}, signal?: AbortSignal | null): Promise<any> {
+        const info: RequestInit = this._prepareRequest('GET', data, {}, signal);
+        return this._fetch(ServiceUrl.BACKEND_SERVICE_BASE_URL + url, info);
+    }
+
+    async post(url: string = '', data: object = {}, signal?: AbortSignal | null): Promise<any> {
+        const info: RequestInit = this._prepareRequest('POST', data, {}, signal);
+        return this._fetch(ServiceUrl.BACKEND_SERVICE_BASE_URL + url, info);
+    }
+
+    async put(url: string = '', data: object = {}, signal?: AbortSignal | null): Promise<any> {
+        const info: RequestInit = this._prepareRequest('PUT', data, {}, signal);
+        return this._fetch(ServiceUrl.BACKEND_SERVICE_BASE_URL + url, info);
+    }
+
+    async patch(url: string = '', data: object = {}, signal?: AbortSignal | null): Promise<any> {
+        const info: RequestInit = this._prepareRequest('PATCH', data, {}, signal);
+        return this._fetch(ServiceUrl.BACKEND_SERVICE_BASE_URL + url, info);
+    }
+
+    async delete(url: string = '', data: object = {}, signal?: AbortSignal | null): Promise<any> {
+        const info: RequestInit = this._prepareRequest('DELETE', data, {}, signal);
+        return this._fetch(ServiceUrl.BACKEND_SERVICE_BASE_URL + url, info);
     }
 }
 

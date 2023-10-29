@@ -5,10 +5,6 @@ import ChatsList from "./ChatsList";
 import { DIRECTION } from "../../../util/Constants";
 import { useAuthContextData } from "../../../middleware/AuthProvider";
 
-function randomIntFromInterval(min: number, max: number) { // min and max included 
-    return Math.floor(Math.random() * (max - min + 1) + min)
-}
-
 
 export default function Chats() {
     const [{ time, chatId }, setThreshold] = useState<{ time?: Date | null, chatId: number | string | null }>({ time: null, chatId: null });

@@ -17,9 +17,9 @@ const ItemBody = ({ chat }: { chat: Chat }) => {
                 <b>{chat.name}</b>
             </p>
             <div className="chat-list-item__date">
-                <span>{chat.time?.toLocaleTimeString("ru")}</span>
+                <span>{chat.getTime()?.toLocaleTimeString("ru")}</span>
                 <br />
-                <span>{chat.time?.toLocaleDateString("ru")}</span>
+                <span>{chat.getTime()?.toLocaleDateString("ru")}</span>
             </div>
         </>
     )
@@ -52,6 +52,14 @@ const ChatListItem = forwardRef(({ chat, isLast, clickHandler }:
 
 const ChatsList = forwardRef(({ chats }: { chats: Chat[] }, ref: any) => {
     const navigate = useNavigate();
+
+    if (chats == null || chats.length == 0 ) {
+        return (
+            <>
+                No chats!
+            </>
+        )
+    }
 
     const itemClickHandler = (chat: Chat) => {
         navigate(SecuredPages.CHAT_ROOM_PAGE, {

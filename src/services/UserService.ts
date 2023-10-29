@@ -2,7 +2,9 @@ import HttpService from "./HttpService";
 import User from "../models/User";
 
 export interface UserRequestDTO {
-    search?: string;
+    filter?: {
+        search?: string;
+    }
 }
 
 class UserService {
@@ -19,17 +21,17 @@ class UserService {
     }
 
     async get(id: number | string): Promise<User> {
-        const data = (await HttpService.get(`/user/${id}`)) as User;
+        const data = (await HttpService.getJson(`/user/${id}`)) as User;
         // Store user somewhere to retrieve in the app
         return new User(data.id, data.name, data.surname, data.login, data.avatar, data.password);
     }
 
     async create(user: object): Promise<any> {
-        return HttpService.post(`/users`, user);
+        return HttpService.postJson(`/users`, user);
     }
 
     async update(user: User): Promise<any> {
-        return HttpService.put(`/users`, user);
+        return HttpService.putJson(`/users`, user);
     }
 
     async delete(id: number | string): Promise<any> {
@@ -37,7 +39,7 @@ class UserService {
     }
 
     async list(dto: UserRequestDTO, controller?: AbortController | null): Promise<User[]> {
-        return HttpService.get(`/users/`, dto, controller?.signal);
+        return HttpService.postJson(`/users/`, dto, controller?.signal);
     }
 }
 

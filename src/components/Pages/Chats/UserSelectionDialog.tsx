@@ -35,6 +35,13 @@ const SearchBar = ({ onChange }: { onChange: (value: string) => any }) => {
 }
 
 const UserList = ({ users, checked, handleToggle }: { users: User[], checked: number[], handleToggle: (value: number) => any }) => {
+    if (users == null || users.length == 0) {
+        return (
+            <>
+                No users found!
+            </>
+        )
+    }
     return (
         <Box >
             <List>
@@ -103,6 +110,8 @@ const UserSelectionDialog = ({chat}: {chat: Chat}) => {
 
     useEffect(() => {
         const fetchUsers = async () => {
+            console.log(`useEffect() with fetchUsers() called! search: ${search}, open: ${open}. Will be called: ${open}`);
+            if (!open) return;
             if (search) {
                 // In case of search is present start requesting from 3 symbols-lenght string
                 if (search.length > 2) {
@@ -117,14 +126,19 @@ const UserSelectionDialog = ({chat}: {chat: Chat}) => {
         }
         // If we've already started a new request, cancel it
         const dto: UserRequestDTO = {
-            search: search
+            filter: {
+                search: search
+            }
         }
 
         fetchUsers();
 
-        return () => abortController.abort();
+        return () => {
+            console.log(`USE_EFFECT RETURN CALLED: from UserSelectionDialog.fetchUsers()`)
+            //abortController.abort();
+        };
 
-    }, [search])
+    }, [open, search])
 
     return (
         <div className="">

@@ -4,9 +4,9 @@ import Message from "./Message";
 interface Chat {
     id: number | string;
     name: string;
-    isPrivate?: boolean;
+    private?: boolean;
     avatar?: string;
-    time?: Date;
+    time?: Date | null;
     participants?: User[];
     messages?: Message[];
 }
@@ -14,29 +14,33 @@ interface Chat {
 class Chat implements Chat {
     id: number | string;
     name: string;
-    isPrivate?: boolean;
+    private?: boolean;
     avatar?: string;
-    time?: Date;
+    time?: Date | null;
     participants?: User[];
     messages?: Message[];
 
-    constructor(id: number | string, name: string, isPrivate?: boolean, avatar?: string,
-        time?: Date, participants?: User[], messages?: Message[]) {
+    constructor(id: number | string, name: string, _private?: boolean, avatar?: string,
+        time?: Date | null, participants?: User[], messages?: Message[]) {
             this.id = id;
             this.name = name;
-            this.isPrivate = isPrivate;
+            this.private = _private;
             this.avatar = avatar;
-            this.time = time;
+            this.time = time instanceof Date ? time : time == null ? null : new Date(time); // from backend it comes often as timestamp
             this.participants = participants;
             this.messages = messages;
     }
 
     toString(): string {
-        return `id: ${this.id}, name: ${this.name}, isPrivate: ${this.isPrivate}, avatar: ${this.avatar}, time: ${this.time}`;
+        return `id: ${this.id}, name: ${this.name}, private: ${this.private}, avatar: ${this.avatar}, time: ${this.time}`;
     }
 
     dateToString(): string | undefined {
         return this.time?.getTime().toString();
+    }
+
+    getTime(): Date | null {
+        return this.time instanceof Date ? this.time : this.time == null ? null : new Date(this.time);
     }
 }
 
