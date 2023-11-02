@@ -11,6 +11,7 @@ export const DIRECTION = {
 
 export class ServiceUrl {
     static readonly BACKEND_SERVICE_BASE_URL = 'https://localhost:8443/messenger/api/v1';
+    static readonly BACKEND_SERVICE_WEB_SOCKET_URL = 'wss://localhost:8443/messenger/api/v1/ws';
     static readonly AUTH_BASE = '/auth';
     static readonly MESSENGER_BASE = '/chats';
     static readonly USER_BASE = '/users';

@@ -62,5 +62,5 @@ export function FetchMessages(chatId: number | string, time?: Date | null, messa
         fetchMessages();
     }, []); // once {time, messageId}
 
-    return { messages, loading: isLoading, hasMore, error };
+    return { messages, setMessages, loading: isLoading, hasMore, error };
 }

@@ -35,7 +35,7 @@ const SearchBar = ({ onChange }: { onChange: (value: string) => any }) => {
 }
 
 const UserList = ({ users, checked, handleToggle }: { users: User[], checked: number[], handleToggle: (value: number) => any }) => {
-    if (users == null || users.length == 0) {
+    if (users == null || users.length === 0) {
         return (
             <>
                 No users found!

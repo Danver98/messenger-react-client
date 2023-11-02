@@ -8,7 +8,6 @@ const AuthContext = createContext<AuthContextData>({});
 const AuthProvider = ({ children }: {children: any}) => {
 
   // Memoized value of the authentication context
-  // Where to take the user???
   const { accessToken, setAccessToken, getAccessToken } = useAccessToken();
   const { refreshToken, setRefreshToken } = useRefreshToken();
   const {currentLoggedUser, setCurrentLoggedUser} = useCurrentLoggedUser();

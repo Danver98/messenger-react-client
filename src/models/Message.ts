@@ -22,7 +22,8 @@ export enum MessageType {
 
 interface Message {
     id: string | null;
-    chatId: number | string;
+    chatId?: number | string | null;
+    receiverId?: number | string | null;
     type?: MessageType | null;
     time?: Date | null;
     data?: MessageData | null;
@@ -31,15 +32,18 @@ interface Message {
 
 class Message implements Message {
     id: string | null;
-    chatId: number | string;
+    chatId?: number | string | null;
+    receiverId?: number | string | null;
     type?: MessageType | null;
     time?: Date | null;
     data?: MessageData | null;
     author?: User | null;
 
-    constructor(id: string | null, chatId: number | string, type?: MessageType | null, data?: MessageData | null, author?: User | null, time?: Date | null) {
+    constructor(id: string | null, chatId?: number | string | null, receiverId?: number | string | null,
+        type?: MessageType | null, data?: MessageData | null, author?: User | null, time?: Date | null) {
         this.id = id;
         this.chatId = chatId;
+        this.receiverId = receiverId;
         this.type = type;
         this.time = time instanceof Date ? time : time == null ? null : new Date(time); // from backend it comes often as timestamp
         this.data = data;

@@ -1,17 +1,17 @@
 import { useLocation } from "react-router-dom";
-import { useContext, useState, useEffect, useRef } from "react";
+import { useContext, useState, useEffect, useRef, useCallback } from "react";
 import MessageList from "./MessagesList";
 import { FetchMessages } from "./FetchData";
 import { DIRECTION, ServiceUrl } from "../../../util/Constants";
 import Chat from "../../../models/Chat";
 import Message, { MessageDataType, MessageType } from "../../../models/Message";
-import MessengerService from "../../../services/MessengerService";
 import User from "../../../models/User";
 import UserSelectionDialog from "./UserSelectionDialog";
 import { useAuthContextData } from "../../../middleware/AuthProvider";
 import { Button, TextareaAutosize } from "@mui/material";
+import { Client, IPublishParams } from '@stomp/stompjs';
 
-function MessageSender({ chat, user }: { chat: Chat, user: User }) {
+function MessageSender({ chat, user, stompClient }: { chat: Chat, user: User, stompClient: Client | null }) {
     const handleSubmit = async (event: any) => {
         const formData = new FormData(event.currentTarget);
         event.preventDefault();
@@ -24,10 +24,19 @@ function MessageSender({ chat, user }: { chat: Chat, user: User }) {
         const author: User = {
             id: user.id,
             name: user.name,
-            surname: user.surname
+            surname: user.surname,
+            avatar: user.avatar
         };
-        const message = new Message(null, chat.id, type, messageData, author);
-        MessengerService.sendMessage(message);
+        const message = new Message(null, chat.id, null, type, messageData, author);
+        const params: IPublishParams = {
+            destination: '/app/chats/public/send-message',
+            body: JSON.stringify({
+                message: message,
+                
+            })
+        }
+        await stompClient?.publish(params);
+        //MessengerService.sendMessage(message);
     }
     return (
         <div className="chat-room-message-sender">
@@ -66,14 +75,57 @@ export default function ChatRoom() {
     const [{ time, messageId }, setThreshold] = useState<{ time?: Date | null, messageId: number | string | null }>({ time: null, messageId: null });
     const [lastElementRef, setLastElementRef] = useState(null);
     const observerRef = useRef<IntersectionObserver | null>(null);
+    const [stompClient, setStompClient] = useState<Client | null>(null);
 
     const {
         messages,
+        setMessages,
         loading,
         hasMore,
         error
     } = FetchMessages(chat.id, time, messageId, DIRECTION.PAST);
 
+    // Should FetchMessages() had completed before socket initialization?
+    useEffect(() => {
+        console.log('Initiating new STOMP over websocket');
+        const config = {
+            connectHeaders: {},
+            brokerURL: ServiceUrl.BACKEND_SERVICE_WEB_SOCKET_URL,
+            onConnect: (frame: any) => {
+                console.log(`Successfully connected to server websocket!`);
+                if (chat.private) {
+                    stompClient?.subscribe(`/user/${authContext.user?.id}/queue/chats/messages`, onPrivateMessageReceived, {});
+                } else {
+                    stompClient?.subscribe(`/topic/chats/${chat.id}/messages`, onMessageReceived, {});
+                }
+                setStompClient(stompClient);
+            },
+            onDisconnect: () => {
+                stompClient.deactivate();
+            },
+            onStompError: (frame: any) => {
+                alert(`STOMP error occured: ${frame}`)
+            }
+        }
+        const stompClient = new Client(config);
+        stompClient.activate();
+
+        return () => { 
+            console.log(`Returning from 'Initiating new STOMP over websocket' useEffect() `)
+         };
+    }, []);
+
+    const onMessageReceived = (payload: any) => {
+        const data = JSON.parse(payload.body);
+        console.log(`Public payload received: ${data}`);
+        setMessages((prevMessages: Message[]) =>
+        [new Message(data.id, data.chatId, data.receiverId, data.type, data.data, data.author, data.time), ...prevMessages])
+    }
+
+    const onPrivateMessageReceived = (payload: any) => {
+        const data = payload.body;
+        console.log(`Private payload received: ${data}`);
+    }
 
     useEffect(() => {
         observerRef.current = new IntersectionObserver(
@@ -107,7 +159,7 @@ export default function ChatRoom() {
                     <UserSelectionDialog chat={chat} />
                 </div>
                 <MessageList messages={messages} user={authContext.user} ref={setLastElementRef} />
-                <MessageSender chat={chat} user={authContext.user as User} />
+                <MessageSender chat={chat} user={authContext.user as User} stompClient={stompClient}/>
             </div>
         </div>
     )

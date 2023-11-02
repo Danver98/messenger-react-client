@@ -72,7 +72,7 @@ class MessengerService {
     async getMessages(dto: MessageRequestDTO): Promise<Message[]> {
         const messages: Message[] = await HttpService.postJson(MessengerService.MESSAGE_URL + '/', dto);
         return messages.map((message: Message, index) => {
-            return new Message(message.id, message.chatId, message.type, message.data, message.author, message.time);
+            return new Message(message.id, message.chatId, message.receiverId, message.type, message.data, message.author, message.time);
         })
         // return new Promise((resolve, reject) => {
         //     setTimeout(() => {

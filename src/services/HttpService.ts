@@ -80,7 +80,7 @@ class HttpService {
             }
             this._afterResponse(response);
             //this._checkType(response, "application/json");
-            if (response.headers.get('content-length') == '0') return null;
+            if (response.headers.get('content-length') === '0') return null;
             return await response.json();
             // process your data further
         } catch (error) {

@@ -53,7 +53,7 @@ const ChatListItem = forwardRef(({ chat, isLast, clickHandler }:
 const ChatsList = forwardRef(({ chats }: { chats: Chat[] }, ref: any) => {
     const navigate = useNavigate();
 
-    if (chats == null || chats.length == 0 ) {
+    if (chats == null || chats.length === 0 ) {
         return (
             <>
                 No chats!
@@ -70,7 +70,7 @@ const ChatsList = forwardRef(({ chats }: { chats: Chat[] }, ref: any) => {
     }
 
     const listItems = chats.map((chat, index) =>
-        <ChatListItem chat={chat} isLast={index == chats.length - 1} clickHandler={itemClickHandler} ref={ref} />
+        <ChatListItem chat={chat} isLast={index === chats.length - 1} clickHandler={itemClickHandler} ref={ref} />
     )
     return (
         <ul className="chat-list">{listItems}</ul>
