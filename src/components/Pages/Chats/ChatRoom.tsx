@@ -10,8 +10,11 @@ import UserSelectionDialog from "./UserSelectionDialog";
 import { useAuthContextData } from "../../../middleware/AuthProvider";
 import { Button, TextareaAutosize } from "@mui/material";
 import { Client, IPublishParams } from '@stomp/stompjs';
+import { useStompClient } from "react-stomp-hooks";
 
-function MessageSender({ chat, user, stompClient }: { chat: Chat, user: User, stompClient: Client | null }) {
+function MessageSender({ chat, user}: { chat: Chat, user: User }) {
+    const stompClient = useStompClient();
+
     const handleSubmit = async (event: any) => {
         const formData = new FormData(event.currentTarget);
         event.preventDefault();
@@ -35,8 +38,7 @@ function MessageSender({ chat, user, stompClient }: { chat: Chat, user: User, st
                 
             })
         }
-        await stompClient?.publish(params);
-        //MessengerService.sendMessage(message);
+        stompClient?.publish(params);
     }
     return (
         <div className="chat-room-message-sender">
@@ -86,34 +88,34 @@ export default function ChatRoom() {
     } = FetchMessages(chat.id, time, messageId, DIRECTION.PAST);
 
     // Should FetchMessages() had completed before socket initialization?
-    useEffect(() => {
-        console.log('Initiating new STOMP over websocket');
-        const config = {
-            connectHeaders: {},
-            brokerURL: ServiceUrl.BACKEND_SERVICE_WEB_SOCKET_URL,
-            onConnect: (frame: any) => {
-                console.log(`Successfully connected to server websocket!`);
-                if (chat.private) {
-                    stompClient?.subscribe(`/user/${authContext.user?.id}/queue/chats/messages`, onPrivateMessageReceived, {});
-                } else {
-                    stompClient?.subscribe(`/topic/chats/${chat.id}/messages`, onMessageReceived, {});
-                }
-                setStompClient(stompClient);
-            },
-            onDisconnect: () => {
-                stompClient.deactivate();
-            },
-            onStompError: (frame: any) => {
-                alert(`STOMP error occured: ${frame}`)
-            }
-        }
-        const stompClient = new Client(config);
-        stompClient.activate();
+    // useEffect(() => {
+    //     console.log('Initiating new STOMP over websocket');
+    //     const config = {
+    //         connectHeaders: {},
+    //         brokerURL: ServiceUrl.BACKEND_SERVICE_WEB_SOCKET_URL,
+    //         onConnect: (frame: any) => {
+    //             console.log(`Successfully connected to server websocket!`);
+    //             if (chat.private) {
+    //                 stompClient?.subscribe(`/user/${authContext.user?.id}/queue/chats/messages`, onPrivateMessageReceived, {});
+    //             } else {
+    //                 stompClient?.subscribe(`/topic/chats/${chat.id}/messages`, onMessageReceived, {});
+    //             }
+    //             setStompClient(stompClient);
+    //         },
+    //         onDisconnect: () => {
+    //             stompClient.deactivate();
+    //         },
+    //         onStompError: (frame: any) => {
+    //             alert(`STOMP error occured: ${frame}`)
+    //         }
+    //     }
+    //     const stompClient = new Client(config);
+    //     stompClient.activate();
 
-        return () => { 
-            console.log(`Returning from 'Initiating new STOMP over websocket' useEffect() `)
-         };
-    }, []);
+    //     return () => { 
+    //         console.log(`Returning from 'Initiating new STOMP over websocket' useEffect() `)
+    //      };
+    // }, []);
 
     const onMessageReceived = (payload: any) => {
         const data = JSON.parse(payload.body);
@@ -159,7 +161,7 @@ export default function ChatRoom() {
                     <UserSelectionDialog chat={chat} />
                 </div>
                 <MessageList messages={messages} user={authContext.user} ref={setLastElementRef} />
-                <MessageSender chat={chat} user={authContext.user as User} stompClient={stompClient}/>
+                <MessageSender chat={chat} user={authContext.user as User} />
             </div>
         </div>
     )

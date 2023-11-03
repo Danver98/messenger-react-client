@@ -16,6 +16,7 @@ export interface MessageData {
 export enum MessageType {
     CHAT = 1,
     JOIN,
+    INVITATION,
     LEAVE
 }
 

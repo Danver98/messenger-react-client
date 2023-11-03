@@ -81,6 +81,7 @@ export function useCurrentLoggedUser() {
 
   return {
     setCurrentLoggedUser: saveCurrentLoggedUser,
-    currentLoggedUser
+    currentLoggedUser,
+    getCurrentLoggedUser
   }
 }

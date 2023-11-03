@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import AuthContextData from "../contexts/AuthContextData";
 import { useAccessToken, useCurrentLoggedUser, useRefreshToken } from "../components/hooks/useToken";
-import User from "../models/User";
 
 const AuthContext = createContext<AuthContextData>({});
 

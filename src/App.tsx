@@ -1,21 +1,27 @@
+import { StompSessionProvider } from 'react-stomp-hooks';
 import './App.css';
-import {  Routes, Route } from 'react-router-dom';
-import Layout from './components/Layout/Layout';
-import Home from './components/Pages/Home';
-import Register from './components/Pages/Register/Register';
-import Login from './components/Pages/Login/Login';
-import Chats from './components/Pages/Chats/Chats';
-import Intro from './components/Pages/Intro';
-import ProtectedRoute from './middleware/ProtectedRoute';
-import ChatRoom from './components/Pages/Chats/ChatRoom';
 import AuthProvider from './middleware/AuthProvider';
 import Routing from './routing/Routing';
+import { ServiceUrl } from './util/Constants';
+import ChatDataProvider from './middleware/stomp/StompChatDataProvider';
 
 function App() {
   return (
-    <AuthProvider>
-      <Routing />
-    </AuthProvider>
+    <StompSessionProvider
+      url={ServiceUrl.BACKEND_SERVICE_WEB_SOCKET_URL}
+      onConnect={(frame: any) => {
+        console.log(`Successfully connected to server websocket!`);
+      }}
+      onDisconnect={(frame: any) => {
+        console.log(`Successfully disconnected from server websocket!`);
+      }}
+    >
+      <ChatDataProvider>
+        <AuthProvider>
+          <Routing />
+        </AuthProvider>
+      </ChatDataProvider>
+    </StompSessionProvider>
   )
 }
 

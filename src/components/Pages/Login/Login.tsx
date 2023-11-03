@@ -1,14 +1,16 @@
 import { useAuthContextData } from "../../../middleware/AuthProvider";
+import { useChatData } from "../../../middleware/stomp/StompChatDataProvider";
 import User from "../../../models/User";
 import AuthService from "../../../services/AuthService"
 import { SecuredPages } from "../../../util/Constants";
-import { useAccessToken } from "../../hooks/useToken";
+import { useCurrentLoggedUser } from "../../hooks/useToken";
 import "./Login.css";
 import { useNavigate } from "react-router-dom";
 
 export default function Login() {
     const navigate = useNavigate();
     const authContext = useAuthContextData();
+    const chatDataContext = useChatData();
 
     const handleSubmit = async (event: any) => {
         const formData = new FormData(event.currentTarget);
@@ -21,6 +23,7 @@ export default function Login() {
         if (user) {
             authContext.setUser?.(user);
             navigate(SecuredPages.HOME_PAGE, {replace: true});
+            chatDataContext?.setCurrentLoggedUser(user);
         };
         // Check if success and navigate to '/home'
     }
