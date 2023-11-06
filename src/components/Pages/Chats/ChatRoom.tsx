@@ -11,6 +11,7 @@ import { useAuthContextData } from "../../../middleware/AuthProvider";
 import { Button, TextareaAutosize } from "@mui/material";
 import { Client, IPublishParams } from '@stomp/stompjs';
 import { useStompClient } from "react-stomp-hooks";
+import { useBus, useListener } from 'react-bus'
 
 function MessageSender({ chat, user}: { chat: Chat, user: User }) {
     const stompClient = useStompClient();
@@ -117,17 +118,19 @@ export default function ChatRoom() {
     //      };
     // }, []);
 
-    const onMessageReceived = (payload: any) => {
-        const data = JSON.parse(payload.body);
-        console.log(`Public payload received: ${data}`);
+    const onMessageReceived = (data: any) => {
+        const message = new Message(data.id, data.chatId, data.receiverId, data.type, data.data, data.author, data.time);
         setMessages((prevMessages: Message[]) =>
-        [new Message(data.id, data.chatId, data.receiverId, data.type, data.data, data.author, data.time), ...prevMessages])
+        [message, ...prevMessages])
     }
 
     const onPrivateMessageReceived = (payload: any) => {
         const data = payload.body;
         console.log(`Private payload received: ${data}`);
     }
+
+    // Subscribe to new messages coming to chat
+    useListener(`/chats/${chat.id}/messages`, onMessageReceived);
 
     useEffect(() => {
         observerRef.current = new IntersectionObserver(

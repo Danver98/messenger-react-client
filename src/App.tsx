@@ -3,6 +3,7 @@ import './App.css';
 import AuthProvider from './middleware/AuthProvider';
 import Routing from './routing/Routing';
 import { ServiceUrl } from './util/Constants';
+import { Provider as BusProvider } from 'react-bus';
 import ChatDataProvider from './middleware/stomp/StompChatDataProvider';
 
 function App() {
@@ -16,11 +17,13 @@ function App() {
         console.log(`Successfully disconnected from server websocket!`);
       }}
     >
-      <ChatDataProvider>
-        <AuthProvider>
-          <Routing />
-        </AuthProvider>
-      </ChatDataProvider>
+      <BusProvider>
+        <ChatDataProvider>
+          <AuthProvider>
+            <Routing />
+          </AuthProvider>
+        </ChatDataProvider>
+      </BusProvider>
     </StompSessionProvider>
   )
 }

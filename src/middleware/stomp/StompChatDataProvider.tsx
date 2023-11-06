@@ -5,6 +5,7 @@ import Message, { MessageType } from "../../models/Message";
 import MessengerService, { ChatRequestDTO } from "../../services/MessengerService";
 import Chat from "../../models/Chat";
 import User from "../../models/User";
+import { useBus, useListener } from 'react-bus'
 
 interface ChatDataStorage {
   messages: Message[];
@@ -21,68 +22,82 @@ const ChatDataContext = createContext<IChatDataContext>({});
 
 const ChatDataProvider = ({ children }: { children: any }) => {
 
+  const bus = useBus();
   // Memoized value of the authentication context
   const { currentLoggedUser, getCurrentLoggedUser, setCurrentLoggedUser } = useCurrentLoggedUser();
   const initialUserId = useMemo(() => {
     const user = getCurrentLoggedUser();
     return user ? user.id : null;
   }, []);
-  const [ currentUserId, setCurrentUserId ] = useState(initialUserId);
-  const [chatsData, setChatsData] = useState<{ [id: string | number]: ChatDataStorage }>({});
+  const [currentUserId, setCurrentUserId] = useState(initialUserId);
+  const [chatsData, setChatsData] = useState<{ [id: string | number]: ChatDataStorage }>(
+    {
+    }
+  );
   const stompClient = useStompClient();
 
-  const onPublicMessageReceived = (payload: any) => {
+  function OnPublicMessageReceived(payload: any, oldData: any, setData: any): void {
     const data = JSON.parse(payload.body);
     console.log(`Public payload received: ${data}`);
-    const newMessages = [
-      new Message(data.id, data.chatId, data.receiverId, data.type, data.data, data.author, data.time),
-      ...chatsData[data.chatId].messages
-    ];
-
-    setChatsData({ ...chatsData, chatId: { ...chatsData[data.chatId], messages: newMessages } });
+    const message = new Message(data.id, data.chatId, data.receiverId, data.type, data.data, data.author, data.time);
+    // const newMessages = [
+    //   message,
+    //   ...chatsData[data.chatId].messages
+    // ];
+    bus.emit(`/chats/${data.chatId}/messages`, message);
+    // setChatsData(prevChatsData => {
+    //   return prevChatsData.map((chatData: any, index: any) => {
+    //     return chatData;
+    //   });
+    // });
   }
 
-  const onPrivateMessageReceived = (payload: any) => {
+  function OnPrivateMessageReceived(payload: any): void {
     const data = JSON.parse(payload.body);
     console.log(`Private payload received: ${data}`);
     if (data.type === MessageType.INVITATION) {
       // User's invited to public dialog
       console.log(`User's got an invitation to the new chat!`)
-      stompClient?.subscribe(`/topic/chats/${data.chatId}/messages`, onPublicMessageReceived);
+      stompClient?.subscribe(`/topic/chats/${data.chatId}/messages`, (payload: any) => {
+        OnPublicMessageReceived(payload, chatsData, setChatsData);
+      });
     }
-    const newMessages = [
-      new Message(data.id, data.chatId, data.receiverId, data.type, data.data, data.author, data.time),
-      ...chatsData[data.chatId].messages
-    ];
-
-    setChatsData({ ...chatsData, chatId: { ...chatsData[data.chatId], messages: newMessages } });
+    const message = new Message(data.id, data.chatId, data.receiverId, data.type, data.data, data.author, data.time);
+    // const newMessages = [
+    //   message,
+    //   ...chatsData[data.chatId].messages
+    // ];
+    bus.emit(`/chats/${data.chatId}/messages`, message);
+    //setChatsData({ ...chatsData, chatId: { ...chatsData[data.chatId], messages: newMessages } });
   }
 
   useEffect(() => {
     const subscribe = async (user: User | null) => {
       if (!user) return;
       console.log(`Subscribing to private chat...`)
-      stompClient?.subscribe(`/user/${user.id}/queue/chats/messages`, (payload: any) => {
-        onPrivateMessageReceived(payload);
-      });
+      stompClient?.subscribe(`/user/${user.id}/queue/chats/messages`, OnPrivateMessageReceived);
       // Subscribe to public chats
       const dto: ChatRequestDTO = {
         userId: user.id
       };
       const chats = await MessengerService.getChatsByUser(dto);
       console.log(`Subscribing to public chats...`);
-      //stompClient?.subscribe(`/topic/chats/${chat.id}/messages`, onPublicMessageReceived);
       const newChatsData: { [id: string | number]: ChatDataStorage } = {};
       chats?.forEach((chat: Chat) => {
         stompClient?.subscribe(`/topic/chats/${chat.id}/messages`, (payload: any) => {
-          onPublicMessageReceived(payload);
+          OnPublicMessageReceived(payload, chatsData, setChatsData);
         });
-        newChatsData[chat.id] = {messages: []}
+        newChatsData[chat.id] = { messages: [] }
       });
-      setChatsData({...newChatsData});
-      console.log(`Subscribtion complete!`);
+      setChatsData(
+        {
+          ...newChatsData
+        }
+      );
+      setCurrentUserId(Math.random()* 100 + 1);
+      console.log(`Subscription complete!`);
     }
-  
+
     subscribe(currentLoggedUser);
 
     return () => {
@@ -93,8 +108,12 @@ const ChatDataProvider = ({ children }: { children: any }) => {
 
 
   useEffect(() => {
-    console.log(`chatsDataChanged: ${chatsData.toString()}`);
+    console.log(`chatsDataChanged: ${chatsData?.toString()}`);
   }, [chatsData]);
+
+  useEffect(() => {
+    console.log(`currentUserIdChanged: ${currentUserId?.toString()}`);
+  }, [currentUserId]);
 
   const contextValue = {
     chatsData,
