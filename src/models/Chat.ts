@@ -9,6 +9,7 @@ interface Chat {
     time?: Date | null;
     participants?: User[];
     messages?: Message[];
+    lastMessage?: Message | null;
 }
 
 class Chat implements Chat {
@@ -19,9 +20,10 @@ class Chat implements Chat {
     time?: Date | null;
     participants?: User[];
     messages?: Message[];
+    lastMessage?: Message | null;
 
     constructor(id: number | string, name: string, _private?: boolean, avatar?: string,
-        time?: Date | null, participants?: User[], messages?: Message[]) {
+        time?: Date | null, participants?: User[], messages?: Message[], lastMessage?: Message | null) {
             this.id = id;
             this.name = name;
             this.private = _private;
@@ -29,6 +31,7 @@ class Chat implements Chat {
             this.time = time instanceof Date ? time : time == null ? null : new Date(time); // from backend it comes often as timestamp
             this.participants = participants;
             this.messages = messages;
+            this.lastMessage = lastMessage;
     }
 
     toString(): string {

@@ -51,8 +51,24 @@ class MessengerService {
         const rawChats: Chat[] = await HttpService.postJson(MessengerService.CHAT_URL + '/', dto);
         return rawChats?.map((chat, index) => {
             const image = this.randomIntFromInterval(80, 120);
-            return new Chat(chat.id, chat.name, chat.private, chat.avatar || (RANDOM_CHAT_AVATAR_URL + `${image}/${image}`),
-                chat.time, chat.participants, chat.messages);
+            return new Chat(
+                chat.id,
+                chat.name,
+                chat.private,
+                chat.avatar || (RANDOM_CHAT_AVATAR_URL + `${image}/${image}`),
+                chat.time,
+                chat.participants,
+                chat.messages,
+                chat.lastMessage == null ? null :
+                new Message(
+                    chat.lastMessage.id, 
+                    chat.lastMessage.chatId, 
+                    chat.lastMessage.receiverId, 
+                    chat.lastMessage.type, 
+                    chat.lastMessage.data, 
+                    chat.lastMessage.author, 
+                    chat.lastMessage.time)
+                );
         }
         )
     }
@@ -72,7 +88,16 @@ class MessengerService {
     async getMessages(dto: MessageRequestDTO): Promise<Message[]> {
         const messages: Message[] = await HttpService.postJson(MessengerService.MESSAGE_URL + '/', dto);
         return messages.map((message: Message, index) => {
-            return new Message(message.id, message.chatId, message.receiverId, message.type, message.data, message.author, message.time);
+            return new Message(
+                message.id,
+                message.chatId,
+                message.receiverId,
+                message.type,
+                message.data,
+                message.author,
+                message.time
+
+                );
         })
         // return new Promise((resolve, reject) => {
         //     setTimeout(() => {

@@ -4,6 +4,32 @@ import "./Chats.css"
 import ChatsList from "./ChatsList";
 import { DIRECTION } from "../../../util/Constants";
 import { useAuthContextData } from "../../../middleware/AuthProvider";
+import ChatRoom from "./ChatRoom";
+import Chat from "../../../models/Chat";
+import { InputAdornment, TextField } from "@mui/material";
+import SearchIcon from '@mui/icons-material/Search';
+
+const SearchBar = ({ onChange }: { onChange: (value: string) => any }) => {
+    return (
+        <TextField
+            id="standard-basic"
+            label="Search"
+            variant="standard"
+            fullWidth
+            margin="none"
+            InputProps={{
+                endAdornment: (
+                    <InputAdornment position="end">
+                        <SearchIcon />
+                    </InputAdornment>
+                ),
+            }}
+            onChange={(e: any) => {
+                onChange(e.target.value)
+            }}
+        />
+    )
+}
 
 
 export default function Chats() {
@@ -13,6 +39,7 @@ export default function Chats() {
     const [counter, setCounter] = useState(0);
     const authContext = useAuthContextData()
     const userId = authContext.user?.id;
+    const [activeChat, setActveChat] = useState<Chat | null>(null);
     // TODO: direction
 
     const {
@@ -47,12 +74,34 @@ export default function Chats() {
         };
     }, [lastElementRef]);
 
+    const handleClick = async (chat: Chat) => {
+        setActveChat(chat);
+    }
+
     return (
         <>
             <div className="chat-page">
-                <div>Counter: {counter}</div>
                 {/* <div> Last chat info: {chats && chats.length ? chats[chats.length - 1].toString() : null}</div> */}
-                <ChatsList chats={chats} ref={setLastElementRef} />
+                <div className="chat-dashboard">
+                    <div className="chat-dashboard__left">
+                        <SearchBar
+                            onChange={() => {}}
+                        />
+                        <ChatsList chats={chats} ref={setLastElementRef} itemClickHandler={handleClick} />
+                    </div>
+                    <div className="chat-dashboard__right">
+                        {
+                            activeChat &&
+                            <ChatRoom chat={activeChat} />
+                        }
+                        {
+                            activeChat == null &&
+                            <div className="chat-room__empty">
+                                    Select chat to start messaging
+                            </div>
+                        }
+                    </div>
+                </div>
             </div>
         </>
     )

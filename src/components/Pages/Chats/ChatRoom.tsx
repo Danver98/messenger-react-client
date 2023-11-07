@@ -13,7 +13,7 @@ import { Client, IPublishParams } from '@stomp/stompjs';
 import { useStompClient } from "react-stomp-hooks";
 import { useBus, useListener } from 'react-bus'
 
-function MessageSender({ chat, user}: { chat: Chat, user: User }) {
+function MessageSender({ chat, user }: { chat: Chat, user: User }) {
     const stompClient = useStompClient();
 
     const handleSubmit = async (event: any) => {
@@ -36,7 +36,7 @@ function MessageSender({ chat, user}: { chat: Chat, user: User }) {
             destination: '/app/chats/public/send-message',
             body: JSON.stringify({
                 message: message,
-                
+
             })
         }
         stompClient?.publish(params);
@@ -71,10 +71,9 @@ function MessageSender({ chat, user}: { chat: Chat, user: User }) {
     )
 }
 
-export default function ChatRoom() {
+export default function ChatRoom({ chat }: { chat: Chat}) {
     const location = useLocation();
     const authContext = useAuthContextData();
-    const chat: Chat = location.state.chat; // Or better fetch new info?
     const [{ time, messageId }, setThreshold] = useState<{ time?: Date | null, messageId: number | string | null }>({ time: null, messageId: null });
     const [lastElementRef, setLastElementRef] = useState(null);
     const observerRef = useRef<IntersectionObserver | null>(null);
@@ -121,7 +120,7 @@ export default function ChatRoom() {
     const onMessageReceived = (data: any) => {
         const message = new Message(data.id, data.chatId, data.receiverId, data.type, data.data, data.author, data.time);
         setMessages((prevMessages: Message[]) =>
-        [message, ...prevMessages])
+            [message, ...prevMessages])
     }
 
     const onPrivateMessageReceived = (payload: any) => {

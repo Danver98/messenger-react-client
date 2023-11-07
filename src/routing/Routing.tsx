@@ -28,10 +28,6 @@ const Routing = () => {
                     path: '/secured/chats',
                     element: <Chats />
                 },
-                {
-                    path: '/secured/chats/room',
-                    element: <ChatRoom />
-                },
             ]
         },
     ];

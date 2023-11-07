@@ -40,8 +40,14 @@ class Message implements Message {
     data?: MessageData | null;
     author?: User | null;
 
-    constructor(id: string | null, chatId?: number | string | null, receiverId?: number | string | null,
-        type?: MessageType | null, data?: MessageData | null, author?: User | null, time?: Date | null) {
+    constructor(
+        id: string | null,
+        chatId?: number | string | null,
+        receiverId?: number | string | null,
+        type?: MessageType | null,
+        data?: MessageData | null,
+        author?: User | null,
+        time?: Date | null) {
         this.id = id;
         this.chatId = chatId;
         this.receiverId = receiverId;
@@ -53,6 +59,24 @@ class Message implements Message {
 
     getTime(): Date | null {
         return this.time instanceof Date ? this.time : this.time == null ? null : new Date(this.time);
+    }
+
+    getDataText(): string {
+        if (this.data == null || this.data.data == null) {
+            return '';
+        }
+        return this.data.data;
+    }
+
+    getAuthorFullName(): string {
+        if (this.author == null || this.author.name == null || this.author.surname == null) {
+            return '';
+        }
+        return this.author.name + ' ' + this.author.surname;
+    }
+
+    getAuthorAndDataString(): string {
+        return this.getAuthorFullName() + ': ' + this.getDataText();
     }
 }
 
