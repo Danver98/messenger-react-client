@@ -7,7 +7,7 @@ interface Chat {
     private?: boolean;
     avatar?: string;
     time?: Date | null;
-    participants?: User[];
+    participants?: (number | string)[];
     messages?: Message[];
     lastMessage?: Message | null;
 }
@@ -18,12 +18,12 @@ class Chat implements Chat {
     private?: boolean;
     avatar?: string;
     time?: Date | null;
-    participants?: User[];
+    participants?: (number | string)[];
     messages?: Message[];
     lastMessage?: Message | null;
 
     constructor(id: number | string, name: string, _private?: boolean, avatar?: string,
-        time?: Date | null, participants?: User[], messages?: Message[], lastMessage?: Message | null) {
+        time?: Date | null, participants?: (number | string)[], messages?: Message[], lastMessage?: Message | null) {
             this.id = id;
             this.name = name;
             this.private = _private;

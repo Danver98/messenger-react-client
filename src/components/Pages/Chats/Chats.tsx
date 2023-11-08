@@ -8,6 +8,9 @@ import ChatRoom from "./ChatRoom";
 import Chat from "../../../models/Chat";
 import { InputAdornment, TextField } from "@mui/material";
 import SearchIcon from '@mui/icons-material/Search';
+import { useBus, useListener } from 'react-bus';
+import Message from "../../../models/Message";
+import MessengerService from "../../../services/MessengerService";
 
 const SearchBar = ({ onChange }: { onChange: (value: string) => any }) => {
     return (
@@ -44,10 +47,29 @@ export default function Chats() {
 
     const {
         chats,
+        setChats,
         loading,
         hasMore,
         error
     } = FetchChats(userId ? userId : 0, time, chatId, DIRECTION.PAST);
+
+    useListener(`/components/chats/messages`, (data: any) => {
+        console.log(`Received message for '/components/chats/messages' channel `);
+        const message = new Message(data.id, data.chatId, data.receiverId, data.type, data.data, data.author, data.time);
+        const changedChat = chats.find((chat: Chat) => chat.id === data.chatId);
+        if (changedChat == null) return;
+        const changedChatCopy = new Chat(
+            changedChat.id,
+            changedChat.name,
+            changedChat.private,
+            changedChat.avatar,
+            changedChat.time,
+            changedChat.participants,
+            data.messages,
+            message);
+        const filteredChats = chats.filter((chat: Chat) => chat.id !== data.chatId) || [];
+        setChats([changedChatCopy, ...filteredChats ]);
+    });
 
     useEffect(() => {
         observerRef.current = new IntersectionObserver(
@@ -75,7 +97,10 @@ export default function Chats() {
     }, [lastElementRef]);
 
     const handleClick = async (chat: Chat) => {
-        setActveChat(chat);
+        // make a fetch
+        const fetchedChat = await MessengerService.getChat(chat.id, userId);
+        // This is a chat with participants
+        setActveChat(fetchedChat);
     }
 
     return (

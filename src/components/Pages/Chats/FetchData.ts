@@ -9,7 +9,6 @@ export function FetchChats(userId: number | string, time?: Date | null, chatId?:
     const [isLoading, setIsLoading] = useState(false);
     const [hasMore, setHasMore] = useState(true);
     const [error, setError] = useState();
-    console.log(`FetchChats() called!`);
 
     useEffect(() => {
         const fetchChats = async () => {
@@ -32,7 +31,7 @@ export function FetchChats(userId: number | string, time?: Date | null, chatId?:
         fetchChats();
     }, []); // once {time, chatId}
 
-    return { chats, loading: isLoading, hasMore, error };
+    return { chats, setChats, loading: isLoading, hasMore, error };
 }
 
 export function FetchMessages(chatId: number | string, time?: Date | null, messageId?: number | string | null,
@@ -55,12 +54,13 @@ export function FetchMessages(chatId: number | string, time?: Date | null, messa
                 'count': count
             };
             const newMessages = await MessengerService.getMessages(dto);
-            setMessages([...messages, ...newMessages]);
+            setMessages((prevMessages) => [...newMessages]);
+            //setMessages([...messages, ...newMessages]);
             setIsLoading(false);
             setHasMore(newMessages && newMessages.length > 0);
         };
         fetchMessages();
-    }, []); // once {time, messageId}
+    }, [chatId]); // once {time, messageId}
 
     return { messages, setMessages, loading: isLoading, hasMore, error };
 }

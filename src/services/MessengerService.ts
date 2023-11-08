@@ -42,8 +42,8 @@ class MessengerService {
         return Math.floor(Math.random() * (max - min + 1) + min)
     }
 
-    async getChat(id: string | number): Promise<Chat> {
-        const data = (await HttpService.get(MessengerService.CHAT_URL + `/${id}`)) as Chat;
+    async getChat(id: string | number, userId?: string | number): Promise<Chat> {
+        const data = await HttpService.getJson(MessengerService.CHAT_URL + `/${id}?userId=${userId}`);
         return new Chat(data.id, data.name, data.private, data.avatar, data.time, data.participants, data.messages);
     }
 

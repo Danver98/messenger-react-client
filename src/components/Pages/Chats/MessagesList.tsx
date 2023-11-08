@@ -66,7 +66,7 @@ const MessageList = forwardRef(({ messages, user }: { messages?: Message[], user
         )
     }
     const listItems = messages?.map((message, index) =>
-        <MessageListItem message={message} user={user} isLast={index - 1 == messages.length} ref={ref} />)
+        <MessageListItem message={message} user={user} isLast={index === messages.length - 1} ref={ref} />)
 
     return (
         <ul className="chat-room-message-list">{listItems}</ul>

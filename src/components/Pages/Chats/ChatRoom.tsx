@@ -11,36 +11,9 @@ import { useAuthContextData } from "../../../middleware/AuthProvider";
 import { Button, TextareaAutosize } from "@mui/material";
 import { Client, IPublishParams } from '@stomp/stompjs';
 import { useStompClient } from "react-stomp-hooks";
-import { useBus, useListener } from 'react-bus'
+import { useBus, useListener } from 'react-bus';
 
-function MessageSender({ chat, user }: { chat: Chat, user: User }) {
-    const stompClient = useStompClient();
-
-    const handleSubmit = async (event: any) => {
-        const formData = new FormData(event.currentTarget);
-        event.preventDefault();
-        // Are id, time and so on created on the server side?
-        const messageData = {
-            type: MessageDataType.TEXT,
-            data: formData.get('messageData')
-        };
-        const type = MessageType.CHAT;
-        const author: User = {
-            id: user.id,
-            name: user.name,
-            surname: user.surname,
-            avatar: user.avatar
-        };
-        const message = new Message(null, chat.id, null, type, messageData, author);
-        const params: IPublishParams = {
-            destination: '/app/chats/public/send-message',
-            body: JSON.stringify({
-                message: message,
-
-            })
-        }
-        stompClient?.publish(params);
-    }
+function MessageSender({ handleSubmit }: { handleSubmit: (event: any) => any }) {
     return (
         <div className="chat-room-message-sender">
             <form
@@ -77,7 +50,7 @@ export default function ChatRoom({ chat }: { chat: Chat}) {
     const [{ time, messageId }, setThreshold] = useState<{ time?: Date | null, messageId: number | string | null }>({ time: null, messageId: null });
     const [lastElementRef, setLastElementRef] = useState(null);
     const observerRef = useRef<IntersectionObserver | null>(null);
-    const [stompClient, setStompClient] = useState<Client | null>(null);
+    const stompClient = useStompClient();
 
     const {
         messages,
@@ -85,37 +58,7 @@ export default function ChatRoom({ chat }: { chat: Chat}) {
         loading,
         hasMore,
         error
-    } = FetchMessages(chat.id, time, messageId, DIRECTION.PAST);
-
-    // Should FetchMessages() had completed before socket initialization?
-    // useEffect(() => {
-    //     console.log('Initiating new STOMP over websocket');
-    //     const config = {
-    //         connectHeaders: {},
-    //         brokerURL: ServiceUrl.BACKEND_SERVICE_WEB_SOCKET_URL,
-    //         onConnect: (frame: any) => {
-    //             console.log(`Successfully connected to server websocket!`);
-    //             if (chat.private) {
-    //                 stompClient?.subscribe(`/user/${authContext.user?.id}/queue/chats/messages`, onPrivateMessageReceived, {});
-    //             } else {
-    //                 stompClient?.subscribe(`/topic/chats/${chat.id}/messages`, onMessageReceived, {});
-    //             }
-    //             setStompClient(stompClient);
-    //         },
-    //         onDisconnect: () => {
-    //             stompClient.deactivate();
-    //         },
-    //         onStompError: (frame: any) => {
-    //             alert(`STOMP error occured: ${frame}`)
-    //         }
-    //     }
-    //     const stompClient = new Client(config);
-    //     stompClient.activate();
-
-    //     return () => { 
-    //         console.log(`Returning from 'Initiating new STOMP over websocket' useEffect() `)
-    //      };
-    // }, []);
+    } = FetchMessages(chat.id, time, messageId, DIRECTION.PAST, 50);
 
     const onMessageReceived = (data: any) => {
         const message = new Message(data.id, data.chatId, data.receiverId, data.type, data.data, data.author, data.time);
@@ -123,9 +66,47 @@ export default function ChatRoom({ chat }: { chat: Chat}) {
             [message, ...prevMessages])
     }
 
-    const onPrivateMessageReceived = (payload: any) => {
-        const data = payload.body;
-        console.log(`Private payload received: ${data}`);
+    const sendMessage = async (event: any) => {
+        const user = authContext.user as User;
+        const formData = new FormData(event.currentTarget);
+        event.preventDefault();
+        // Are id, time and so on created on the server side?
+        const messageData = {
+            type: MessageDataType.TEXT,
+            data: formData.get('messageData')
+        };
+        const type = MessageType.CHAT;
+        const author: User = {
+            id: user.id,
+            name: user.name,
+            surname: user.surname,
+            avatar: user.avatar
+        };
+        const receiverId = chat.private && chat.participants?
+                        chat.participants[0] === user.id ?
+                                        chat.participants[1]
+                                        : chat.participants[0]
+                        : null;
+        const message = new Message(
+            null,
+            chat.id,
+            receiverId,
+            type,
+            messageData,
+            author);
+        const params: IPublishParams = {
+            destination: chat.private ? '/app/chats/private/send-message' : '/app/chats/public/send-message',
+            body: JSON.stringify({
+                message: message,
+
+            })
+        }
+        stompClient?.publish(params);
+        if (chat.private) {
+            // TODO: in private chats we don'r get back our messages, so we've to insert it manually
+            setMessages((prevMessages: Message[]) =>
+            [message, ...prevMessages])
+        }
     }
 
     // Subscribe to new messages coming to chat
@@ -136,6 +117,10 @@ export default function ChatRoom({ chat }: { chat: Chat}) {
             (entries) => {
                 if (entries[0].isIntersecting) {
                     console.log(`MESSAGE ELEMENT'S INTERSECTED`);
+                    if (messages) {
+                        const lastMsg = messages[messages.length - 1];
+                        setThreshold({time: lastMsg.time, messageId: lastMsg.id});
+                    }
                 }
             }
         );
@@ -155,6 +140,12 @@ export default function ChatRoom({ chat }: { chat: Chat}) {
         };
     }, [lastElementRef]);
 
+
+    useEffect(() => {
+        console.log(`Chat id changed!`)
+        //setMessages((prevMessages) => []);
+    }, [chat.id]);
+
     return (
         <div className="chat-room-page">
             <div className="chat-room-page__CentralBlock">
@@ -163,7 +154,7 @@ export default function ChatRoom({ chat }: { chat: Chat}) {
                     <UserSelectionDialog chat={chat} />
                 </div>
                 <MessageList messages={messages} user={authContext.user} ref={setLastElementRef} />
-                <MessageSender chat={chat} user={authContext.user as User} />
+                <MessageSender handleSubmit={ sendMessage }/>
             </div>
         </div>
     )
