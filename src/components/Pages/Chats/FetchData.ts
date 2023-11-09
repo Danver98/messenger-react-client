@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import Chat from "../../../models/Chat";
 import MessengerService from "../../../services/MessengerService";
 import Message from "../../../models/Message";
+import { PagingParams } from '../Chats/ChatRoom';
 
 export function FetchChats(userId: number | string, time?: Date | null, chatId?: number | string | null,
     direction?: number | null, count?: number | null) {
@@ -34,24 +35,23 @@ export function FetchChats(userId: number | string, time?: Date | null, chatId?:
     return { chats, setChats, loading: isLoading, hasMore, error };
 }
 
-export function FetchMessages(chatId: number | string, time?: Date | null, messageId?: number | string | null,
-    direction?: number | null, count?: number | null) {
+export function FetchMessages(pagingParams: PagingParams) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [hasMore, setHasMore] = useState(true);
     const [error, setError] = useState();
     useEffect(() => {
         const fetchMessages = async () => {
-            console.log(`useEffect() with fetchMessages() called! isLoading: ${isLoading}, hasMore: ${hasMore}, chatId: ${chatId},
-            time: ${time}, messageId: ${messageId}, direction: ${direction}, count: ${count}`)
+            console.log(`useEffect() with fetchMessages() called! isLoading: ${isLoading}, hasMore: ${hasMore}, chatId: ${pagingParams.chatId},
+            time: ${pagingParams.time}, messageId: ${pagingParams.messageId}, direction: ${pagingParams.direction}, count: ${pagingParams.count}`)
             if (isLoading) return;
             setIsLoading(true);
             const dto = {
-                'chatId': chatId,
-                'time': time,
-                'messageId': messageId,
-                'direction': direction,
-                'count': count
+                'chatId': pagingParams.chatId,
+                'time': pagingParams.time,
+                'messageId': pagingParams.messageId,
+                'direction': pagingParams.direction,
+                'count': pagingParams.count
             };
             const newMessages = await MessengerService.getMessages(dto);
             setMessages((prevMessages) => [...newMessages]);
@@ -60,7 +60,7 @@ export function FetchMessages(chatId: number | string, time?: Date | null, messa
             setHasMore(newMessages && newMessages.length > 0);
         };
         fetchMessages();
-    }, [chatId]); // once {time, messageId}
+    }, [pagingParams]); // once {time, messageId}
 
     return { messages, setMessages, loading: isLoading, hasMore, error };
 }

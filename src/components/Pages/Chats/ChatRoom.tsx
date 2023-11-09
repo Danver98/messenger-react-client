@@ -12,6 +12,17 @@ import { Button, TextareaAutosize } from "@mui/material";
 import { Client, IPublishParams } from '@stomp/stompjs';
 import { useStompClient } from "react-stomp-hooks";
 import { useBus, useListener } from 'react-bus';
+import MessengerService from "../../../services/MessengerService";
+
+export interface PagingParams {
+    chatId: number | string;
+    time?: Date | null;
+    messageId?: number | string | null;
+    direction?: number | null;
+    count?: number | null;
+    include?: boolean | null;
+}
+
 
 function MessageSender({ handleSubmit }: { handleSubmit: (event: any) => any }) {
     return (
@@ -44,21 +55,28 @@ function MessageSender({ handleSubmit }: { handleSubmit: (event: any) => any }) 
     )
 }
 
-export default function ChatRoom({ chat }: { chat: Chat}) {
-    const location = useLocation();
+export default function ChatRoom({ chat }: { chat: Chat }) {
     const authContext = useAuthContextData();
-    const [{ time, messageId }, setThreshold] = useState<{ time?: Date | null, messageId: number | string | null }>({ time: null, messageId: null });
+    const [pagingParams, setPagingParams] = useState<PagingParams>({ chatId: chat.id, direction: DIRECTION.PAST, count: 50 });
     const [lastElementRef, setLastElementRef] = useState(null);
     const observerRef = useRef<IntersectionObserver | null>(null);
     const stompClient = useStompClient();
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
+    const [error, setError] = useState();
+    const [intersected, setIntersected] = useState(false);
 
-    const {
-        messages,
-        setMessages,
-        loading,
-        hasMore,
-        error
-    } = FetchMessages(chat.id, time, messageId, DIRECTION.PAST, 50);
+    const fetchMessages = async (params: PagingParams, includeOld: boolean = true) => {
+        const dto = {
+            'chatId': params.chatId,
+            'time': params.time,
+            'messageId': params.messageId,
+            'direction': params.direction || DIRECTION.PAST,
+            'count': params.count || 50
+        };
+        return await MessengerService.getMessages(dto);
+    }
 
     const onMessageReceived = (data: any) => {
         const message = new Message(data.id, data.chatId, data.receiverId, data.type, data.data, data.author, data.time);
@@ -82,11 +100,11 @@ export default function ChatRoom({ chat }: { chat: Chat}) {
             surname: user.surname,
             avatar: user.avatar
         };
-        const receiverId = chat.private && chat.participants?
-                        chat.participants[0] === user.id ?
-                                        chat.participants[1]
-                                        : chat.participants[0]
-                        : null;
+        const receiverId = chat.private && chat.participants ?
+            chat.participants[0] === user.id ?
+                chat.participants[1]
+                : chat.participants[0]
+            : null;
         const message = new Message(
             null,
             chat.id,
@@ -105,7 +123,7 @@ export default function ChatRoom({ chat }: { chat: Chat}) {
         if (chat.private) {
             // TODO: in private chats we don'r get back our messages, so we've to insert it manually
             setMessages((prevMessages: Message[]) =>
-            [message, ...prevMessages])
+                [message, ...prevMessages])
         }
     }
 
@@ -113,14 +131,25 @@ export default function ChatRoom({ chat }: { chat: Chat}) {
     useListener(`/chats/${chat.id}/messages`, onMessageReceived);
 
     useEffect(() => {
+        if (!hasMore) return;
+        const f = async () => {
+            const newMessages = await fetchMessages(pagingParams);
+            if (pagingParams.include) {
+                setMessages((prevMessages) => [...prevMessages, ...newMessages]);
+            } else {
+                setMessages((prevMessages) => [...newMessages]);
+            }
+            setHasMore(newMessages && newMessages.length > 0);
+        };
+        f();
+    }, [pagingParams]);
+
+    useEffect(() => {
         observerRef.current = new IntersectionObserver(
             (entries) => {
                 if (entries[0].isIntersecting) {
                     console.log(`MESSAGE ELEMENT'S INTERSECTED`);
-                    if (messages) {
-                        const lastMsg = messages[messages.length - 1];
-                        setThreshold({time: lastMsg.time, messageId: lastMsg.id});
-                    }
+                    setIntersected((prev) => !prev);
                 }
             }
         );
@@ -143,8 +172,22 @@ export default function ChatRoom({ chat }: { chat: Chat}) {
 
     useEffect(() => {
         console.log(`Chat id changed!`)
-        //setMessages((prevMessages) => []);
+        setHasMore(true);
+        setPagingParams({ chatId: chat.id });
     }, [chat.id]);
+
+    useEffect(() => {
+        console.log(`Intersected!`);
+        if (!messages) return;
+        const lastMsg = messages[messages.length - 1];
+        if (!lastMsg) return;
+        setPagingParams({
+            chatId: chat.id,
+            time: lastMsg.time,
+            messageId: lastMsg.id,
+            include: true
+        })
+    }, [intersected]);
 
     return (
         <div className="chat-room-page">
@@ -154,7 +197,7 @@ export default function ChatRoom({ chat }: { chat: Chat}) {
                     <UserSelectionDialog chat={chat} />
                 </div>
                 <MessageList messages={messages} user={authContext.user} ref={setLastElementRef} />
-                <MessageSender handleSubmit={ sendMessage }/>
+                <MessageSender handleSubmit={sendMessage} />
             </div>
         </div>
     )
