@@ -63,11 +63,11 @@ export default function ChatRoom({ chat }: { chat: Chat }) {
     const stompClient = useStompClient();
     const [messages, setMessages] = useState<Message[]>([]);
     const [isLoading, setIsLoading] = useState(false);
-    const [hasMore, setHasMore] = useState(true);
+    const [hasMore, setHasMore] = useState(false);
     const [error, setError] = useState();
     const [intersected, setIntersected] = useState(false);
 
-    const fetchMessages = async (params: PagingParams, includeOld: boolean = true) => {
+    const fetchMessages = async (params: PagingParams) => {
         const dto = {
             'chatId': params.chatId,
             'time': params.time,

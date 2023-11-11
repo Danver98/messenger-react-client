@@ -70,7 +70,6 @@
     display: flex;
     align-items: center;
     margin-bottom: 4px;
-    background-color: #46dffa;
 }
 
 .chat-list-item__name {
@@ -87,7 +86,6 @@
     display: flex;
     min-width: 0;
     justify-content: space-between;
-    background-color: aquamarine;
 }
 
 .chat-list-item__lastMessage {
