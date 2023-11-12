@@ -2,36 +2,37 @@ import User from "./User";
 import Message from "./Message";
 
 interface Chat {
-    id: number | string;
-    name: string;
+    id?: number | string | null;
+    name?: string | null;
     private?: boolean;
     avatar?: string | null;
     time?: Date | null;
     participants?: (number | string)[];
-    messages?: Message[];
     lastMessage?: Message | null;
+    draft?: boolean | null;
 }
 
 class Chat implements Chat {
-    id: number | string;
-    name: string;
+    id?: number | string | null;
+    name?: string | null;
     private?: boolean;
     avatar?: string | null;
     time?: Date | null;
     participants?: (number | string)[];
-    messages?: Message[];
     lastMessage?: Message | null;
+    draft?: boolean | null;
 
-    constructor(id: number | string, name: string, _private?: boolean, avatar?: string | null,
-        time?: Date | null, participants?: (number | string)[], messages?: Message[], lastMessage?: Message | null) {
+    constructor(id?: number | string | null, name?: string | null, _private?: boolean, avatar?: string | null,
+        time?: Date | null, participants?: (number | string)[], lastMessage?: Message | null,
+        draft?: boolean | null) {
             this.id = id;
             this.name = name;
             this.private = _private;
             this.avatar = avatar;
             this.time = time instanceof Date ? time : time == null ? null : new Date(time); // from backend it comes often as timestamp
             this.participants = participants;
-            this.messages = messages;
             this.lastMessage = lastMessage;
+            this.draft = draft;
     }
 
     toString(): string {

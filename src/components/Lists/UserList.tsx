@@ -72,7 +72,7 @@ const UserList = forwardRef(({ users, checked, handleToggle, multiSelect }:
 });
 
 const UserSelection = ({ user, requestFilter, onResult }:
-    { user?: User | null, requestFilter?: object, onResult: (elements: any[]) => any }) => {
+    { user?: User | null, requestFilter?: object, onResult: (elements: any[], params?: any | null) => any }) => {
 
     const [open, setOpen] = useState(false);
     const [users, setUsers] = useState<User[]>([]);
@@ -116,7 +116,10 @@ const UserSelection = ({ user, requestFilter, onResult }:
             return;
         }
         const ids = checked.map((position) => users[position].id);
-        onResult(ids);
+        onResult(ids, {
+            chatName,
+            multiSelect
+        });
     }, [users, checked]);
 
     useEffect(() => {
@@ -239,21 +242,22 @@ const UserSelection = ({ user, requestFilter, onResult }:
                         />
                     </div>
                     <div className="participant-selection-popup__Confirmation">
-                        <div className="">
-                            <Button
-                                variant="contained"
-                                onClick={() => { }}
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                variant="contained"
-                                disabled={checked.length === 0}
-                                onClick={() => handleClickOk()}
-                            >
-                                Add
-                            </Button>
-                        </div>
+                        <Button
+                            variant="contained"
+                            onClick={() => { }}
+                            sx={{
+                                marginRight: '8px'
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="contained"
+                            disabled={checked.length === 0}
+                            onClick={() => handleClickOk()}
+                        >
+                            Ready
+                        </Button>
                     </div>
                 </div>
             </Dialog>

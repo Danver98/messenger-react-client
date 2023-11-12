@@ -12,9 +12,6 @@ interface ChatDataStorage {
 }
 
 interface IChatDataContext {
-  chatsData?: any;
-  setChatsData?: any;
-  setCurrentUserId?: any;
   setCurrentLoggedUser?: any;
 }
 
@@ -25,40 +22,49 @@ const ChatDataProvider = ({ children }: { children: any }) => {
   const bus = useBus();
   // Memoized value of the authentication context
   const { currentLoggedUser, getCurrentLoggedUser, setCurrentLoggedUser } = useCurrentLoggedUser();
-  const initialUserId = useMemo(() => {
-    const user = getCurrentLoggedUser();
-    return user ? user.id : null;
-  }, []);
-  const [currentUserId, setCurrentUserId] = useState(initialUserId);
-  const [chatsData, setChatsData] = useState<{ [id: string | number]: ChatDataStorage }>(
-    {
-    }
-  );
   const stompClient = useStompClient();
 
   function OnPublicMessageReceived(payload: any): void {
-    const data = JSON.parse(payload.body);
-    console.log(`Public payload received: ${data}`);
+    const dto = JSON.parse(payload.body);
+    const data = dto.message;
+    const chat = dto.chat;
+    console.log(`Public payload received: ${dto}`);
     const message = new Message(data.id, data.chatId, data.receiverId, data.type, data.data, data.author, data.time);
-    bus.emit(`/chats/${data.chatId}/messages`, message);
+    bus.emit(`/chats/${data.chatId}/messages`, {
+      message: message,
+      chat: chat
+    });
     // send message to chats component queue
-    bus.emit(`/components/chats/messages`, message);
+    bus.emit(`/components/chats/messages`, {
+      message: message,
+      chat: chat
+    });
   }
 
   function OnPrivateMessageReceived(payload: any): void {
-    const data = JSON.parse(payload.body);
-    console.log(`Private payload received: ${data}`);
-    if (data.type === MessageType.INVITATION) {
-      // User's invited to public dialog
+    const dto = JSON.parse(payload.body);
+    const data = dto.message;
+    const chat = dto.chat;
+    console.log(`Private payload received: ${dto}`);
+    if (data.type === MessageType.CREATION) {
       console.log(`User's got an invitation to the new chat!`)
-      stompClient?.subscribe(`/topic/chats/${data.chatId}/messages`, (payload: any) => {
-        OnPublicMessageReceived(payload);
-      });
+      if (chat != null && !data.chat.private) {
+        // If given public chat, subscribe
+        stompClient?.subscribe(`/topic/chats/${data.chatId}/messages`, (payload: any) => {
+          OnPublicMessageReceived(payload);
+        });
+      }
     }
     const message = new Message(data.id, data.chatId, data.receiverId, data.type, data.data, data.author, data.time);
-    bus.emit(`/chats/${data.chatId}/messages`, message);
+    bus.emit(`/chats/${data.chatId}/messages`, {
+      message: message,
+      chat: chat
+    });
     // send message to chats component queue
-    bus.emit(`/components/chats/messages`, message);
+    bus.emit(`/components/chats/messages`, {
+      message: message,
+      chat: chat
+    });
   }
 
   useEffect(() => {
@@ -75,6 +81,7 @@ const ChatDataProvider = ({ children }: { children: any }) => {
       const chats = await MessengerService.getChatsByUser(dto);
       console.log(`Subscribing to public chats...`);
       chats?.forEach((chat: Chat) => {
+        if (chat.private) return;
         stompClient?.subscribe(`/topic/chats/${chat.id}/messages`, (payload: any) => {
           OnPublicMessageReceived(payload);
         });
@@ -90,19 +97,7 @@ const ChatDataProvider = ({ children }: { children: any }) => {
 
   }, [currentLoggedUser, stompClient]);
 
-
-  useEffect(() => {
-    console.log(`chatsDataChanged: ${chatsData?.toString()}`);
-  }, [chatsData]);
-
-  useEffect(() => {
-    console.log(`currentUserIdChanged: ${currentUserId?.toString()}`);
-  }, [currentUserId]);
-
   const contextValue = {
-    chatsData,
-    setChatsData,
-    setCurrentUserId,
     setCurrentLoggedUser
   }
 

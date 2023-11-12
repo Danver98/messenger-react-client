@@ -12,3 +12,9 @@
     min-height: 0px;
     overflow-y: auto;
 }
+
+.participant-selection-popup__Confirmation {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 4px;
+}

@@ -15,7 +15,7 @@ import { useBus, useListener } from 'react-bus';
 import MessengerService from "../../../services/MessengerService";
 
 export interface PagingParams {
-    chatId: number | string;
+    chatId?: number | string | null;
     time?: Date | null;
     messageId?: number | string | null;
     direction?: number | null;
@@ -58,6 +58,7 @@ function MessageSender({ handleSubmit }: { handleSubmit: (event: any) => any }) 
 export default function ChatRoom({ chat }: { chat: Chat }) {
     const authContext = useAuthContextData();
     const [pagingParams, setPagingParams] = useState<PagingParams>({ chatId: chat.id, direction: DIRECTION.PAST, count: 50 });
+    const [draft, setDraft] = useState<boolean | null | undefined>(chat.draft);
     const [lastElementRef, setLastElementRef] = useState(null);
     const observerRef = useRef<IntersectionObserver | null>(null);
     const stompClient = useStompClient();
@@ -78,7 +79,8 @@ export default function ChatRoom({ chat }: { chat: Chat }) {
         return await MessengerService.getMessages(dto);
     }
 
-    const onMessageReceived = (data: any) => {
+    const onMessageReceived = (dto: any) => {
+        const data = dto.message;
         const message = new Message(data.id, data.chatId, data.receiverId, data.type, data.data, data.author, data.time);
         setMessages((prevMessages: Message[]) =>
             [message, ...prevMessages])
@@ -88,12 +90,11 @@ export default function ChatRoom({ chat }: { chat: Chat }) {
         const user = authContext.user as User;
         const formData = new FormData(event.currentTarget);
         event.preventDefault();
-        // Are id, time and so on created on the server side?
         const messageData = {
             type: MessageDataType.TEXT,
             data: formData.get('messageData')
         };
-        const type = MessageType.CHAT;
+        let type = MessageType.CHAT;
         const author: User = {
             id: user.id,
             name: user.name,
@@ -105,6 +106,14 @@ export default function ChatRoom({ chat }: { chat: Chat }) {
                 chat.participants[1]
                 : chat.participants[0]
             : null;
+        let destination = chat.private ? '/app/chats/private/send-message' : '/app/chats/public/send-message';
+        
+        if (draft && chat.private) {
+            type = MessageType.CREATION;
+            destination = '/app/chats/create-invite';
+            setDraft(false);
+        }
+
         const message = new Message(
             null,
             chat.id,
@@ -112,11 +121,12 @@ export default function ChatRoom({ chat }: { chat: Chat }) {
             type,
             messageData,
             author);
+
         const params: IPublishParams = {
-            destination: chat.private ? '/app/chats/private/send-message' : '/app/chats/public/send-message',
+            destination: destination,
             body: JSON.stringify({
                 message: message,
-
+                chat: chat
             })
         }
         stompClient?.publish(params);

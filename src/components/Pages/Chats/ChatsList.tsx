@@ -8,7 +8,7 @@ const ItemBody = ({ chat }: { chat: Chat }) => {
         <>
             <img
                 src={chat.avatar ? chat.avatar : ''}
-                alt={chat.name}
+                alt={chat.name ? chat.name : ''}
                 className="chat-list-item__image"
             />
             <div className="chat-list-item__info">

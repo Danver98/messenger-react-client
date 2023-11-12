@@ -12,7 +12,7 @@ export interface ChatRequestDTO {
 }
 
 export interface MessageRequestDTO {
-    chatId: number | string;
+    chatId?: number | string | null;
     time?: Date | null;
     messageId?: number | string | null;
     direction?: number | null;
@@ -42,9 +42,9 @@ class MessengerService {
         return Math.floor(Math.random() * (max - min + 1) + min)
     }
 
-    async getChat(id: string | number, userId?: string | number): Promise<Chat> {
+    async getChat(id?: string | number | null, userId?: string | number): Promise<Chat> {
         const data = await HttpService.getJson(MessengerService.CHAT_URL + `/${id}?userId=${userId}`);
-        return new Chat(data.id, data.name, data.private, data.avatar, data.time, data.participants, data.messages);
+        return new Chat(data.id, data.name, data.private, data.avatar, data.time, data.participants);
     }
 
     async getChatsByUser(dto: ChatRequestDTO): Promise<any> {
@@ -58,7 +58,6 @@ class MessengerService {
                 chat.avatar || (RANDOM_CHAT_AVATAR_URL + `${image}/${image}`),
                 chat.time,
                 chat.participants,
-                chat.messages,
                 chat.lastMessage == null ? null :
                 new Message(
                     chat.lastMessage.id, 
@@ -77,7 +76,7 @@ class MessengerService {
      * Creates new chat or returns existing
      */
     async createChat(chat: Chat): Promise<any> {
-        await HttpService.postJson(MessengerService.CHAT_URL, chat);
+        await HttpService.postJson(MessengerService.CHAT_URL + '/create', chat);
     }
 
     async deleteChat(id: string | number): Promise<void> {
@@ -136,7 +135,7 @@ class MessengerService {
         return HttpService.postJson(MessengerService.MESSAGE_URL + '/create', message);
     }
 
-    async addUsersToChat(chatId: number | string, users: (number | string)[]): Promise<any> {
+    async addUsersToChat(chatId?: number | string | null, users?: (number | string)[] | null): Promise<any> {
         const dto = {
             chatId: chatId,
             users: users
