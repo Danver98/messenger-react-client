@@ -57,6 +57,7 @@ function MessageSender({ handleSubmit }: { handleSubmit: (event: any) => any }) 
 
 export default function ChatRoom({ chat }: { chat: Chat }) {
     const authContext = useAuthContextData();
+    const bus = useBus();
     const [pagingParams, setPagingParams] = useState<PagingParams>({ chatId: chat.id, direction: DIRECTION.PAST, count: 50 });
     const [draft, setDraft] = useState<boolean | null | undefined>(chat.draft);
     const [lastElementRef, setLastElementRef] = useState(null);
@@ -107,7 +108,7 @@ export default function ChatRoom({ chat }: { chat: Chat }) {
                 : chat.participants[0]
             : null;
         let destination = chat.private ? '/app/chats/private/send-message' : '/app/chats/public/send-message';
-        
+
         if (draft && chat.private) {
             type = MessageType.CREATION;
             destination = '/app/chats/create-invite';
@@ -133,7 +134,12 @@ export default function ChatRoom({ chat }: { chat: Chat }) {
         if (chat.private) {
             // TODO: in private chats we don'r get back our messages, so we've to insert it manually
             setMessages((prevMessages: Message[]) =>
-                [message, ...prevMessages])
+                [message, ...prevMessages]);
+            // send message to chats component queue
+            bus.emit(`/components/chats/messages`, {
+                message: message,
+                chat: chat
+            });
         }
     }
 
