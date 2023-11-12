@@ -71,7 +71,7 @@ const UserList = ({ users, checked, handleToggle }: { users: User[], checked: nu
     )
 }
 
-const UserSelectionDialog = ({user, chat}: {user?: User | null, chat: Chat}) => {
+const UserSelectionDialog = ({ user, chat }: { user?: User | null, chat: Chat }) => {
     const [open, setOpen] = useState(false);
     const [users, setUsers] = useState<User[]>([]);
     const [search, setSearch] = useState("");
@@ -140,9 +140,12 @@ const UserSelectionDialog = ({user, chat}: {user?: User | null, chat: Chat}) => 
 
     return (
         <div className="">
-            <Button variant="outlined" onClick={handleClickOpen}>
-                Add participants
-            </Button>
+            {
+                !chat.private &&
+                <Button variant="outlined" onClick={handleClickOpen}>
+                    Add participants
+                </Button>
+            }
             <Dialog
                 open={open}
                 onClose={() => handeClickClose()}

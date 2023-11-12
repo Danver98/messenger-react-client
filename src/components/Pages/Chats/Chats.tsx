@@ -65,21 +65,44 @@ export default function Chats() {
 
     useListener(`/components/chats/messages`, (dto: any) => {
         console.log(`Received message for '/components/chats/messages' channel `);
-        const data = dto.message;
-        const message = new Message(data.id, data.chatId, data.receiverId, data.type, data.data, data.author, data.time);
-        const changedChat = chats.find((chat: Chat) => chat.id === data.chatId);
+        const msg = dto.message;
+        let chat = dto.chat;
+        const message = new Message(msg.id, msg.chatId, msg.receiverId, msg.type, msg.data, msg.author, msg.time);
+        if (msg.type === MessageType.CREATION && chat != null) {
+            const newChat = new Chat(
+                chat.id,
+                chat.name,
+                chat.private,
+                chat.avatar,
+                chat.time,
+                chat.participants,
+                message,
+                chat.draft
+            );
+            setChats((prevChats) => [newChat, ...prevChats]);
+            return;
+        }
+        const filteredChats: Chat[] = [];
+        chats.forEach((element: Chat) => {
+            if (element.id === msg.chatId) {
+                chat = new Chat(
+                    element.id,
+                    element.name,
+                    element.private,
+                    element.avatar,
+                    element.time,
+                    element.participants,
+                    message,
+                    element.draft);
+            } else {
+                filteredChats.push(element);
+            }
+        })
         // TODO: check if it is a first message from a cetaion user to private chat
-        if (changedChat == null) return;
-        const changedChatCopy = new Chat(
-            changedChat.id,
-            changedChat.name,
-            changedChat.private,
-            changedChat.avatar,
-            changedChat.time,
-            changedChat.participants,
-            message);
-        const filteredChats = chats.filter((chat: Chat) => chat.id !== data.chatId) || [];
-        setChats([changedChatCopy, ...filteredChats ]);
+        if (chat == null) {
+            return;
+        }
+        setChats([chat, ...filteredChats ]);
     });
 
     useEffect(() => {
@@ -116,18 +139,21 @@ export default function Chats() {
 
     const handleChatCreation = async(users: any[], params?: ChatCreationParams | null) => {
         // Create private chat if doesn't exist or redirect to it
-        const chat = new Chat(
+        const newChat = new Chat(
             null,
             params?.chatName || null,
             !params?.multiSelect , //private
             null,
             null,
             [authContext.user?.id, ...users], // participants
-            null
+            null,
+            true //draft
         );
-        const fetchedChat = await MessengerService.createChat(chat);
+        const fetchedChat = await MessengerService.createChat(newChat);
         if (params?.multiSelect) {
             const user = authContext.user as User;
+            fetchedChat.name = params?.chatName;
+            fetchedChat.participants = [authContext.user?.id, ...users];
             const messageData = {
                 type: MessageDataType.TEXT,
                 data: `${user.name + ' ' + user.surname} created chat "${params?.chatName}"`
@@ -142,7 +168,7 @@ export default function Chats() {
             const receiverId = null;
             const message = new Message(
                 null,
-                chat.id,
+                fetchedChat.id,
                 receiverId,
                 type,
                 messageData,
@@ -151,7 +177,7 @@ export default function Chats() {
                 destination: '/app/chats/create-invite',
                 body: JSON.stringify({
                     message: message,
-                    chat: chat,
+                    chat: fetchedChat,
                 })
             }
             stompClient?.publish(publishParams);

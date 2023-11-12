@@ -48,7 +48,7 @@ const ChatDataProvider = ({ children }: { children: any }) => {
     console.log(`Private payload received: ${dto}`);
     if (data.type === MessageType.CREATION) {
       console.log(`User's got an invitation to the new chat!`)
-      if (chat != null && !data.chat.private) {
+      if (chat != null && !chat.private) {
         // If given public chat, subscribe
         stompClient?.subscribe(`/topic/chats/${data.chatId}/messages`, (payload: any) => {
           OnPublicMessageReceived(payload);

@@ -89,7 +89,7 @@ const UserSelection = ({ user, requestFilter, onResult }:
     }, []);
 
     const handleToggle = (position: number) => {
-        if (multiSelect && checked.length > 1) return;
+        if (!multiSelect && checked.length > 1) return;
         const currentIndex = checked.indexOf(position);
         const newChecked = [...checked];
 
@@ -107,7 +107,9 @@ const UserSelection = ({ user, requestFilter, onResult }:
     }, []);
 
     const handeClickClose = useCallback(() => {
-        setOpen(false)
+        setChecked([]);
+        setMultiSelect(false);
+        setOpen(false);
     }, []);
 
     const handleClickOk = useCallback(() => {
@@ -116,6 +118,7 @@ const UserSelection = ({ user, requestFilter, onResult }:
             return;
         }
         const ids = checked.map((position) => users[position].id);
+        handeClickClose();
         onResult(ids, {
             chatName,
             multiSelect

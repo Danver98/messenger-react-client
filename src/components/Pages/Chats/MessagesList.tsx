@@ -60,9 +60,9 @@ const MessageListItem = forwardRef(({ message, user, isLast, clickHandler }:
 const MessageList = forwardRef(({ messages, user }: { messages?: Message[], user?: User | null }, ref?: any) => {
     if (messages == null || messages.length === 0) {
         return (
-            <>
+            <div className="chat-room-message-list-empty">
                 No messages!
-            </>
+            </div>
         )
     }
     const listItems = messages?.map((message, index) =>

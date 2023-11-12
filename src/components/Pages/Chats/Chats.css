@@ -174,6 +174,13 @@
     /* padding-left: 0px; */
 }
 
+.chat-room-message-list-empty {
+    display: flex;
+    flex-direction: column-reverse;
+    flex: 1 1 auto;
+    justify-content: center;
+}
+
 .message-list-item {
     display: flex;
     padding: 0px 16px 0px 0px;

@@ -76,7 +76,7 @@ class MessengerService {
      * Creates new chat or returns existing
      */
     async createChat(chat: Chat): Promise<any> {
-        await HttpService.postJson(MessengerService.CHAT_URL + '/create', chat);
+        return await HttpService.postJson(MessengerService.CHAT_URL + '/create', chat);
     }
 
     async deleteChat(id: string | number): Promise<void> {
