@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, forwardRef, } from "react";
+import { useEffect, useState, useRef, forwardRef, useCallback, } from "react";
 import { FetchChats } from "./FetchData";
 import "./Chats.css"
 import ChatsList from "./ChatsList";
@@ -6,11 +6,13 @@ import { DIRECTION } from "../../../util/Constants";
 import { useAuthContextData } from "../../../middleware/AuthProvider";
 import ChatRoom from "./ChatRoom";
 import Chat from "../../../models/Chat";
-import { InputAdornment, TextField } from "@mui/material";
+import { Button, InputAdornment, TextField } from "@mui/material";
 import SearchIcon from '@mui/icons-material/Search';
 import { useBus, useListener } from 'react-bus';
 import Message from "../../../models/Message";
 import MessengerService from "../../../services/MessengerService";
+import { purple, blue } from '@mui/material/colors';
+import UserSelection from "../../Lists/UserList";
 
 const SearchBar = ({ onChange }: { onChange: (value: string) => any }) => {
     return (
@@ -103,6 +105,21 @@ export default function Chats() {
         setActveChat(fetchedChat);
     }
 
+    const handleUserSelected = async(users: any[]) => {
+        const userId = users[0];
+        // Create private chat if doesn't exist or redirect to it
+        const chat = new Chat(
+            -1,
+            "",
+            true, //private
+            null,
+            null,
+            [authContext.user?.id, userId] // participants
+        );
+        const fetchedChat = await MessengerService.createChat(chat);
+        setActveChat(fetchedChat);
+    }
+
     return (
         <>
             <div className="chat-page">
@@ -113,6 +130,7 @@ export default function Chats() {
                             onChange={() => {}}
                         />
                         <ChatsList chats={chats} ref={setLastElementRef} itemClickHandler={handleClick} />
+                        <UserSelection user={authContext.user} onResult={(elements: any[]) => {}}/>
                     </div>
                     <div className="chat-dashboard__right">
                         {

@@ -73,7 +73,10 @@ class MessengerService {
         )
     }
 
-    async createChat(chat: Chat): Promise<void> {
+    /**
+     * Creates new chat or returns existing
+     */
+    async createChat(chat: Chat): Promise<any> {
         await HttpService.postJson(MessengerService.CHAT_URL, chat);
     }
 

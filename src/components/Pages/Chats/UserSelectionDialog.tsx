@@ -71,7 +71,7 @@ const UserList = ({ users, checked, handleToggle }: { users: User[], checked: nu
     )
 }
 
-const UserSelectionDialog = ({chat}: {chat: Chat}) => {
+const UserSelectionDialog = ({user, chat}: {user?: User | null, chat: Chat}) => {
     const [open, setOpen] = useState(false);
     const [users, setUsers] = useState<User[]>([]);
     const [search, setSearch] = useState("");
@@ -93,7 +93,7 @@ const UserSelectionDialog = ({chat}: {chat: Chat}) => {
         setOpen(true);
     }, []);
 
-    const handeCLickClose = useCallback(() => {
+    const handeClickClose = useCallback(() => {
         setOpen(false)
     }, []);
 
@@ -105,8 +105,6 @@ const UserSelectionDialog = ({chat}: {chat: Chat}) => {
     const abortController = useMemo(() => {
         return new AbortController();
     }, []);
-
-
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -147,7 +145,7 @@ const UserSelectionDialog = ({chat}: {chat: Chat}) => {
             </Button>
             <Dialog
                 open={open}
-                onClose={() => handeCLickClose()}
+                onClose={() => handeClickClose()}
             >
                 <div className="participant-selection-popup">
                     <div className="participant-selection-popup-content-wrapper">

@@ -1,10 +1,14 @@
 import HttpService from "./HttpService";
 import User from "../models/User";
+import { DIRECTION } from "../util/Constants";
 
 export interface UserRequestDTO {
     filter?: {
         search?: string;
-    }
+    },
+    id?: string | number | null,
+    surname?: string | null,
+    direction?: number | null;
 }
 
 class UserService {
