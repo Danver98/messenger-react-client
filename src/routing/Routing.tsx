@@ -12,29 +12,30 @@ import Login from "../components/Pages/Login/Login";
 import Home from "../components/Pages/Home";
 import Profile from "../components/Pages/Settings/Profile";
 import Settings from "../components/Pages/Settings/Settings";
+import { SecuredPages } from "../util/Constants";
 
 const Routing = () => {
     const { getAccessToken } = useAuthContextData();
 
     const authenticatedRoutes = [
         {
-            path: '/secured',
+            path: SecuredPages.ROOT,
             element: <ProtectedRoute />,
             children: [
                 {
-                    path: '/secured/home',
+                    path: SecuredPages.HOME_PAGE,
                     element: <Home />
                 },
                 {
-                    path: '/secured/chats',
+                    path: SecuredPages.CHATS_PAGE,
                     element: <Chats />
                 },
                 {
-                    path: '/secured/profile',
+                    path: SecuredPages.PROFILE_PAGE,
                     element: <Profile />
                 },
                 {
-                    path: '/secured/settings',
+                    path: SecuredPages.SETTINGS,
                     element: <Settings />
                 }
             ]

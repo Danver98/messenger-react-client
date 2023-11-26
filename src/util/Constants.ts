@@ -34,12 +34,13 @@ export class Pages {
 export class SecuredPages {
     /**
      * Must be in sync with routing structure
-     */
+    */
 
-    static readonly CHATS_PAGE = '/secured/chats';
-    static readonly HOME_PAGE = '/secured/home';
+    static readonly ROOT = '/secured';
+    static readonly CHATS_PAGE = SecuredPages.ROOT + '/chats';
+    static readonly HOME_PAGE = SecuredPages.ROOT + '/home';
     // Chat dialog itself
-    static readonly CHAT_ROOM_PAGE = '/secured/chats/room';
-    static readonly PROFILE_PAGE = '/secured/profile';
-    static readonly SETTINGS = '/secured/settings';
+    static readonly CHAT_ROOM_PAGE = SecuredPages.ROOT + '/chats/room';
+    static readonly PROFILE_PAGE = SecuredPages.ROOT + '/profile';
+    static readonly SETTINGS = SecuredPages.ROOT + '/settings';
 };
