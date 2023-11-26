@@ -247,7 +247,7 @@ const UserSelection = ({ user, requestFilter, onResult }:
                     <div className="participant-selection-popup__Confirmation">
                         <Button
                             variant="contained"
-                            onClick={() => { }}
+                            onClick={() => { handeClickClose()}}
                             sx={{
                                 marginRight: '8px'
                             }}

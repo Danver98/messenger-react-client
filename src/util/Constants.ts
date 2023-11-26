@@ -40,4 +40,6 @@ export class SecuredPages {
     static readonly HOME_PAGE = '/secured/home';
     // Chat dialog itself
     static readonly CHAT_ROOM_PAGE = '/secured/chats/room';
+    static readonly PROFILE_PAGE = '/secured/profile';
+    static readonly SETTINGS = '/secured/settings';
 };
