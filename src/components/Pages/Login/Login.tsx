@@ -3,7 +3,6 @@ import { useChatData } from "../../../middleware/stomp/StompChatDataProvider";
 import User from "../../../models/User";
 import AuthService from "../../../services/AuthService"
 import { SecuredPages } from "../../../util/Constants";
-import { useCurrentLoggedUser } from "../../hooks/useToken";
 import "./Login.css";
 import { useNavigate } from "react-router-dom";
 

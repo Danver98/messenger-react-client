@@ -56,6 +56,18 @@ class HttpService {
         return info;
     }
 
+    protected _prepareRequestFile(method = 'GET', data?: FormData | null, headers?: HeadersInit, signal?: AbortSignal | null): RequestInit {
+
+        const info: RequestInit = {
+            method: method,
+            headers: this._getHeaders(headers),
+            credentials: 'include',
+            body: data,
+            signal: signal
+        }
+        return info;
+    }
+
     protected async _fetch(input: URL | RequestInfo, init?: RequestInit | undefined): Promise<any> {
         try {
             const response = await fetch(input, init);
@@ -64,7 +76,7 @@ class HttpService {
             }
             this._afterResponse(response);
             //this._checkType(response, "application/json");
-            return response.body;
+            return response.text();
             // process your data further
         } catch (error) {
             alert(`${error}`);
@@ -155,6 +167,19 @@ class HttpService {
         const info: RequestInit = this._prepareRequest('DELETE', data, {}, signal);
         return this._fetch(ServiceUrl.BACKEND_SERVICE_BASE_URL + url, info);
     }
+
+    // =============================================================================================
+    async postFile(url: string = '', data: any = {}, signal?: AbortSignal | null): Promise<any> {
+        const headers = {
+        };
+        const formData = new FormData();
+        for (let key in data) {
+            formData.append(key, data[key]);
+        }
+        const info: RequestInit = this._prepareRequestFile('POST', formData, headers, signal);
+        return this._fetch(ServiceUrl.BACKEND_SERVICE_BASE_URL + url, info);
+    }
+
 }
 
 export default HttpService.Instance;

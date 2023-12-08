@@ -8,11 +8,13 @@ import Message, { MessageDataType, MessageType } from "../../../models/Message";
 import User from "../../../models/User";
 import UserSelectionDialog from "./UserSelectionDialog";
 import { useAuthContextData } from "../../../middleware/AuthProvider";
-import { Button, TextareaAutosize } from "@mui/material";
+import AttachFileIcon from '@mui/icons-material/AttachFile';
+import { Button, IconButton, TextareaAutosize } from "@mui/material";
 import { Client, IPublishParams } from '@stomp/stompjs';
 import { useStompClient } from "react-stomp-hooks";
 import { useBus, useListener } from 'react-bus';
 import MessengerService from "../../../services/MessengerService";
+import { useFilePicker } from "use-file-picker";
 
 export interface PagingParams {
     chatId?: number | string | null;
@@ -25,6 +27,7 @@ export interface PagingParams {
 
 
 function MessageSender({ handleSubmit }: { handleSubmit: (event: any) => any }) {
+    const fileUpload = useRef<any>();
     return (
         <div className="chat-room-message-sender">
             <form
@@ -33,6 +36,18 @@ function MessageSender({ handleSubmit }: { handleSubmit: (event: any) => any }) 
                 className="chat-room-message-sender__FormContainer"
             >
                 <div className="chat-room-message-sender__Form">
+                    <IconButton
+                        color="primary"
+                        onClick={() => {fileUpload.current.click()}}
+                    >
+                        <AttachFileIcon />
+                    </IconButton>
+                    <input
+                        name="fileData"
+                        type="file"
+                        hidden
+                        ref={(element) => {fileUpload.current = element}}
+                    />
                     <TextareaAutosize
                         aria-label="minimum height"
                         name="messageData"
@@ -85,7 +100,13 @@ export default function ChatRoom({ chat }: { chat: Chat }) {
         const message = new Message(data.id, data.chatId, data.receiverId, data.type, data.data, data.author, data.time);
         setMessages((prevMessages: Message[]) =>
             [message, ...prevMessages])
-    }
+    };
+
+    const sendAttachment = async (file: File, chatId?: string | number | null, 
+        userId?: string | number | null) => {
+            const url = await MessengerService.sendAttachment(file, chatId, userId);
+            return url;
+    };
 
     const sendMessage = async (event: any) => {
         const user = authContext.user as User;

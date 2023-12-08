@@ -2,6 +2,7 @@ import HttpService from "./HttpService";
 import Chat from "../models/Chat";
 import Message, { MessageDataType } from "../models/Message";
 import { RANDOM_CHAT_AVATAR_URL } from "../util/Constants";
+import { ID } from "../util/Types";
 
 export interface ChatRequestDTO {
     userId: number | string | null;
@@ -141,6 +142,15 @@ class MessengerService {
             users: users
         }
         return HttpService.postJson(MessengerService.CHAT_URL + `/add`, dto);
+    }
+
+    async sendAttachment(attachment: File, chatId?: ID, userId?: ID): Promise<any> {
+        const dto = {
+            file: attachment,
+            chatId,
+            userId
+        }
+        return HttpService.postFile(MessengerService.CHAT_URL + '/attachment', dto);
     }
 }
 export default MessengerService.Instance;
