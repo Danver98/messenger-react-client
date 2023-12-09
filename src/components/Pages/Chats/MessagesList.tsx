@@ -22,7 +22,14 @@ const MessageBody = ({ message, user }: { message: Message, user?: User | null})
                     {message.author?.name + ' ' + message.author?.surname}
                 </div>
                 <p className="message-list-item__messageData">
-                    {message.data?.data}
+                    {(message.data?.type == MessageDataType.TEXT ||
+                        message.data?.type == MessageDataType.DEFAULT) && message.data?.data}
+                    {message.data?.type == MessageDataType.IMAGE &&
+                        <img
+                            src={message.data?.data}
+                            className="message-list-item_image"
+                        />
+                    }
                 </p>
                 <div className="message-list-item__messageBlock-date">
                     <div>{message.time?.toLocaleDateString("ru") + ' | ' + message.time?.toLocaleTimeString("ru")}</div>

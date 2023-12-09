@@ -3,6 +3,7 @@ import ResponseInterceptor from "../middleware/ResponseInterceptor";
 import { Headers } from "../util/Constants";
 import { getToken } from "../components/hooks/useToken";
 import { ACCESS_TOKEN, ServiceUrl } from "../util/Constants";
+import { showNotification } from "../util/Notifications";
 
 class HttpService {
 
@@ -79,7 +80,7 @@ class HttpService {
             return response.text();
             // process your data further
         } catch (error) {
-            alert(`${error}`);
+            showNotification(`${error}`, 'danger');
             return null;
         }
     }
@@ -96,7 +97,7 @@ class HttpService {
             return await response.json();
             // process your data further
         } catch (error) {
-            alert(`${error}`);
+            showNotification(`${error}`, 'danger');
             return null;
         }
     }

@@ -66,6 +66,9 @@ class Message implements Message {
         if (this.data == null || this.data.data == null) {
             return '';
         }
+        if (this.data.type == MessageDataType.IMAGE) {
+            return '[Image]';
+        }
         return this.data.data;
     }
 

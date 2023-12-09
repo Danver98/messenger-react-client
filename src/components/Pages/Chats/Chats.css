@@ -237,6 +237,11 @@
     margin: 0px;
 }
 
+.message-list-item_image {
+    height: 250px;
+    width: 250px;
+}
+
 .chat-room-message-sender {
     display: flex;
     width: 100%;
@@ -255,6 +260,12 @@
     flex: 1 1 auto;
     justify-content: center;
     align-items: center;
+}
+
+.chat-room-message-sender__TextArea-container {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
 }
 
 .chat-room-message-sender__TextArea {

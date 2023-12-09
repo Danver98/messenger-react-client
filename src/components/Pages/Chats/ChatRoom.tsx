@@ -4,12 +4,13 @@ import MessageList from "./MessagesList";
 import { FetchMessages } from "./FetchData";
 import { DIRECTION, ServiceUrl } from "../../../util/Constants";
 import Chat from "../../../models/Chat";
-import Message, { MessageDataType, MessageType } from "../../../models/Message";
+import Message, { MessageData, MessageDataType, MessageType } from "../../../models/Message";
 import User from "../../../models/User";
 import UserSelectionDialog from "./UserSelectionDialog";
 import { useAuthContextData } from "../../../middleware/AuthProvider";
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import { Button, IconButton, TextareaAutosize } from "@mui/material";
+import ClearIcon from '@mui/icons-material/Clear';
 import { Client, IPublishParams } from '@stomp/stompjs';
 import { useStompClient } from "react-stomp-hooks";
 import { useBus, useListener } from 'react-bus';
@@ -28,6 +29,16 @@ export interface PagingParams {
 
 function MessageSender({ handleSubmit }: { handleSubmit: (event: any) => any }) {
     const fileUpload = useRef<any>();
+    const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
+    
+    const fileInputChanged = (event: any) => {
+        setSelectedFiles((prev) => [...prev, event.target.value])
+    }
+
+    const clearFileList = (event: any) => {
+        fileUpload.current.value = null;
+        setSelectedFiles([]);
+    }
     return (
         <div className="chat-room-message-sender">
             <form
@@ -38,7 +49,7 @@ function MessageSender({ handleSubmit }: { handleSubmit: (event: any) => any }) 
                 <div className="chat-room-message-sender__Form">
                     <IconButton
                         color="primary"
-                        onClick={() => {fileUpload.current.click()}}
+                        onClick={() => { fileUpload.current.click() }}
                     >
                         <AttachFileIcon />
                     </IconButton>
@@ -46,16 +57,33 @@ function MessageSender({ handleSubmit }: { handleSubmit: (event: any) => any }) 
                         name="fileData"
                         type="file"
                         hidden
-                        ref={(element) => {fileUpload.current = element}}
+                        ref={fileUpload}
+                        onChange={(event) => { fileInputChanged(event) }}
                     />
-                    <TextareaAutosize
-                        aria-label="minimum height"
-                        name="messageData"
-                        minRows={4}
-                        maxRows={4}
-                        placeholder="Enter your message"
-                        className="chat-room-message-sender__TextArea"
-                    />
+                    <div className="chat-room-message-sender__TextArea-container">
+                        <TextareaAutosize
+                            aria-label="minimum height"
+                            name="messageData"
+                            minRows={4}
+                            maxRows={4}
+                            placeholder="Enter your message"
+                            className="chat-room-message-sender__TextArea"
+                        />
+                        {
+                            selectedFiles && selectedFiles.length > 0 &&
+                            <div>
+                                {
+                                    selectedFiles.join(', ')
+                                }
+                                <IconButton
+                                    onClick={clearFileList}
+                                >
+                                    <ClearIcon />
+                                </IconButton>
+
+                            </div>
+                        }
+                    </div>
                     <Button
                         variant="contained"
                         type="submit"
@@ -102,20 +130,35 @@ export default function ChatRoom({ chat }: { chat: Chat }) {
             [message, ...prevMessages])
     };
 
-    const sendAttachment = async (file: File, chatId?: string | number | null, 
-        userId?: string | number | null) => {
-            const url = await MessengerService.sendAttachment(file, chatId, userId);
-            return url;
-    };
-
     const sendMessage = async (event: any) => {
         const user = authContext.user as User;
         const formData = new FormData(event.currentTarget);
         event.preventDefault();
-        const messageData = {
+        const file = formData.get('fileData')
+        let messageData = {
             type: MessageDataType.TEXT,
             data: formData.get('messageData')
         };
+
+        if (file instanceof File && file.name) {
+            const url = await MessengerService.sendAttachment(file as File, chat.id, user.id);
+            let _type = MessageDataType.FILE;
+            if (file.name.endsWith('.jpeg') || file.name.endsWith('.jpg') || file.name.endsWith('.png') ||
+                file.name.endsWith('.gif')) {
+                    _type = MessageDataType.IMAGE;
+                }
+            messageData = {
+                type: _type,
+                data: url
+            }
+            _sendMessage(messageData);
+        } else {
+            _sendMessage(messageData);
+        }
+    }
+
+    const _sendMessage = async (messageData: MessageData) => {
+        const user = authContext.user as User;
         let type = MessageType.CHAT;
         const author: User = {
             id: user.id,

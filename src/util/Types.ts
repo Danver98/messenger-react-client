@@ -1,2 +1,1 @@
-export type ID = string | number | null | undefined;
-type d = keyof ID;
+export declare type ID = string | number | null | undefined;
