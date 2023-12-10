@@ -16,6 +16,7 @@ import { useStompClient } from "react-stomp-hooks";
 import { useBus, useListener } from 'react-bus';
 import MessengerService from "../../../services/MessengerService";
 import { useFilePicker } from "use-file-picker";
+import { getType } from "../../../util/FileUtils";
 
 export interface PagingParams {
     chatId?: number | string | null;
@@ -39,11 +40,17 @@ function MessageSender({ handleSubmit }: { handleSubmit: (event: any) => any }) 
         fileUpload.current.value = null;
         setSelectedFiles([]);
     }
+
+    const onSubmit = async (event: any) => {
+        await handleSubmit(event);
+        clearFileList(event);
+    }
+
     return (
         <div className="chat-room-message-sender">
             <form
                 method="POST"
-                onSubmit={handleSubmit}
+                onSubmit={onSubmit}
                 className="chat-room-message-sender__FormContainer"
             >
                 <div className="chat-room-message-sender__Form">
@@ -142,11 +149,10 @@ export default function ChatRoom({ chat }: { chat: Chat }) {
 
         if (file instanceof File && file.name) {
             const url = await MessengerService.sendAttachment(file as File, chat.id, user.id);
-            let _type = MessageDataType.FILE;
-            if (file.name.endsWith('.jpeg') || file.name.endsWith('.jpg') || file.name.endsWith('.png') ||
-                file.name.endsWith('.gif')) {
-                    _type = MessageDataType.IMAGE;
-                }
+            if (url == null) {
+                return alert(`Failed to upload "${file.name}" resource to the server`);
+            }
+            let _type = getType(file);
             messageData = {
                 type: _type,
                 data: url

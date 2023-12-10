@@ -240,6 +240,17 @@
 .message-list-item_image {
     height: 250px;
     width: 250px;
+    margin-top: 4px;
+}
+
+.message-list-item_audio {
+    margin-top: 8px;
+}
+
+.message-list-item_video {
+    height: 250px;
+    width: 250px;
+    margin-top: 4px;
 }
 
 .chat-room-message-sender {

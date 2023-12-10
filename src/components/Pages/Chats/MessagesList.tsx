@@ -4,7 +4,7 @@ import User from "../../../models/User";
 import "./Chats.css";
 
 
-const MessageBody = ({ message, user }: { message: Message, user?: User | null}) => {
+const MessageBody = ({ message, user }: { message: Message, user?: User | null }) => {
     // Currently assuming we only have text messages;
     const alignment = message.author?.id === user?.id ? 'right' : 'left';
     return (
@@ -22,12 +22,33 @@ const MessageBody = ({ message, user }: { message: Message, user?: User | null})
                     {message.author?.name + ' ' + message.author?.surname}
                 </div>
                 <p className="message-list-item__messageData">
-                    {(message.data?.type == MessageDataType.TEXT ||
-                        message.data?.type == MessageDataType.DEFAULT) && message.data?.data}
-                    {message.data?.type == MessageDataType.IMAGE &&
+                    {
+                        (message.data?.type === MessageDataType.TEXT ||
+                            message.data?.type === MessageDataType.DEFAULT) && message.data?.data
+                    }
+                    {
+                        message.data?.type == MessageDataType.IMAGE &&
                         <img
                             src={message.data?.data}
                             className="message-list-item_image"
+                        />
+                    }
+                    {
+                        message.data?.type == MessageDataType.AUDIO &&
+                        <audio
+                            src={message.data?.data}
+                            preload="metadata"
+                            controls
+                            className="message-list-item_audio"
+                        />
+                    }
+                    {
+                        message.data?.type == MessageDataType.VIDEO &&
+                        <video
+                            src={message.data?.data}
+                            preload="metadata"
+                            controls
+                            className="message-list-item_video"
                         />
                     }
                 </p>

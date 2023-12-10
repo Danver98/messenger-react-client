@@ -6,6 +6,7 @@ export enum MessageDataType {
     IMAGE,
     VIDEO,
     FILE,
+    AUDIO,
 }
 
 export interface MessageData {
@@ -67,7 +68,16 @@ class Message implements Message {
             return '';
         }
         if (this.data.type == MessageDataType.IMAGE) {
-            return '[Image]';
+            return '[IMAGE]';
+        }
+        if (this.data.type == MessageDataType.AUDIO) {
+            return '[AUDIO]';
+        }
+        if (this.data.type == MessageDataType.VIDEO) {
+            return '[VIDEO]';
+        }
+        if (this.data.type == MessageDataType.FILE) {
+            return '[FILE]';
         }
         return this.data.data;
     }
