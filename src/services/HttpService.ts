@@ -21,12 +21,12 @@ class HttpService {
     }
 
     protected _getHeaders(headers?: HeadersInit): HeadersInit {
-        const customHeaders: { [key: string]: any } ={
+        const customHeaders: { [key: string]: any } = {
             ...this._defaultHeaders,
         }
         const accessToken = getToken(ACCESS_TOKEN);
         if (accessToken) {
-            customHeaders[Headers.AUTHORIZATION] = accessToken;
+            customHeaders[Headers.AUTHORIZATION] = `Bearer ${accessToken}`;
         }
         if (headers) {
             return {
