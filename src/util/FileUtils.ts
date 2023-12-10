@@ -19,7 +19,7 @@ const VIDEO_EXTENSIONS = [
 function getExtension(file: File | null): string | null {
     if (file == null) return null;
     const index = file.name.lastIndexOf('.');
-    if (index == -1 || index == file.name.length - 1) {
+    if (index === -1 || index === file.name.length - 1) {
         return null;
     };
     return file.name.substring(index + 1).toLowerCase();
