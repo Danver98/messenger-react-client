@@ -10,12 +10,12 @@ import UserSelectionDialog from "./UserSelectionDialog";
 import { useAuthContextData } from "../../../middleware/AuthProvider";
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import { Button, IconButton, TextareaAutosize } from "@mui/material";
+import CircularProgress from '@mui/material/CircularProgress';
 import ClearIcon from '@mui/icons-material/Clear';
-import { Client, IPublishParams } from '@stomp/stompjs';
+import { IPublishParams } from '@stomp/stompjs';
 import { useStompClient } from "react-stomp-hooks";
 import { useBus, useListener } from 'react-bus';
 import MessengerService from "../../../services/MessengerService";
-import { useFilePicker } from "use-file-picker";
 import { getType } from "../../../util/FileUtils";
 
 export interface PagingParams {
@@ -148,7 +148,9 @@ export default function ChatRoom({ chat }: { chat: Chat }) {
         };
 
         if (file instanceof File && file.name) {
+            setIsLoading(true);
             const url = await MessengerService.sendAttachment(file as File, chat.id, user.id);
+            setIsLoading(false);
             if (url == null) {
                 return alert(`Failed to upload "${file.name}" resource to the server`);
             }
@@ -283,6 +285,9 @@ export default function ChatRoom({ chat }: { chat: Chat }) {
                     <UserSelectionDialog chat={chat} />
                 </div>
                 <MessageList messages={messages} user={authContext.user} ref={setLastElementRef} />
+                {
+                    isLoading && <CircularProgress />
+                }
                 <MessageSender handleSubmit={sendMessage} />
             </div>
         </div>

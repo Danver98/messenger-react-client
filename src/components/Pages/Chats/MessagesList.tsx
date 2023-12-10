@@ -1,11 +1,11 @@
 import { forwardRef, } from "react";
 import Message, { MessageDataType } from "../../../models/Message";
+import FilePresentIcon from '@mui/icons-material/FilePresent';
 import User from "../../../models/User";
 import "./Chats.css";
 
 
 const MessageBody = ({ message, user }: { message: Message, user?: User | null }) => {
-    // Currently assuming we only have text messages;
     const alignment = message.author?.id === user?.id ? 'right' : 'left';
     return (
         <div className={`message-list-item_container align-items-${alignment}`}>
@@ -27,14 +27,14 @@ const MessageBody = ({ message, user }: { message: Message, user?: User | null }
                             message.data?.type === MessageDataType.DEFAULT) && message.data?.data
                     }
                     {
-                        message.data?.type == MessageDataType.IMAGE &&
+                        message.data?.type == MessageDataType.IMAGE && message.data?.data &&
                         <img
                             src={message.data?.data}
                             className="message-list-item_image"
                         />
                     }
                     {
-                        message.data?.type == MessageDataType.AUDIO &&
+                        message.data?.type == MessageDataType.AUDIO && message.data?.data &&
                         <audio
                             src={message.data?.data}
                             preload="metadata"
@@ -43,13 +43,31 @@ const MessageBody = ({ message, user }: { message: Message, user?: User | null }
                         />
                     }
                     {
-                        message.data?.type == MessageDataType.VIDEO &&
+                        message.data?.type == MessageDataType.VIDEO && message.data?.data &&
                         <video
                             src={message.data?.data}
                             preload="metadata"
                             controls
                             className="message-list-item_video"
                         />
+                    }
+                    {
+                        message.data?.type == MessageDataType.FILE && message.data?.data &&
+                        <div
+                            className="message-list-item_file"
+                        >
+                            <a
+                                href={message.data?.data}
+                                download
+                            >
+                                <FilePresentIcon
+                                    fontSize="large"
+                                    color="primary"
+                                />
+                            </a>
+                            <span>{ (message.data?.data as string)
+                            .substring((message.data?.data as string).lastIndexOf('/') + 1)}</span>
+                        </div>
                     }
                 </p>
                 <div className="message-list-item__messageBlock-date">
