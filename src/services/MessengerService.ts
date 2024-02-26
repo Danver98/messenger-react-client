@@ -88,7 +88,7 @@ class MessengerService {
     }
 
     async getMessages(dto: MessageRequestDTO): Promise<Message[]> {
-        const messages: Message[] = await HttpService.postJson(MessengerService.CHAT_URL + '/messages', dto);
+        const messages: Message[] = await HttpService.postJson(MessengerService.CHAT_URL + `/${dto.chatId}` + '/messages', dto);
         return messages.map((message: Message, index) => {
             return new Message(
                 message.id,
@@ -132,7 +132,7 @@ class MessengerService {
     }
 
     async sendMessage(message: Message): Promise<any> {
-        return HttpService.postJson(MessengerService.CHAT_URL + '/messages/create', message);
+        return HttpService.postJson(MessengerService.CHAT_URL + `/${message.chatId}` + '/messages/create', message);
     }
 
     async addUsersToChat(chatId?: number | string | null, users?: (number | string)[] | null): Promise<any> {
