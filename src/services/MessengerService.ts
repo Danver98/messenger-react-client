@@ -1,7 +1,7 @@
 import HttpService from "./HttpService";
 import Chat from "../models/Chat";
 import Message, { MessageDataType } from "../models/Message";
-import { RANDOM_CHAT_AVATAR_URL } from "../util/Constants";
+import { Headers, RANDOM_CHAT_AVATAR_URL } from "../util/Constants";
 import { ID } from "../util/Types";
 
 export interface ChatRequestDTO {
@@ -38,17 +38,31 @@ class MessengerService {
         return this._instance || (this._instance = new this());
     }
 
+    /**
+     * 
+     * @param id 
+     * @returns header for server authorization purposes.
+     * It should be attached to EVERY authorized request
+     */
+    private getRequestResourceObjectHeader(id: ID): HeadersInit {
+        return {
+            [Headers.X_REQUEST_RESOURCE_OBJECT]: id
+        } as HeadersInit;
+    }
+
     private randomIntFromInterval(min: number, max: number) { // min and max included 
-        return Math.floor(Math.random() * (max - min + 1) + min)
+        return Math.floor(Math.random() * (max - min + 1) + min);
     }
 
     async getChat(id?: string | number | null, userId?: string | number): Promise<Chat> {
-        const data = await HttpService.getJson(MessengerService.CHAT_URL + `/${id}?userId=${userId}`);
+        const headers: HeadersInit = this.getRequestResourceObjectHeader(id);
+        const data = await HttpService.getJson(MessengerService.CHAT_URL + `/${id}?userId=${userId}`, undefined, headers);
         return new Chat(data.id, data.name, data.private, data.avatar, data.time, data.participants);
     }
 
     async getChatsByUser(dto: ChatRequestDTO): Promise<any> {
-        const rawChats: Chat[] = await HttpService.postJson(MessengerService.CHAT_URL + '/', dto);
+        const headers: HeadersInit = this.getRequestResourceObjectHeader(dto.chatId);
+        const rawChats: Chat[] = await HttpService.postJson(MessengerService.CHAT_URL + '/', dto, headers);
         return rawChats?.map((chat, index) => {
             const image = this.randomIntFromInterval(80, 120);
             return new Chat(
@@ -76,19 +90,23 @@ class MessengerService {
      * Creates new chat or returns existing
      */
     async createChat(chat: Chat): Promise<any> {
-        return await HttpService.postJson(MessengerService.CHAT_URL + '/create', chat);
+        const headers: HeadersInit = this.getRequestResourceObjectHeader(null);
+        return await HttpService.postJson(MessengerService.CHAT_URL + '/create', chat, headers);
     }
 
     async deleteChat(id: string | number): Promise<void> {
-        await HttpService.delete(MessengerService.CHAT_URL + `/${id}`);
+        const headers: HeadersInit = this.getRequestResourceObjectHeader(id);
+        await HttpService.delete(MessengerService.CHAT_URL + `/${id}`, undefined, headers);
     }
 
     async updateChat(chat: Chat): Promise<void> {
-        await HttpService.putJson(MessengerService.CHAT_URL + `/${chat.id}`, chat);
+        const headers: HeadersInit = this.getRequestResourceObjectHeader(chat.id);
+        await HttpService.putJson(MessengerService.CHAT_URL + `/${chat.id}`, chat, headers);
     }
 
     async getMessages(dto: MessageRequestDTO): Promise<Message[]> {
-        const messages: Message[] = await HttpService.postJson(MessengerService.CHAT_URL + `/${dto.chatId}` + '/messages', dto);
+        const headers: HeadersInit = this.getRequestResourceObjectHeader(dto.chatId);
+        const messages: Message[] = await HttpService.postJson(MessengerService.CHAT_URL + `/${dto.chatId}` + '/messages', dto, headers);
         return messages.map((message: Message, index) => {
             return new Message(
                 message.id,
@@ -132,24 +150,27 @@ class MessengerService {
     }
 
     async sendMessage(message: Message): Promise<any> {
-        return HttpService.postJson(MessengerService.CHAT_URL + `/${message.chatId}` + '/messages/create', message);
+        const headers: HeadersInit = this.getRequestResourceObjectHeader(message.chatId);
+        return HttpService.postJson(MessengerService.CHAT_URL + `/${message.chatId}` + '/messages/create', message, headers);
     }
 
     async addUsersToChat(chatId?: number | string | null, users?: (number | string)[] | null): Promise<any> {
+        const headers: HeadersInit = this.getRequestResourceObjectHeader(chatId);
         const dto = {
             chatId: chatId,
             users: users
-        }
-        return HttpService.postJson(MessengerService.CHAT_URL + `/add`, dto);
+        } 
+        return HttpService.postJson(MessengerService.CHAT_URL + `/add`, dto, headers);
     }
 
     async sendAttachment(attachment: File, chatId?: ID, userId?: ID): Promise<any> {
+        const headers: HeadersInit = this.getRequestResourceObjectHeader(chatId);
         const dto = {
             file: attachment,
             chatId,
             userId
         }
-        return HttpService.postFile(MessengerService.CHAT_URL + '/attachment', dto);
+        return HttpService.postFile(MessengerService.CHAT_URL + '/attachment', dto, headers);
     }
 }
 export default MessengerService.Instance;

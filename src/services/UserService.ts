@@ -1,6 +1,5 @@
 import HttpService from "./HttpService";
 import User from "../models/User";
-import { DIRECTION } from "../util/Constants";
 
 export interface UserRequestDTO {
     filter?: {
@@ -44,7 +43,7 @@ class UserService {
     }
 
     async list(dto: UserRequestDTO, controller?: AbortController | null): Promise<User[]> {
-        return HttpService.postJson(`/users/`, dto, controller?.signal);
+        return HttpService.postJson(`/users/`, dto, undefined, controller?.signal);
     }
 
     async setAvatar(id: number | string, image: File): Promise<any> {

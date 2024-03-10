@@ -20,6 +20,7 @@ export class ServiceUrl {
 
 export class Headers {
     static readonly AUTHORIZATION = 'Authorization';
+    static readonly X_REQUEST_RESOURCE_OBJECT = 'X-request-resource-object';
 };
 
 export class Pages {

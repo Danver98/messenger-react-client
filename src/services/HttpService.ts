@@ -109,70 +109,72 @@ class HttpService {
         }
     }
 
-    async getJson(url: string = '', data: object = {}, signal?: AbortSignal | null): Promise<any> {
+    async getJson(url: string = '', data: object = {}, headers?: HeadersInit, signal?: AbortSignal | null): Promise<any> {
         const info: RequestInit = this._prepareRequest('GET', data, {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            ...headers
         }, signal);
         return this._fetchJSON(ServiceUrl.BACKEND_SERVICE_BASE_URL + url, info);
     }
 
-    async postJson(url: string = '', data: object = {}, signal?: AbortSignal | null): Promise<any> {
+    async postJson(url: string = '', data: object = {}, headers?: HeadersInit, signal?: AbortSignal | null): Promise<any> {
         const info: RequestInit = this._prepareRequest('POST', data, {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            ...headers
         }, signal);
         return this._fetchJSON(ServiceUrl.BACKEND_SERVICE_BASE_URL + url, info);
     }
 
-    async putJson(url: string = '', data: object = {}, signal?: AbortSignal | null): Promise<any> {
+    async putJson(url: string = '', data: object = {}, headers?: HeadersInit, signal?: AbortSignal | null): Promise<any> {
         const info: RequestInit = this._prepareRequest('PUT', data, {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            ...headers
         }, signal);
         return this._fetchJSON(ServiceUrl.BACKEND_SERVICE_BASE_URL + url, info);
     }
 
-    async patchJson(url: string = '', data: object = {}, signal?: AbortSignal | null): Promise<any> {
+    async patchJson(url: string = '', data: object = {}, headers?: HeadersInit, signal?: AbortSignal | null): Promise<any> {
         const info: RequestInit = this._prepareRequest('PATCH', data, {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            ...headers
         }, signal);
         return this._fetchJSON(ServiceUrl.BACKEND_SERVICE_BASE_URL + url, info);
     }
 
-    async deleteJson(url: string = '', data: object = {}, signal?: AbortSignal | null): Promise<any> {
-        const info: RequestInit = this._prepareRequest('DELETE', data, {}, signal);
+    async deleteJson(url: string = '', data: object = {}, headers?: HeadersInit, signal?: AbortSignal | null): Promise<any> {
+        const info: RequestInit = this._prepareRequest('DELETE', data, headers, signal);
         return this._fetchJSON(ServiceUrl.BACKEND_SERVICE_BASE_URL + url, info);
     }
 
     // =================================================================================
 
-    async get(url: string = '', data: object = {}, signal?: AbortSignal | null): Promise<any> {
-        const info: RequestInit = this._prepareRequest('GET', data, {}, signal);
+    async get(url: string = '', data: object = {}, headers?: HeadersInit, signal?: AbortSignal | null): Promise<any> {
+        const info: RequestInit = this._prepareRequest('GET', data, headers, signal);
         return this._fetch(ServiceUrl.BACKEND_SERVICE_BASE_URL + url, info);
     }
 
-    async post(url: string = '', data: object = {}, signal?: AbortSignal | null): Promise<any> {
-        const info: RequestInit = this._prepareRequest('POST', data, {}, signal);
+    async post(url: string = '', data: object = {}, headers?: HeadersInit, signal?: AbortSignal | null): Promise<any> {
+        const info: RequestInit = this._prepareRequest('POST', data, headers, signal);
         return this._fetch(ServiceUrl.BACKEND_SERVICE_BASE_URL + url, info);
     }
 
-    async put(url: string = '', data: object = {}, signal?: AbortSignal | null): Promise<any> {
-        const info: RequestInit = this._prepareRequest('PUT', data, {}, signal);
+    async put(url: string = '', data: object = {}, headers?: HeadersInit, signal?: AbortSignal | null): Promise<any> {
+        const info: RequestInit = this._prepareRequest('PUT', data, headers, signal);
         return this._fetch(ServiceUrl.BACKEND_SERVICE_BASE_URL + url, info);
     }
 
-    async patch(url: string = '', data: object = {}, signal?: AbortSignal | null): Promise<any> {
-        const info: RequestInit = this._prepareRequest('PATCH', data, {}, signal);
+    async patch(url: string = '', data: object = {}, headers?: HeadersInit, signal?: AbortSignal | null): Promise<any> {
+        const info: RequestInit = this._prepareRequest('PATCH', data, headers, signal);
         return this._fetch(ServiceUrl.BACKEND_SERVICE_BASE_URL + url, info);
     }
 
-    async delete(url: string = '', data: object = {}, signal?: AbortSignal | null): Promise<any> {
-        const info: RequestInit = this._prepareRequest('DELETE', data, {}, signal);
+    async delete(url: string = '', data: object = {}, headers?: HeadersInit, signal?: AbortSignal | null): Promise<any> {
+        const info: RequestInit = this._prepareRequest('DELETE', data, headers, signal);
         return this._fetch(ServiceUrl.BACKEND_SERVICE_BASE_URL + url, info);
     }
 
     // =============================================================================================
-    async postFile(url: string = '', data: any = {}, signal?: AbortSignal | null): Promise<any> {
-        const headers = {
-        };
+    async postFile(url: string = '', data: any = {}, headers?: HeadersInit, signal?: AbortSignal | null): Promise<any> {
         const formData = new FormData();
         for (let key in data) {
             formData.append(key, data[key]);

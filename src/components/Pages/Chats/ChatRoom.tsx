@@ -12,11 +12,12 @@ import AttachFileIcon from '@mui/icons-material/AttachFile';
 import { Button, IconButton, TextareaAutosize } from "@mui/material";
 import CircularProgress from '@mui/material/CircularProgress';
 import ClearIcon from '@mui/icons-material/Clear';
-import { IPublishParams } from '@stomp/stompjs';
+import { IPublishParams, StompHeaders } from '@stomp/stompjs';
 import { useStompClient } from "react-stomp-hooks";
 import { useBus, useListener } from 'react-bus';
 import MessengerService from "../../../services/MessengerService";
 import { getType } from "../../../util/FileUtils";
+import { Headers } from "../../../util/Constants";
 
 export interface PagingParams {
     chatId?: number | string | null;
@@ -200,7 +201,10 @@ export default function ChatRoom({ chat }: { chat: Chat }) {
             body: JSON.stringify({
                 message: message,
                 chat: chat
-            })
+            }),
+            headers: {
+                [Headers.X_REQUEST_RESOURCE_OBJECT]: chat.id
+            } as StompHeaders
         }
         stompClient?.publish(params);
         if (chat.private) {
