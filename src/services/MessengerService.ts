@@ -46,7 +46,7 @@ class MessengerService {
      */
     private getRequestResourceObjectHeader(id: ID): HeadersInit {
         return {
-            [Headers.X_REQUEST_RESOURCE_OBJECT]: id
+            [Headers.X_REQUEST_RESOURCE_OBJECT]: id ? id : null
         } as HeadersInit;
     }
 
