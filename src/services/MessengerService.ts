@@ -54,9 +54,10 @@ class MessengerService {
         return Math.floor(Math.random() * (max - min + 1) + min);
     }
 
-    async getChat(id?: string | number | null, userId?: string | number): Promise<Chat> {
+    async getChat(id?: string | number | null, userId?: string | number): Promise<Chat | null> {
         const headers: HeadersInit = this.getRequestResourceObjectHeader(id);
         const data = await HttpService.getJson(MessengerService.CHAT_URL + `/${id}?userId=${userId}`, undefined, headers);
+        if (data == null) return null;
         return new Chat(data.id, data.name, data.private, data.avatar, data.time, data.participants);
     }
 
@@ -107,7 +108,7 @@ class MessengerService {
     async getMessages(dto: MessageRequestDTO): Promise<Message[]> {
         const headers: HeadersInit = this.getRequestResourceObjectHeader(dto.chatId);
         const messages: Message[] = await HttpService.postJson(MessengerService.CHAT_URL + `/${dto.chatId}` + '/messages', dto, headers);
-        return messages.map((message: Message, index) => {
+        return messages?.map((message: Message, index) => {
             return new Message(
                 message.id,
                 message.chatId,

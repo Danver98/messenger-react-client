@@ -11,7 +11,6 @@ export interface UserRequestDTO {
 }
 
 class UserService {
-    // TODO: coordinate backend and frontend API
     private static _instance: UserService;
 
     private constructor() {
@@ -23,8 +22,9 @@ class UserService {
         return this._instance || (this._instance = new this());      
     }
 
-    async get(id: number | string): Promise<User> {
-        const data = (await HttpService.getJson(`/users/${id}`)) as User;
+    async get(id: number | string): Promise<User|null> {
+        const data: User = (await HttpService.getJson(`/users/${id}`));
+        if (data == null) return null;
         // Store user somewhere to retrieve in the app
         return new User(data.id, data.name, data.surname, data.login, data.avatar, data.password);
     }

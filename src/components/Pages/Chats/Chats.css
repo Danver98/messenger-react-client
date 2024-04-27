@@ -206,7 +206,7 @@
 .message-list-item__userBlock {
     display: flex;
     height: 100%;
-    align-items: end;
+    align-items: flex-end;
     margin-right: 16px;
 }
 

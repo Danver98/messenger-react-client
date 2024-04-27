@@ -30,7 +30,7 @@ const ItemBody = ({ chat }: { chat: Chat }) => {
                         </div>
                         <div className="chat-list-item__messageCounter">
                             <div className="chat-list-item__messageCounter-round">
-
+                                { chat.unreadMsgCount }
                             </div>
                         </div>
                     </div>

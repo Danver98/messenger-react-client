@@ -1,4 +1,3 @@
-import User from "./User";
 import Message from "./Message";
 
 interface Chat {
@@ -10,6 +9,8 @@ interface Chat {
     participants?: (number | string)[];
     lastMessage?: Message | null;
     draft?: boolean | null;
+    unreadMsgCount?: number | null;
+    lastReadMsgId?: number | null;
 }
 
 class Chat implements Chat {
@@ -21,10 +22,12 @@ class Chat implements Chat {
     participants?: (number | string)[];
     lastMessage?: Message | null;
     draft?: boolean | null;
+    unreadMsgCount?: number | null;
+    lastReadMsgId?: number | null;
 
     constructor(id?: number | string | null, name?: string | null, _private?: boolean, avatar?: string | null,
         time?: Date | null, participants?: (number | string)[], lastMessage?: Message | null,
-        draft?: boolean | null) {
+        draft?: boolean | null, unreadMsgCount?: number | null, lastReadMsgId?: number | null) {
             this.id = id;
             this.name = name;
             this.private = _private;
@@ -33,6 +36,8 @@ class Chat implements Chat {
             this.participants = participants;
             this.lastMessage = lastMessage;
             this.draft = draft;
+            this.unreadMsgCount =  unreadMsgCount;
+            this.lastReadMsgId = lastReadMsgId;
     }
 
     toString(): string {
