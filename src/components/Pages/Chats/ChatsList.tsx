@@ -28,11 +28,14 @@ const ItemBody = ({ chat }: { chat: Chat }) => {
                             <span className="chat-list-item__lastMessage-author">{chat.lastMessage.getAuthorFullName()}</span>
                             <span>{ ': ' + chat.lastMessage.getDataText() }</span>
                         </div>
-                        <div className="chat-list-item__messageCounter">
-                            <div className="chat-list-item__messageCounter-round">
-                                { chat.unreadMsgCount }
+                        {
+                            chat.unreadMsgCount &&
+                            <div className="chat-list-item__messageCounter">
+                                <div className="chat-list-item__messageCounter-round">
+                                    { chat.unreadMsgCount }
+                                </div>
                             </div>
-                        </div>
+                        }
                     </div>
                 }
             </div>

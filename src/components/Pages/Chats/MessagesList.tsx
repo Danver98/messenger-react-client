@@ -4,6 +4,15 @@ import FilePresentIcon from '@mui/icons-material/FilePresent';
 import User from "../../../models/User";
 import "./Chats.css";
 
+const NewMessagesDecorator = () => {
+    return (
+        <div className='message-list-item_container'>
+            <hr>
+                New Messages
+            </hr>
+        </div>
+    )
+}
 
 const MessageBody = ({ message, user }: { message: Message, user?: User | null }) => {
     const alignment = message.author?.id === user?.id ? 'right' : 'left';
@@ -78,8 +87,8 @@ const MessageBody = ({ message, user }: { message: Message, user?: User | null }
     )
 };
 
-const MessageListItem = forwardRef(({ message, user, isLast, clickHandler }:
-    { message: Message, user?: User | null, isLast?: boolean, clickHandler?: (id: any) => void }, ref?: any) => {
+const MessageListItem = forwardRef(({ message, user, lastReadMsgId, isLast, clickHandler }:
+    { message: Message, user?: User | null, lastReadMsgId?: number | string | null, isLast?: boolean, clickHandler?: (id: any) => void }, ref?: any) => {
     if (isLast) {
         return (
             <li
@@ -88,7 +97,15 @@ const MessageListItem = forwardRef(({ message, user, isLast, clickHandler }:
                 onClick={() => { clickHandler?.(message.id) }}
                 className="message-list-item"
             >
+                {
+                    lastReadMsgId == null &&
+                    <NewMessagesDecorator />
+                }
                 <MessageBody message={message} user={user} />
+                {
+                    message.id === lastReadMsgId &&
+                    <NewMessagesDecorator />
+                }
             </li>
         )
     }
@@ -98,12 +115,21 @@ const MessageListItem = forwardRef(({ message, user, isLast, clickHandler }:
             onClick={() => { clickHandler?.(message.id) }}
             className="message-list-item"
         >
+            {
+                lastReadMsgId == null &&
+                <NewMessagesDecorator />
+            }
             <MessageBody message={message} user={user} />
+            {
+                    message.id === lastReadMsgId &&
+                    <NewMessagesDecorator />
+            }
         </li>
     )
 });
 
-const MessageList = forwardRef(({ messages, user }: { messages?: Message[], user?: User | null }, ref?: any) => {
+const MessageList = forwardRef(({ messages, user, lastReadMsgId }: 
+    { messages?: Message[], user?: User | null, lastReadMsgId?: number | string | null }, ref?: any) => {
     if (messages == null || messages.length === 0) {
         return (
             <div className="chat-room-message-list-empty">
@@ -112,7 +138,13 @@ const MessageList = forwardRef(({ messages, user }: { messages?: Message[], user
         )
     }
     const listItems = messages?.map((message, index) =>
-        <MessageListItem message={message} user={user} isLast={index === messages.length - 1} ref={ref} />)
+        <MessageListItem 
+            message={message}
+            user={user}
+            lastReadMsgId={lastReadMsgId}
+            isLast={index === messages.length - 1}
+            ref={ref}
+        />)
 
     return (
         <ul className="chat-room-message-list">{listItems}</ul>

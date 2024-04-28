@@ -78,7 +78,7 @@ const ChatDataProvider = ({ children }: { children: any }) => {
       const dto: ChatRequestDTO = {
         userId: user.id
       };
-      const chats = await MessengerService.getChatsByUser(dto);
+      const chats = await MessengerService.getChatsByUserLight(dto);
       console.log(`Subscribing to public chats...`);
       chats?.forEach((chat: Chat) => {
         if (chat.private) return;

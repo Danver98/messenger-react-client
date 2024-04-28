@@ -10,7 +10,7 @@ interface Chat {
     lastMessage?: Message | null;
     draft?: boolean | null;
     unreadMsgCount?: number | null;
-    lastReadMsgId?: number | null;
+    lastReadMsgId?: number | string | null;
 }
 
 class Chat implements Chat {
@@ -23,11 +23,11 @@ class Chat implements Chat {
     lastMessage?: Message | null;
     draft?: boolean | null;
     unreadMsgCount?: number | null;
-    lastReadMsgId?: number | null;
+    lastReadMsgId?: number | string | null;
 
     constructor(id?: number | string | null, name?: string | null, _private?: boolean, avatar?: string | null,
         time?: Date | null, participants?: (number | string)[], lastMessage?: Message | null,
-        draft?: boolean | null, unreadMsgCount?: number | null, lastReadMsgId?: number | null) {
+        draft?: boolean | null, unreadMsgCount?: number | null, lastReadMsgId?: number | string | null) {
             this.id = id;
             this.name = name;
             this.private = _private;

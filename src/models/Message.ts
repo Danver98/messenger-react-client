@@ -31,6 +31,7 @@ interface Message {
     time?: Date | null;
     data?: MessageData | null;
     author?: User | null;
+    read?: boolean | null;
 }
 
 class Message implements Message {
@@ -41,6 +42,7 @@ class Message implements Message {
     time?: Date | null;
     data?: MessageData | null;
     author?: User | null;
+    read?: boolean | null;
 
     constructor(
         id: string | null,
@@ -49,7 +51,8 @@ class Message implements Message {
         type?: MessageType | null,
         data?: MessageData | null,
         author?: User | null,
-        time?: Date | null) {
+        time?: Date | null,
+        read?: boolean | null) {
         this.id = id;
         this.chatId = chatId;
         this.receiverId = receiverId;
@@ -57,6 +60,7 @@ class Message implements Message {
         this.time = time instanceof Date ? time : time == null ? null : new Date(time); // from backend it comes often as timestamp
         this.data = data;
         this.author = author;
+        this.read = read;
     }
 
     getTime(): Date | null {

@@ -14,6 +14,7 @@ export interface ChatRequestDTO {
 
 export interface MessageRequestDTO {
     chatId?: number | string | null;
+    userId?: number | string | null;
     time?: Date | null;
     messageId?: number | string | null;
     direction?: number | null;
@@ -81,8 +82,23 @@ class MessengerService {
                     chat.lastMessage.type, 
                     chat.lastMessage.data, 
                     chat.lastMessage.author, 
-                    chat.lastMessage.time)
+                    chat.lastMessage.time),
+                chat.draft,
+                chat.unreadMsgCount,
+                chat.lastReadMsgId
                 );
+        }
+        )
+    }
+
+    async getChatsByUserLight(dto: ChatRequestDTO): Promise<any> {
+        const headers: HeadersInit = this.getRequestResourceObjectHeader(dto.chatId);
+        const rawChats: Chat[] = await HttpService.postJson(MessengerService.CHAT_URL + '/light-list', dto, headers);
+        return rawChats?.map((chat, index) => {
+            const c = new Chat(chat.id);
+            c.private = chat.private;
+            c.draft = chat.draft
+            return c
         }
         )
     }
@@ -116,38 +132,10 @@ class MessengerService {
                 message.type,
                 message.data,
                 message.author,
-                message.time
-
+                message.time,
+                message.read
                 );
         })
-        // return new Promise((resolve, reject) => {
-        //     setTimeout(() => {
-        //         const data = Array.from({ length: 50 }).map((element, index) => {
-        //             const date = new Date();
-        //             const id = crypto.randomUUID();
-        //             const userId = this.randomIntFromInterval(1, 1000);
-        //             const size = this.randomIntFromInterval(80, 120);
-        //             const longText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Porttitor massa id neque aliquam vestibulum morbi blandit. Eu feugiat pretium nibh ipsum consequat nisl. In eu mi bibendum neque egestas congue quisque egestas. Tempus iaculis urna id volutpat. Vitae aliquet nec ullamcorper sit amet risus. Nec sagittis aliquam malesuada bibendum arcu. Fringilla est ullamcorper eget nulla facilisi etiam dignissim diam quis. Pellentesque massa placerat duis ultricies lacus sed turpis tincidunt. Nisi lacus sed viverra tellus in hac habitasse platea."
-        //             const shortText = `TODO: generate text with lorem ipsum. Message number: ${index + 1}, info: ${userId % 4 === 0}`;
-        //             return new Message(
-        //                 id,
-        //                 dto.chatId,
-        //                 {
-        //                     type: MessageDataType.TEXT,
-        //                     data: (userId % 4 === 0) ? longText : shortText
-        //                 },
-        //                 {
-        //                     id: userId,
-        //                     name: `Name ${userId}`,
-        //                     surname: `Surname ${userId}`,
-        //                     avatar: RANDOM_CHAT_AVATAR_URL + `${size}/${size}`
-        //                 },
-        //                 date
-        //             );
-        //         });
-        //         resolve(data);
-        //     }, 1000);
-        // });
     }
 
     async sendMessage(message: Message): Promise<any> {

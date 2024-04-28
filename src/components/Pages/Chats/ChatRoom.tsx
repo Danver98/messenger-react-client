@@ -1,8 +1,6 @@
-import { useLocation } from "react-router-dom";
-import { useContext, useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import MessageList from "./MessagesList";
-import { FetchMessages } from "./FetchData";
-import { DIRECTION, ServiceUrl } from "../../../util/Constants";
+import { DIRECTION } from "../../../util/Constants";
 import Chat from "../../../models/Chat";
 import Message, { MessageData, MessageDataType, MessageType } from "../../../models/Message";
 import User from "../../../models/User";
@@ -21,6 +19,7 @@ import { Headers } from "../../../util/Constants";
 
 export interface PagingParams {
     chatId?: number | string | null;
+    userId?: number | string | null;
     time?: Date | null;
     messageId?: number | string | null;
     direction?: number | null;
@@ -109,7 +108,13 @@ function MessageSender({ handleSubmit }: { handleSubmit: (event: any) => any }) 
 export default function ChatRoom({ chat }: { chat: Chat }) {
     const authContext = useAuthContextData();
     const bus = useBus();
-    const [pagingParams, setPagingParams] = useState<PagingParams>({ chatId: chat.id, direction: DIRECTION.PAST, count: 50 });
+    const [pagingParams, setPagingParams] = useState<PagingParams>(
+        { 
+            chatId: chat.id,
+            userId: authContext.user?.id,
+            direction: DIRECTION.PAST,
+            count: 50 
+        });
     const [draft, setDraft] = useState<boolean | null | undefined>(chat.draft);
     const [lastElementRef, setLastElementRef] = useState(null);
     const observerRef = useRef<IntersectionObserver | null>(null);
@@ -123,6 +128,7 @@ export default function ChatRoom({ chat }: { chat: Chat }) {
     const fetchMessages = async (params: PagingParams) => {
         const dto = {
             'chatId': params.chatId,
+            'userId': params.userId,
             'time': params.time,
             'messageId': params.messageId,
             'direction': params.direction || DIRECTION.PAST,

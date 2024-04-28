@@ -48,6 +48,7 @@ export function FetchMessages(pagingParams: PagingParams) {
             setIsLoading(true);
             const dto = {
                 'chatId': pagingParams.chatId,
+                'userId': pagingParams.userId,
                 'time': pagingParams.time,
                 'messageId': pagingParams.messageId,
                 'direction': pagingParams.direction,

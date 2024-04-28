@@ -86,6 +86,7 @@
     display: flex;
     min-width: 0;
     justify-content: space-between;
+    align-items: center;
 }
 
 .chat-list-item__lastMessage {
@@ -93,6 +94,7 @@
     white-space: nowrap;
     text-overflow: ellipsis;
     margin-right: 2px;
+    margin-left: 8px;
 }
 
 .chat-list-item__lastMessage-author {
@@ -101,15 +103,18 @@
 
 .chat-list-item__messageCounter {
     display:  flex;
+    height: 100%;
 }
 
 .chat-list-item__messageCounter-round {
-    height: 25px;
-    width: 25px;
+    height: 100%;
+    flex-grow: 1;
     background-color: gray;
     text-align: center;
     vertical-align: middle;
     border-radius: 50%;
+    flex-basis: 50%;
+    padding: 2px;
 }
 
 .chat-room-page {
