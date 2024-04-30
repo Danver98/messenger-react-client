@@ -36,7 +36,7 @@ class Chat implements Chat {
             this.participants = participants;
             this.lastMessage = lastMessage;
             this.draft = draft;
-            this.unreadMsgCount =  unreadMsgCount;
+            this.unreadMsgCount = unreadMsgCount;
             this.lastReadMsgId = lastReadMsgId;
     }
 

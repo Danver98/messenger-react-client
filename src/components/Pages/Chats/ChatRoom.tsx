@@ -105,7 +105,7 @@ function MessageSender({ handleSubmit }: { handleSubmit: (event: any) => any }) 
     )
 }
 
-export default function ChatRoom({ chat }: { chat: Chat }) {
+export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: () => void }) {
     const authContext = useAuthContextData();
     const bus = useBus();
     const [pagingParams, setPagingParams] = useState<PagingParams>(
@@ -124,6 +124,8 @@ export default function ChatRoom({ chat }: { chat: Chat }) {
     const [hasMore, setHasMore] = useState(false);
     const [error, setError] = useState();
     const [intersected, setIntersected] = useState(false);
+    const [lastReadMsgId, setLastReadMsgId] = useState(chat.lastReadMsgId);
+    const lastReadMsgRef = useRef<string | null>(null);
 
     const fetchMessages = async (params: PagingParams) => {
         const dto = {
@@ -251,6 +253,11 @@ export default function ChatRoom({ chat }: { chat: Chat }) {
                 }
             }
         );
+        return () => {
+            if (chat.id && lastReadMsgId && authContext.user?.id) {
+                MessengerService.updateLastReadMsg(chat.id, authContext.user.id, lastReadMsgId);
+            }
+        }
     }, []); // Runs on start only
 
     useEffect(() => {
@@ -271,7 +278,7 @@ export default function ChatRoom({ chat }: { chat: Chat }) {
     useEffect(() => {
         console.log(`Chat id changed!`)
         setHasMore(true);
-        setPagingParams({ chatId: chat.id });
+        setPagingParams({ chatId: chat.id, userId: authContext.user?.id });
     }, [chat.id]);
 
     useEffect(() => {
@@ -294,11 +301,23 @@ export default function ChatRoom({ chat }: { chat: Chat }) {
                     <div className="chat-room-page-header__ChatName">{chat.name}</div>
                     <UserSelectionDialog chat={chat} />
                 </div>
-                <MessageList messages={messages} user={authContext.user} ref={setLastElementRef} />
+                <MessageList messages={messages} lastReadMsgId={lastReadMsgId} user={authContext.user} ref={setLastElementRef} />
                 {
                     isLoading && <CircularProgress />
                 }
                 <MessageSender handleSubmit={sendMessage} />
+                <Button
+                    size="small"
+                    variant="contained"
+                    onClick={() => { closeChat?.() }}
+                    sx={{
+                        position: "absolute",
+                        left: "105%",
+                        top: "10px",
+                    }}
+                >
+                    Close
+                </Button>
             </div>
         </div>
     )

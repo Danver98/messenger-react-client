@@ -59,7 +59,18 @@ class MessengerService {
         const headers: HeadersInit = this.getRequestResourceObjectHeader(id);
         const data = await HttpService.getJson(MessengerService.CHAT_URL + `/${id}?userId=${userId}`, undefined, headers);
         if (data == null) return null;
-        return new Chat(data.id, data.name, data.private, data.avatar, data.time, data.participants);
+        const chat = new Chat(
+            data.id,
+            data.name,
+            data.private,
+            data.avatar,
+            data.time,
+            data.participants,
+            data.lastMessage,
+            data.draft,
+            data.unreadMsgCount,
+            data.lastReadMsgId);
+        return chat;
     }
 
     async getChatsByUser(dto: ChatRequestDTO): Promise<any> {
@@ -121,9 +132,23 @@ class MessengerService {
         await HttpService.putJson(MessengerService.CHAT_URL + `/${chat.id}`, chat, headers);
     }
 
+    async updateLastReadMsg(
+        chatId: string | number,
+        userId: number | string,
+        messageId: number | string): Promise<any> {
+        const headers: HeadersInit = this.getRequestResourceObjectHeader(chatId);
+        const dto = {
+            chatId,
+            userId,
+            messageId
+        }
+        return await HttpService.patchJson(MessengerService.CHAT_URL + `/${chatId}`,dto , headers);
+    }
+
     async getMessages(dto: MessageRequestDTO): Promise<Message[]> {
         const headers: HeadersInit = this.getRequestResourceObjectHeader(dto.chatId);
-        const messages: Message[] = await HttpService.postJson(MessengerService.CHAT_URL + `/${dto.chatId}` + '/messages', dto, headers);
+        const messages: Message[] = await HttpService.postJson(
+            MessengerService.CHAT_URL + `/${dto.chatId}/messages`, dto, headers);
         return messages?.map((message: Message, index) => {
             return new Message(
                 message.id,

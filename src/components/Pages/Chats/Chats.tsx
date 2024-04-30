@@ -8,6 +8,7 @@ import ChatRoom from "./ChatRoom";
 import Chat from "../../../models/Chat";
 import { InputAdornment, TextField } from "@mui/material";
 import SearchIcon from '@mui/icons-material/Search';
+import CircularProgress from '@mui/material/CircularProgress';
 import { useListener } from 'react-bus';
 import Message, { MessageDataType, MessageType } from "../../../models/Message";
 import MessengerService from "../../../services/MessengerService";
@@ -51,7 +52,7 @@ export default function Chats() {
     const [counter, setCounter] = useState(0);
     const authContext = useAuthContextData()
     const userId = authContext.user?.id;
-    const [activeChat, setActveChat] = useState<Chat | null>(null);
+    const [activeChat, setActiveChat] = useState<Chat | null>(null);
     const stompClient = useStompClient();
     // TODO: direction
 
@@ -134,7 +135,7 @@ export default function Chats() {
         // make a fetch
         const fetchedChat = await MessengerService.getChat(chat.id, userId);
         // This is a chat with participants
-        setActveChat(fetchedChat);
+        setActiveChat(fetchedChat);
     }
 
     const handleChatCreation = async(users: any[], params?: ChatCreationParams | null) => {
@@ -182,7 +183,7 @@ export default function Chats() {
             }
             stompClient?.publish(publishParams);
         }
-        setActveChat(fetchedChat);
+        setActiveChat(fetchedChat);
     }
 
     return (
@@ -194,20 +195,20 @@ export default function Chats() {
                         <SearchBar
                             onChange={() => {}}
                         />
-                        <ChatsList 
+                        <ChatsList
                             chats={chats}
                             ref={setLastElementRef}
                             itemClickHandler={handleClick} 
                         />
                         <ChatCreation 
-                            user={authContext.user} 
+                            user={authContext.user}
                             onResult={(elements: any[], params?: ChatCreationParams | null) => {handleChatCreation(elements, params)}}
                         />
                     </div>
                     <div className="chat-dashboard__right">
                         {
                             activeChat &&
-                            <ChatRoom chat={activeChat} />
+                            <ChatRoom chat={activeChat} closeChat={() => {setActiveChat(null)}}/>
                         }
                         {
                             activeChat == null &&
