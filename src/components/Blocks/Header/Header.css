@@ -1,6 +1,6 @@
 .header {
     display: flex;
-    background: linear-gradient(90deg, rgba(34,178,207,1) 0%, rgba(0,212,255,1) 51%, rgba(28,183,189,1) 100%, rgba(0,212,255,1) 210%, rgba(9,9,121,0.773622828037465) 454%);
+    background-color: #2AABEE;
     align-items: center;
     justify-content: space-between;
     padding: 8px 16px 8px 16px;

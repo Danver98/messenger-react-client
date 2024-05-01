@@ -76,6 +76,7 @@
     display: flex;
     flex-grow: 1;
     margin-left: 8px;
+    color: #333333;
 }
 
 .chat-list-item__date {
@@ -109,7 +110,7 @@
 .chat-list-item__messageCounter-round {
     height: 100%;
     flex-grow: 1;
-    background-color: gray;
+    background-color: #8C8C8C;
     text-align: center;
     vertical-align: middle;
     border-radius: 50%;
