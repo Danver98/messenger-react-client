@@ -1,4 +1,4 @@
-import { createRef, forwardRef, useEffect } from "react";
+import { createRef, forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import Message, { MessageDataType } from "../../../models/Message";
 import FilePresentIcon from '@mui/icons-material/FilePresent';
 import User from "../../../models/User";
@@ -85,7 +85,29 @@ const MessageBody = ({ message, user }: { message: Message, user?: User | null }
     )
 };
 
-const MessageListItem = forwardRef(({ message, user, lastReadMsgId, isFirst, isLast, clickHandler }:
+function useIntersecting(rootElement: any, ref: any, message: Message, handleIntersection: (obj: any) => void) {
+    const callback = useCallback(handleIntersection, [handleIntersection]);
+    
+    useEffect(() => {
+      const observer = new IntersectionObserver(entries => {
+        if (entries[0].isIntersecting) {
+            //const id = entries[0].target.getAttribute('id');
+            callback(message);
+        }
+      },
+        {   
+            root: rootElement,
+            threshold: 0.8
+        }
+      );
+      if (ref.current) observer.observe(ref.current);
+      return () => {
+        observer.disconnect();
+      };
+    }, [rootElement, ref, message, callback]);
+  }
+
+const MessageListItem = forwardRef(({ message, user, lastReadMsgId, isFirst, isLast, rootElement, clickHandler, intersectionHandler }:
     { 
         message: Message,
         user?: User | null,
@@ -94,17 +116,23 @@ const MessageListItem = forwardRef(({ message, user, lastReadMsgId, isFirst, isL
         isFirst?: boolean,
         isLast?: boolean,
         scrollRef?: any,
-        clickHandler?: (id: any) => void 
+        rootElement: any,
+        clickHandler?: ((id: any) => void) | null,
+        intersectionHandler: ((message: Message) => void)
     }, ref?: any) => {
         const messageId = message.id === null ? undefined : message.id;
+        const itemRef = useRef(null);
+        useIntersecting(rootElement, itemRef, message, intersectionHandler);
         if (isLast) {
+            // TODO: fix problem with double ref: for 'read' flag and data fetching
             return (
                 <li
                     id={messageId}
                     key={message.id}
-                    ref={ref}
+                    // ref={ref} // lastItemRef
                     onClick={() => { clickHandler?.(message.id) }}
                     className="message-list-item"
+                    ref={ref}
                 >
                     {
                         lastReadMsgId == null &&
@@ -124,6 +152,7 @@ const MessageListItem = forwardRef(({ message, user, lastReadMsgId, isFirst, isL
                 key={message.id}
                 onClick={() => { clickHandler?.(message.id) }}
                 className="message-list-item"
+                ref={itemRef}
             >
                 {
                     lastReadMsgId == null &&
@@ -138,11 +167,12 @@ const MessageListItem = forwardRef(({ message, user, lastReadMsgId, isFirst, isL
         )
 });
 
-const MessageList = forwardRef(({ messages, user, lastReadMsgId }: 
+const MessageList = forwardRef(({ messages, user, lastReadMsgId, intersectionHandler }: 
     { 
         messages?: Message[],
         user?: User | null,
-        lastReadMsgId?: number | string | null 
+        lastReadMsgId?: number | string | null,
+        intersectionHandler: (message: Message) => void
     }, ref?: any) => {
         const firstMsgId = messages && messages.length ? messages[messages?.length - 1].id : null;
         const scrollRefs : { [id: string] : any; } = {}
@@ -151,12 +181,14 @@ const MessageList = forwardRef(({ messages, user, lastReadMsgId }:
         });
 
         useEffect(() => {
+            //if (!loading) return;
             const refId = lastReadMsgId ? lastReadMsgId : firstMsgId;
             if (!refId) return;
             document.getElementById(String(refId))?.scrollIntoView({
                 behavior: 'smooth',
-                block: 'start',
+                block: 'center',
             });
+            //setLoading(false);
             // scrollRefs[refId]?.current?.scrollIntoView({
             //     behavior: 'smooth',
             //     block: 'start',
@@ -169,19 +201,29 @@ const MessageList = forwardRef(({ messages, user, lastReadMsgId }:
                 </div>
             )
         }
-        const listItems = messages?.map((message, index) =>
-            <MessageListItem 
+        const listId = "chat-room-msg-list";
+        const listRoot = document.getElementById(listId);
+        const listItems = messages?.map((message, index) => {
+            return <MessageListItem
                 message={message}
                 user={user}
                 lastReadMsgId={lastReadMsgId || firstMsgId}
                 isFirst={index === 0}
                 isLast={index === messages.length - 1}
                 scrollRef={scrollRefs[message.id!]}
+                rootElement={listRoot}
                 ref={ref}
-            />)
+                intersectionHandler={intersectionHandler}
+            />
+        })
 
         return (
-            <ul className="chat-room-message-list">{listItems}</ul>
+            <ul
+                id={listId}
+                className="chat-room-message-list"
+            >
+                {listItems}
+            </ul>
         )
 });
 

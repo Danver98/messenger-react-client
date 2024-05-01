@@ -113,7 +113,7 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
             chatId: chat.id,
             userId: authContext.user?.id,
             direction: DIRECTION.PAST,
-            count: 50 
+            count: 50,
         });
     const [draft, setDraft] = useState<boolean | null | undefined>(chat.draft);
     const [lastElementRef, setLastElementRef] = useState(null);
@@ -122,10 +122,9 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
     const [messages, setMessages] = useState<Message[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [hasMore, setHasMore] = useState(false);
-    const [error, setError] = useState();
     const [intersected, setIntersected] = useState(false);
-    const [lastReadMsgId, setLastReadMsgId] = useState(chat.lastReadMsgId);
-    const lastReadMsgRef = useRef<string | null>(null);
+    const lastReadMsgRef = useRef<Message| null>(chat.lastMessage ? chat.lastMessage : null);
+
 
     const fetchMessages = async (params: PagingParams) => {
         const dto = {
@@ -145,6 +144,15 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
         setMessages((prevMessages: Message[]) =>
             [message, ...prevMessages])
     };
+
+    const setLastReadMsg = (message: Message) => {
+        if (message.read) return;
+        if (!message.id || message.id === lastReadMsgRef.current?.id) return;
+        if (message.time && chat.lastReadMsg?.time &&
+            (message.time < chat.lastReadMsg.time || (message.time === chat.lastReadMsg.time &&
+                chat.lastReadMsg?.id && message.id < chat.lastReadMsg.id))) return;
+        lastReadMsgRef.current = message;
+    }
 
     const sendMessage = async (event: any) => {
         const user = authContext.user as User;
@@ -254,8 +262,12 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
             }
         );
         return () => {
-            if (chat.id && lastReadMsgId && authContext.user?.id) {
-                MessengerService.updateLastReadMsg(chat.id, authContext.user.id, lastReadMsgId);
+            // Shoud be run when user closes current chat or switches to another one
+            if (chat.id && lastReadMsgRef && authContext.user?.id) {
+                if ( chat.lastReadMsg?.id === lastReadMsgRef.current?.id || !lastReadMsgRef.current) {
+                    return;
+                }
+                MessengerService.updateLastReadMsg(chat.id, authContext.user.id, lastReadMsgRef.current.id!);
             }
         }
     }, []); // Runs on start only
@@ -276,7 +288,7 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
 
 
     useEffect(() => {
-        console.log(`Chat id changed!`)
+        console.log(`Chat id changed!`);
         setHasMore(true);
         setPagingParams({ chatId: chat.id, userId: authContext.user?.id });
     }, [chat.id]);
@@ -301,7 +313,13 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
                     <div className="chat-room-page-header__ChatName">{chat.name}</div>
                     <UserSelectionDialog chat={chat} />
                 </div>
-                <MessageList messages={messages} lastReadMsgId={lastReadMsgId} user={authContext.user} ref={setLastElementRef} />
+                <MessageList
+                    messages={messages}
+                    lastReadMsgId={chat.lastReadMsg?.id}
+                    intersectionHandler={setLastReadMsg}
+                    user={authContext.user}
+                    ref={setLastElementRef}
+                />
                 {
                     isLoading && <CircularProgress />
                 }

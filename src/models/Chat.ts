@@ -1,6 +1,6 @@
 import Message from "./Message";
 
-interface Chat {
+interface IChat {
     id?: number | string | null;
     name?: string | null;
     private?: boolean;
@@ -10,10 +10,10 @@ interface Chat {
     lastMessage?: Message | null;
     draft?: boolean | null;
     unreadMsgCount?: number | null;
-    lastReadMsgId?: number | string | null;
+    lastReadMsg?: Message | null;
 }
 
-class Chat implements Chat {
+class Chat implements IChat {
     id?: number | string | null;
     name?: string | null;
     private?: boolean;
@@ -23,11 +23,19 @@ class Chat implements Chat {
     lastMessage?: Message | null;
     draft?: boolean | null;
     unreadMsgCount?: number | null;
-    lastReadMsgId?: number | string | null;
+    lastReadMsg?: Message | null;
 
-    constructor(id?: number | string | null, name?: string | null, _private?: boolean, avatar?: string | null,
-        time?: Date | null, participants?: (number | string)[], lastMessage?: Message | null,
-        draft?: boolean | null, unreadMsgCount?: number | null, lastReadMsgId?: number | string | null) {
+    constructor(
+        id?: number | string | null,
+        name?: string | null,
+        _private?: boolean,
+        avatar?: string | null,
+        time?: Date | null,
+        participants?: (number | string)[],
+        lastMessage?: Message | null,
+        draft?: boolean | null,
+        unreadMsgCount?: number | null,
+        lastReadMsg?: Message | null) {
             this.id = id;
             this.name = name;
             this.private = _private;
@@ -37,7 +45,7 @@ class Chat implements Chat {
             this.lastMessage = lastMessage;
             this.draft = draft;
             this.unreadMsgCount = unreadMsgCount;
-            this.lastReadMsgId = lastReadMsgId;
+            this.lastReadMsg = lastReadMsg;
     }
 
     toString(): string {

@@ -1,6 +1,6 @@
 import HttpService from "./HttpService";
 import Chat from "../models/Chat";
-import Message, { MessageDataType } from "../models/Message";
+import Message from "../models/Message";
 import { Headers, RANDOM_CHAT_AVATAR_URL } from "../util/Constants";
 import { ID } from "../util/Types";
 
@@ -59,6 +59,13 @@ class MessengerService {
         const headers: HeadersInit = this.getRequestResourceObjectHeader(id);
         const data = await HttpService.getJson(MessengerService.CHAT_URL + `/${id}?userId=${userId}`, undefined, headers);
         if (data == null) return null;
+        let lastReadMsg: Message | null;
+        if (data.lastReadMsg) {
+            lastReadMsg = new Message(data.lastReadMsg.id);
+            lastReadMsg.time = data.lastReadMsg.time;
+        } else {
+            lastReadMsg = null;
+        }
         const chat = new Chat(
             data.id,
             data.name,
@@ -69,7 +76,7 @@ class MessengerService {
             data.lastMessage,
             data.draft,
             data.unreadMsgCount,
-            data.lastReadMsgId);
+            lastReadMsg);
         return chat;
     }
 
@@ -95,8 +102,7 @@ class MessengerService {
                     chat.lastMessage.author, 
                     chat.lastMessage.time),
                 chat.draft,
-                chat.unreadMsgCount,
-                chat.lastReadMsgId
+                chat.unreadMsgCount
                 );
         }
         )
@@ -142,7 +148,7 @@ class MessengerService {
             userId,
             messageId
         }
-        return await HttpService.patchJson(MessengerService.CHAT_URL + `/${chatId}`,dto , headers);
+        return HttpService.patchJson(MessengerService.CHAT_URL + `/${chatId}/last-read-msg`,dto , headers);
     }
 
     async getMessages(dto: MessageRequestDTO): Promise<Message[]> {
@@ -165,7 +171,7 @@ class MessengerService {
 
     async sendMessage(message: Message): Promise<any> {
         const headers: HeadersInit = this.getRequestResourceObjectHeader(message.chatId);
-        return HttpService.postJson(MessengerService.CHAT_URL + `/${message.chatId}` + '/messages/create', message, headers);
+        return HttpService.postJson(MessengerService.CHAT_URL + `/${message.chatId}/messages/create`, message, headers);
     }
 
     async addUsersToChat(chatId?: number | string | null, users?: (number | string)[] | null): Promise<any> {
