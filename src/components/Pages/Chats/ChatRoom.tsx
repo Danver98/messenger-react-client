@@ -148,6 +148,9 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
     const setLastReadMsg = (message: Message) => {
         if (message.read) return;
         if (!message.id || message.id === lastReadMsgRef.current?.id) return;
+        if (!lastReadMsgRef.current) {
+            lastReadMsgRef.current = message;
+        }
         if (lastReadMsgRef.current?.time && message.time &&
             (lastReadMsgRef.current.time < message.time ||
                 (lastReadMsgRef.current.time === message.time &&

@@ -200,6 +200,9 @@
     display: flex;
     padding: 0px 16px 0px 0px;
     box-shadow: 3px 0px 5px 1px rgb(213, 218, 217);
+    &:focus-visible {
+        outline: none;
+    }
 }
 
 .message-list-item_container {

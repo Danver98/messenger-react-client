@@ -138,15 +138,7 @@ const MessageListItem = forwardRef((
                     tabIndex={-1}
                     ref={ref}
                 >
-                    {
-                        lastReadMsgId == null &&
-                        <NewMessagesDecorator />
-                    }
                     <MessageBody message={message} user={user} />
-                    {
-                        message.id === lastReadMsgId &&
-                        <NewMessagesDecorator />
-                    }
                 </li>
             )
         }
@@ -159,15 +151,7 @@ const MessageListItem = forwardRef((
                 tabIndex={-1}
                 ref={itemRef}
             >
-                {
-                    lastReadMsgId == null &&
-                    <NewMessagesDecorator />
-                }
                 <MessageBody message={message} user={user} />
-                {
-                        message.id === lastReadMsgId && !isFirst &&
-                        <NewMessagesDecorator />
-                }
             </li>
         )
 });
@@ -197,18 +181,34 @@ const MessageList = forwardRef(({ messages, user, lastReadMsgId, intersectionHan
         }
         const listId = "chat-room-msg-list";
         const listRoot = document.getElementById(listId);
-        const listItems = messages?.map((message, index) => {
-            return <MessageListItem
-                message={message}
-                user={user}
-                lastReadMsgId={lastReadMsgId || firstMsgId}
-                isFirst={index === 0}
-                isLast={index === messages.length - 1}
-                listRoot={listRoot}
-                intersectionHandler={intersectionHandler}
-                ref={ref}
-            />
-        })
+        let listItems: any[] = [];
+        let newMsgDecoratorInserted = false
+        // First message'll be in the bottom of display
+        messages?.forEach((message, index) => {
+            if (!newMsgDecoratorInserted && message.id === lastReadMsgId) {
+                listItems.push([
+                    <NewMessagesDecorator/>
+                ]);
+                newMsgDecoratorInserted = true;
+            }
+            listItems.push([
+                <MessageListItem
+                    message={message}
+                    user={user}
+                    lastReadMsgId={lastReadMsgId || firstMsgId}
+                    isFirst={index === 0}
+                    isLast={index === messages.length - 1}
+                    listRoot={listRoot}
+                    intersectionHandler={intersectionHandler}
+                    ref={ref}
+                />
+            ]);
+        });
+        if (!lastReadMsgId && messages.length) {
+            listItems.push([
+                <NewMessagesDecorator/>
+            ]);
+        }
 
         return (
             <ul
