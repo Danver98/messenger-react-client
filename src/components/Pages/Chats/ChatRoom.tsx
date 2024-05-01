@@ -123,7 +123,7 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
     const [isLoading, setIsLoading] = useState(false);
     const [hasMore, setHasMore] = useState(false);
     const [intersected, setIntersected] = useState(false);
-    const lastReadMsgRef = useRef<Message| null>(chat.lastMessage ? chat.lastMessage : null);
+    const lastReadMsgRef = useRef<Message| null>(chat.lastReadMsg ? chat.lastReadMsg : null);
 
 
     const fetchMessages = async (params: PagingParams) => {
@@ -148,10 +148,14 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
     const setLastReadMsg = (message: Message) => {
         if (message.read) return;
         if (!message.id || message.id === lastReadMsgRef.current?.id) return;
-        if (message.time && chat.lastReadMsg?.time &&
-            (message.time < chat.lastReadMsg.time || (message.time === chat.lastReadMsg.time &&
-                chat.lastReadMsg?.id && message.id < chat.lastReadMsg.id))) return;
-        lastReadMsgRef.current = message;
+        if (lastReadMsgRef.current?.time && message.time &&
+            (lastReadMsgRef.current.time < message.time ||
+                (lastReadMsgRef.current.time === message.time &&
+                lastReadMsgRef.current?.id &&
+                lastReadMsgRef.current.id < message.id)) 
+        ) {
+            lastReadMsgRef.current = message;
+        }
     }
 
     const sendMessage = async (event: any) => {

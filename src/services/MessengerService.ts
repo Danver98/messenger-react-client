@@ -62,7 +62,7 @@ class MessengerService {
         let lastReadMsg: Message | null;
         if (data.lastReadMsg) {
             lastReadMsg = new Message(data.lastReadMsg.id);
-            lastReadMsg.time = data.lastReadMsg.time;
+            lastReadMsg.time = new Date(data.lastReadMsg.time);
         } else {
             lastReadMsg = null;
         }

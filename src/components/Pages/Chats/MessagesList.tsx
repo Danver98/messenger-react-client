@@ -1,4 +1,4 @@
-import { createRef, forwardRef, useCallback, useEffect, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useRef} from "react";
 import Message, { MessageDataType } from "../../../models/Message";
 import FilePresentIcon from '@mui/icons-material/FilePresent';
 import User from "../../../models/User";
@@ -25,7 +25,8 @@ const MessageBody = ({ message, user }: { message: Message, user?: User | null }
             </div>
             <div className="message-list-item__messageBlock">
                 <div className="message-list-item__UserName">
-                    {message.author?.name + ' ' + message.author?.surname}
+                    {/* {message.author?.name + ' ' + message.author?.surname} */}
+                    {message.id}
                 </div>
                 <p className="message-list-item__messageData">
                     {
@@ -85,29 +86,32 @@ const MessageBody = ({ message, user }: { message: Message, user?: User | null }
     )
 };
 
-function useIntersecting(rootElement: any, ref: any, message: Message, handleIntersection: (obj: any) => void) {
-    const callback = useCallback(handleIntersection, [handleIntersection]);
-    
-    useEffect(() => {
-      const observer = new IntersectionObserver(entries => {
-        if (entries[0].isIntersecting) {
-            //const id = entries[0].target.getAttribute('id');
-            callback(message);
-        }
-      },
-        {   
-            root: rootElement,
-            threshold: 0.8
-        }
-      );
-      if (ref.current) observer.observe(ref.current);
-      return () => {
-        observer.disconnect();
-      };
-    }, [rootElement, ref, message, callback]);
+function useEnableIntersectionObserver(
+    rootElement: any,
+    ref: any,
+    handleIntersection: () => void) {
+        const callback = useCallback(handleIntersection, [handleIntersection]);
+        useEffect(() => {
+            const observer = new IntersectionObserver(entries => {
+                if (entries[0].isIntersecting) {
+                    callback();
+                }
+            },
+                {   
+                    root: rootElement,
+                    threshold: 0.8
+                }
+            );
+            if (ref.current) observer.observe(ref.current);
+            return () => {
+                observer.disconnect();
+            };
+        }, [rootElement, ref, callback]);
   }
 
-const MessageListItem = forwardRef(({ message, user, lastReadMsgId, isFirst, isLast, rootElement, clickHandler, intersectionHandler }:
+const MessageListItem = forwardRef((
+    { message, user, lastReadMsgId, isFirst, isLast, listRoot,
+        clickHandler, intersectionHandler}:
     { 
         message: Message,
         user?: User | null,
@@ -115,14 +119,13 @@ const MessageListItem = forwardRef(({ message, user, lastReadMsgId, isFirst, isL
         // isFirst - item in the bottom of the list (if look at the screen)
         isFirst?: boolean,
         isLast?: boolean,
-        scrollRef?: any,
-        rootElement: any,
+        listRoot: HTMLElement | null,
         clickHandler?: ((id: any) => void) | null,
-        intersectionHandler: ((message: Message) => void)
+        intersectionHandler: (message: Message) => void
     }, ref?: any) => {
         const messageId = message.id === null ? undefined : message.id;
         const itemRef = useRef(null);
-        useIntersecting(rootElement, itemRef, message, intersectionHandler);
+        useEnableIntersectionObserver(listRoot, itemRef, () => {intersectionHandler(message)});
         if (isLast) {
             // TODO: fix problem with double ref: for 'read' flag and data fetching
             return (
@@ -132,6 +135,7 @@ const MessageListItem = forwardRef(({ message, user, lastReadMsgId, isFirst, isL
                     // ref={ref} // lastItemRef
                     onClick={() => { clickHandler?.(message.id) }}
                     className="message-list-item"
+                    tabIndex={-1}
                     ref={ref}
                 >
                     {
@@ -152,6 +156,7 @@ const MessageListItem = forwardRef(({ message, user, lastReadMsgId, isFirst, isL
                 key={message.id}
                 onClick={() => { clickHandler?.(message.id) }}
                 className="message-list-item"
+                tabIndex={-1}
                 ref={itemRef}
             >
                 {
@@ -175,25 +180,14 @@ const MessageList = forwardRef(({ messages, user, lastReadMsgId, intersectionHan
         intersectionHandler: (message: Message) => void
     }, ref?: any) => {
         const firstMsgId = messages && messages.length ? messages[messages?.length - 1].id : null;
-        const scrollRefs : { [id: string] : any; } = {}
-        messages?.forEach((message: Message) => {
-            scrollRefs[message.id!] = createRef();
-        });
+        const listRef = useRef(null);
 
         useEffect(() => {
-            //if (!loading) return;
             const refId = lastReadMsgId ? lastReadMsgId : firstMsgId;
             if (!refId) return;
-            document.getElementById(String(refId))?.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center',
-            });
-            //setLoading(false);
-            // scrollRefs[refId]?.current?.scrollIntoView({
-            //     behavior: 'smooth',
-            //     block: 'start',
-            // });
+            document.getElementById(String(refId))?.focus();
         }, [lastReadMsgId, firstMsgId]);
+
         if (messages == null || messages.length === 0) {
             return (
                 <div className="chat-room-message-list-empty">
@@ -210,16 +204,16 @@ const MessageList = forwardRef(({ messages, user, lastReadMsgId, intersectionHan
                 lastReadMsgId={lastReadMsgId || firstMsgId}
                 isFirst={index === 0}
                 isLast={index === messages.length - 1}
-                scrollRef={scrollRefs[message.id!]}
-                rootElement={listRoot}
-                ref={ref}
+                listRoot={listRoot}
                 intersectionHandler={intersectionHandler}
+                ref={ref}
             />
         })
 
         return (
             <ul
                 id={listId}
+                ref={listRef}
                 className="chat-room-message-list"
             >
                 {listItems}
