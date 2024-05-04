@@ -130,7 +130,6 @@ const UserSelection = ({ user, requestFilter, onResult }:
         observerRef.current = new IntersectionObserver(
             (entries) => {
                 if (entries[0].isIntersecting) {
-                    console.log(`USER ELEMENT'S INTERSECTED`);
                     setIntersected((prev) => !prev);
                 }
             }
@@ -153,7 +152,6 @@ const UserSelection = ({ user, requestFilter, onResult }:
 
     useEffect(() => {
         const fetchUsers = async (dto: UserRequestDTO) => {
-            console.log(`useEffect() with fetchUsers() called! search: ${search}, open: ${open}. Will be called: ${open}`);
             if (!(open && hasMore)) return;
             if (search) {
                 // In case of search is present start requesting from 3 symbols-lenght string
@@ -183,7 +181,6 @@ const UserSelection = ({ user, requestFilter, onResult }:
         fetchUsers(dto);
 
         return () => {
-            console.log(`USE_EFFECT RETURN CALLED: from UserSelectionDialog.fetchUsers()`)
             //abortController.abort();
         };
 

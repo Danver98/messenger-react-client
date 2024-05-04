@@ -18,7 +18,6 @@ export default function Profile() {
         multiple: false,
         onFilesSuccessfullySelected: async ({ plainFiles, filesContent }: {plainFiles: any, filesContent: any}) => {
             // this callback is called when there were no validation errors
-            console.log('onFilesSuccessfullySelected', plainFiles, filesContent);
             //setImageFile(filesContent[0]);
             setImageFile(plainFiles[0]);
             if (!user?.id) return;

@@ -186,35 +186,3 @@ class HttpService {
 }
 
 export default HttpService.Instance;
-
-// fetch("https://localhost:8443/messenger/api/v1/auth/register", {
-//   method: 'POST',
-//   headers: {
-//     'Access-Control-Allow-Credentials': 'true',
-//     'Content-Type': 'application/json'
-//   },
-//   credentials: "include",
-//   body: JSON.stringify({
-//     'name': 'John',
-//     'surname': 'Suffered',
-//     'email': 'jsuffered@rambler.com',
-//     'password': 'password',
-//   })
-// }).then( (response) => {
-//   console.log(response.body)
-// })
-
-// fetch("https://localhost:8443/messenger/api/v1/auth/login", {
-//   method: 'POST',
-//   headers: {
-//     'Access-Control-Allow-Credentials': 'true',
-//     'Content-Type': 'application/json'
-//   },
-//   credentials: "include",
-//   body: JSON.stringify({
-//     'email': 'ssuffered_first@rambler.com',
-//     'password': 'password'
-//   })
-// }).then( (response) => {
-//   console.log(response.body)
-// }) 

@@ -2,13 +2,12 @@ import { useEffect, useState, useRef } from "react";
 import { FetchChats } from "./FetchData";
 import "./Chats.css"
 import ChatsList from "./ChatsList";
-import { DIRECTION } from "../../../util/Constants";
+import { CHATS_COMPONENT_MESSAGE_QUEUE, DIRECTION } from "../../../util/Constants";
 import { useAuthContextData } from "../../../middleware/AuthProvider";
 import ChatRoom from "./ChatRoom";
 import Chat from "../../../models/Chat";
 import { InputAdornment, TextField } from "@mui/material";
 import SearchIcon from '@mui/icons-material/Search';
-import CircularProgress from '@mui/material/CircularProgress';
 import { useListener } from 'react-bus';
 import Message, { MessageDataType, MessageType } from "../../../models/Message";
 import MessengerService from "../../../services/MessengerService";
@@ -64,8 +63,7 @@ export default function Chats() {
         error
     } = FetchChats(userId ? userId : 0, time, chatId, DIRECTION.PAST);
 
-    useListener(`/components/chats/messages`, (dto: any) => {
-        console.log(`Received message for '/components/chats/messages' channel `);
+    useListener(CHATS_COMPONENT_MESSAGE_QUEUE, (dto: any) => {
         const msg = dto.message;
         let chat = dto.chat;
         const message = new Message(msg.id, msg.chatId, msg.receiverId, msg.type, msg.data, msg.author, msg.time);
@@ -110,7 +108,6 @@ export default function Chats() {
         observerRef.current = new IntersectionObserver(
             (entries) => {
                 if (entries[0].isIntersecting) {
-                    console.log(`CHAT ELEMENT'S INTERSECTED`);
                     setCounter(prev => prev + 1);
                 }
             }

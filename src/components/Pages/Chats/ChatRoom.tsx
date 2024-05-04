@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import MessageList from "./MessagesList";
-import { DIRECTION } from "../../../util/Constants";
+import { CHATS_COMPONENT_MESSAGE_QUEUE, DIRECTION } from "../../../util/Constants";
 import Chat from "../../../models/Chat";
 import Message, { MessageData, MessageDataType, MessageType } from "../../../models/Message";
 import User from "../../../models/User";
@@ -16,6 +16,25 @@ import { useBus, useListener } from 'react-bus';
 import MessengerService from "../../../services/MessengerService";
 import { getType } from "../../../util/FileUtils";
 import { Headers } from "../../../util/Constants";
+import CloseIcon from '@mui/icons-material/Close';
+
+const Circle = ({value}: {value?: string | number | null}) => (
+    <Button
+        type="submit"
+        variant="contained"
+        color="secondary"
+        sx={{
+            position: "absolute",
+            bottom: 80,
+            right: 5,
+
+            aspectRatio:"1/1",
+            borderRadius: '50%',
+        }}
+    >
+        {value}
+    </Button>
+);
 
 export interface PagingParams {
     chatId?: number | string | null;
@@ -124,6 +143,8 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
     const [hasMore, setHasMore] = useState(false);
     const [intersected, setIntersected] = useState(false);
     const lastReadMsgRef = useRef<Message| null>(chat.lastReadMsg ? chat.lastReadMsg : null);
+    const msgsReadMap = useRef<{ [key: string]: any; }>({});
+    const [unreadMsgCount, setUnreadMsgCount] = useState<number>(chat.unreadMsgCount || 0);
 
 
     const fetchMessages = async (params: PagingParams) => {
@@ -145,11 +166,13 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
             [message, ...prevMessages])
     };
 
-    const setLastReadMsg = (message: Message) => {
+    const handleMsgIntersection = (message: Message, params?: any) => {
         if (message.read) return;
+        if (message.id && message.id in msgsReadMap) return;
         if (!message.id || message.id === lastReadMsgRef.current?.id) return;
         if (!lastReadMsgRef.current) {
             lastReadMsgRef.current = message;
+            setUnreadMsgCount(params.position - 1);
         }
         if (lastReadMsgRef.current?.time && message.time &&
             (lastReadMsgRef.current.time < message.time ||
@@ -158,6 +181,7 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
                 lastReadMsgRef.current.id < message.id)) 
         ) {
             lastReadMsgRef.current = message;
+            setUnreadMsgCount(params.position - 1);
         }
     }
 
@@ -235,7 +259,7 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
             setMessages((prevMessages: Message[]) =>
                 [message, ...prevMessages]);
             // send message to chats component queue
-            bus.emit(`/components/chats/messages`, {
+            bus.emit(CHATS_COMPONENT_MESSAGE_QUEUE, {
                 message: message,
                 chat: chat
             });
@@ -263,7 +287,6 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
         observerRef.current = new IntersectionObserver(
             (entries) => {
                 if (entries[0].isIntersecting) {
-                    console.log(`MESSAGE ELEMENT'S INTERSECTED`);
                     setIntersected((prev) => !prev);
                 }
             }
@@ -295,13 +318,11 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
 
 
     useEffect(() => {
-        console.log(`Chat id changed!`);
         setHasMore(true);
         setPagingParams({ chatId: chat.id, userId: authContext.user?.id });
     }, [chat.id]);
 
     useEffect(() => {
-        console.log(`Intersected!`);
         if (!messages) return;
         const lastMsg = messages[messages.length - 1];
         if (!lastMsg) return;
@@ -323,26 +344,31 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
                 <MessageList
                     messages={messages}
                     lastReadMsgId={chat.lastReadMsg?.id}
-                    intersectionHandler={setLastReadMsg}
+                    intersectionHandler={handleMsgIntersection}
                     user={authContext.user}
                     ref={setLastElementRef}
                 />
                 {
                     isLoading && <CircularProgress />
                 }
+                {
+                    unreadMsgCount > 0 &&
+                    <Circle value={unreadMsgCount}/>
+                }
                 <MessageSender handleSubmit={sendMessage} />
-                <Button
-                    size="small"
-                    variant="contained"
+                <IconButton
                     onClick={() => { closeChat?.() }}
                     sx={{
                         position: "absolute",
                         left: "105%",
                         top: "10px",
+                        
                     }}
                 >
-                    Close
-                </Button>
+                    <CloseIcon
+                        fontSize="large"
+                        />
+                </IconButton>
             </div>
         </div>
     )

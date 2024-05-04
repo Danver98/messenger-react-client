@@ -13,8 +13,6 @@ export function FetchChats(userId: number | string, time?: Date | null, chatId?:
 
     useEffect(() => {
         const fetchChats = async () => {
-            console.log(`useEffect() called! Fetching with params: userId: ${userId}, threshold: ${time}, thresholdChatId: ${chatId},
-            direction: ${direction}, count: ${count}, isLoading: ${isLoading}`)
             if (isLoading) return;
             setIsLoading(true);
             const dto = {
@@ -42,8 +40,6 @@ export function FetchMessages(pagingParams: PagingParams) {
     const [error, setError] = useState();
     useEffect(() => {
         const fetchMessages = async () => {
-            console.log(`useEffect() with fetchMessages() called! isLoading: ${isLoading}, hasMore: ${hasMore}, chatId: ${pagingParams.chatId},
-            time: ${pagingParams.time}, messageId: ${pagingParams.messageId}, direction: ${pagingParams.direction}, count: ${pagingParams.count}`)
             if (isLoading) return;
             setIsLoading(true);
             const dto = {

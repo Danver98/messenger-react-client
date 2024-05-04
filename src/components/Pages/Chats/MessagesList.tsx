@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useEffect, useRef} from "react";
+import { forwardRef, useCallback, useEffect, useRef } from "react";
 import Message, { MessageDataType } from "../../../models/Message";
 import FilePresentIcon from '@mui/icons-material/FilePresent';
 import User from "../../../models/User";
@@ -6,7 +6,7 @@ import "./Chats.css";
 
 const NewMessagesDecorator = () => {
     return (
-        <div className="chat-room__newMsgDecorator" data-content="New Messages"/>
+        <div className="chat-room__newMsgDecorator" data-content="New Messages" />
     )
 }
 
@@ -73,8 +73,8 @@ const MessageBody = ({ message, user }: { message: Message, user?: User | null }
                                     color="primary"
                                 />
                             </a>
-                            <span>{ (message.data?.data as string)
-                            .substring((message.data?.data as string).lastIndexOf('/') + 1)}</span>
+                            <span>{(message.data?.data as string)
+                                .substring((message.data?.data as string).lastIndexOf('/') + 1)}</span>
                         </div>
                     }
                 </p>
@@ -89,136 +89,154 @@ const MessageBody = ({ message, user }: { message: Message, user?: User | null }
 function useEnableIntersectionObserver(
     rootElement: any,
     ref: any,
-    handleIntersection: () => void) {
-        const callback = useCallback(handleIntersection, [handleIntersection]);
-        useEffect(() => {
-            const observer = new IntersectionObserver(entries => {
-                if (entries[0].isIntersecting) {
-                    callback();
+    handleIntersection: (params?: any) => void) {
+    const callback = useCallback(handleIntersection, [handleIntersection]);
+    useEffect(() => {
+        const observer = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting) {
+                const position = entries[0].target.getAttribute('data-item-index');
+                const params = {
+                    id: entries[0].target.getAttribute('id'),
+                    position: position? +position : null,
                 }
-            },
-                {   
-                    root: rootElement,
-                    threshold: 0.8
-                }
-            );
-            if (ref.current) observer.observe(ref.current);
-            return () => {
-                observer.disconnect();
-            };
-        }, [rootElement, ref, callback]);
-  }
+                callback(params);
+            }
+        },
+            {
+                root: rootElement,
+                threshold: 0.95
+            }
+        );
+        if (ref.current) observer.observe(ref.current);
+        return () => {
+            observer.disconnect();
+        };
+    }, [rootElement, ref, callback]);
+}
 
 const MessageListItem = forwardRef((
-    { message, user, lastReadMsgId, isFirst, isLast, listRoot,
-        clickHandler, intersectionHandler}:
-    { 
-        message: Message,
-        user?: User | null,
-        lastReadMsgId?: number | string | null,
-        // isFirst - item in the bottom of the list (if look at the screen)
-        isFirst?: boolean,
-        isLast?: boolean,
-        listRoot: HTMLElement | null,
-        clickHandler?: ((id: any) => void) | null,
-        intersectionHandler: (message: Message) => void
-    }, ref?: any) => {
-        const messageId = message.id === null ? undefined : message.id;
-        const itemRef = useRef(null);
-        useEnableIntersectionObserver(listRoot, itemRef, () => {intersectionHandler(message)});
-        if (isLast) {
-            // TODO: fix problem with double ref: for 'read' flag and data fetching
-            return (
-                <li
-                    id={messageId}
-                    key={message.id}
-                    // ref={ref} // lastItemRef
-                    onClick={() => { clickHandler?.(message.id) }}
-                    className="message-list-item"
-                    tabIndex={-1}
-                    ref={ref}
-                >
-                    <MessageBody message={message} user={user} />
-                </li>
-            )
-        }
+    { message, user, index, isLast, listRoot,
+        clickHandler, intersectionHandler }:
+        {
+            message: Message,
+            user?: User | null,
+            index?: number | null,
+            isLast?: boolean,
+            listRoot: HTMLElement | null,
+            clickHandler?: ((id: any) => void) | null,
+            intersectionHandler: (message: Message, params?: any) => void
+        }, ref?: any) => {
+    const messageId = message.id === null ? undefined : message.id;
+    const itemRef = useRef(null);
+    useEnableIntersectionObserver(
+        listRoot,
+        itemRef,
+        (params?: any) => { intersectionHandler(message, params) }
+    );
+    if (isLast) {
+        // TODO: fix problem with double ref: for 'read' flag and data fetching
         return (
             <li
                 id={messageId}
                 key={message.id}
+                data-item-index={index}
+                // ref={ref} // lastItemRef
                 onClick={() => { clickHandler?.(message.id) }}
                 className="message-list-item"
                 tabIndex={-1}
-                ref={itemRef}
+                ref={ref}
             >
                 <MessageBody message={message} user={user} />
             </li>
         )
+    }
+    return (
+        <li
+            id={messageId}
+            key={message.id}
+            data-item-index={index}
+            onClick={() => { clickHandler?.(message.id) }}
+            className="message-list-item"
+            tabIndex={-1}
+            ref={itemRef}
+        >
+            <MessageBody message={message} user={user} />
+        </li>
+    )
 });
 
-const MessageList = forwardRef(({ messages, user, lastReadMsgId, intersectionHandler }: 
-    { 
+const MessageList = forwardRef(({ messages, user, lastReadMsgId, intersectionHandler }:
+    {
         messages?: Message[],
         user?: User | null,
         lastReadMsgId?: number | string | null,
         intersectionHandler: (message: Message) => void
     }, ref?: any) => {
-        const firstMsgId = messages && messages.length ? messages[messages?.length - 1].id : null;
-        const listRef = useRef(null);
+    const firstMsgId = messages && messages.length ? messages[messages?.length - 1].id : null;
+    const listRef = useRef(null);
 
-        useEffect(() => {
-            const refId = lastReadMsgId ? lastReadMsgId : firstMsgId;
-            if (!refId) return;
-            document.getElementById(String(refId))?.focus();
-        }, [lastReadMsgId, firstMsgId]);
+    // const handleScroll = () => {
+    //     if (listRef.current) {
+    //         const { scrollTop, scrollLeft } = listRef.current;
+    //         const a = 1;
+    //     }
+    // }
 
-        if (messages == null || messages.length === 0) {
-            return (
-                <div className="chat-room-message-list-empty">
-                    No messages!
-                </div>
-            )
-        }
-        const listId = "chat-room-msg-list";
-        const listRoot = document.getElementById(listId);
-        let listItems: any[] = [];
-        let newMsgDecoratorInserted = false
-        // First message'll be in the bottom of display
-        messages?.forEach((message, index) => {
-            if (!newMsgDecoratorInserted && message.id === lastReadMsgId) {
-                listItems.push([
-                    <NewMessagesDecorator/>
-                ]);
-                newMsgDecoratorInserted = true;
-            }
-            listItems.push([
-                <MessageListItem
-                    message={message}
-                    user={user}
-                    lastReadMsgId={lastReadMsgId || firstMsgId}
-                    isFirst={index === 0}
-                    isLast={index === messages.length - 1}
-                    listRoot={listRoot}
-                    intersectionHandler={intersectionHandler}
-                    ref={ref}
-                />
-            ]);
-        });
-        if (!lastReadMsgId && messages.length) {
-            listItems.push([
-                <NewMessagesDecorator/>
-            ]);
-        }
+    useEffect(() => {
+        const refId = lastReadMsgId ? lastReadMsgId : firstMsgId;
+        if (!refId) return;
+        document.getElementById(String(refId))?.focus();
+    }, [lastReadMsgId, firstMsgId]);
 
+    if (messages == null || messages.length === 0) {
         return (
+            <div className="chat-room-message-list-empty">
+                No messages!
+            </div>
+        )
+    }
+    const listId = "chat-room-msg-list";
+    const listRoot = document.getElementById(listId);
+    // Subscribe to scroll event isnide message list
+
+    let listItems: any[] = [];
+    let newMsgDecoratorInserted = false
+    // First message'll be in the bottom of display
+    messages?.forEach((message, index) => {
+        if (!newMsgDecoratorInserted && message.id === lastReadMsgId && index !== 0) {
+            listItems.push([
+                <NewMessagesDecorator />
+            ]);
+            newMsgDecoratorInserted = true;
+        }
+        listItems.push([
+            <MessageListItem
+                message={message}
+                user={user}
+                index={index}
+                isLast={index === messages.length - 1}
+                listRoot={listRoot}
+                intersectionHandler={intersectionHandler}
+                ref={ref}
+            />
+        ]);
+    });
+    if (!lastReadMsgId && messages.length) {
+        listItems.push([
+            <NewMessagesDecorator />
+        ]);
+    }
+
+    return (
             <ul
+                className="chat-room-message-list"
                 id={listId}
                 ref={listRef}
-                className="chat-room-message-list"
+                //onScroll={handleScroll}
             >
                 {listItems}
             </ul>
-        )
+    )
 });
 
 export default MessageList;

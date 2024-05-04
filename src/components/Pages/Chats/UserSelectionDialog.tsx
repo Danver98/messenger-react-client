@@ -108,7 +108,6 @@ const UserSelectionDialog = ({ user, chat }: { user?: User | null, chat: Chat })
 
     useEffect(() => {
         const fetchUsers = async () => {
-            console.log(`useEffect() with fetchUsers() called! search: ${search}, open: ${open}. Will be called: ${open}`);
             if (!open) return;
             if (search) {
                 // In case of search is present start requesting from 3 symbols-lenght string
@@ -132,7 +131,6 @@ const UserSelectionDialog = ({ user, chat }: { user?: User | null, chat: Chat })
         fetchUsers();
 
         return () => {
-            console.log(`USE_EFFECT RETURN CALLED: from UserSelectionDialog.fetchUsers()`)
             //abortController.abort();
         };
 

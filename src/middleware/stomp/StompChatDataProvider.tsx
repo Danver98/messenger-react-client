@@ -6,6 +6,7 @@ import MessengerService, { ChatRequestDTO } from "../../services/MessengerServic
 import Chat from "../../models/Chat";
 import User from "../../models/User";
 import { useBus, useListener } from 'react-bus';
+import { CHATS_COMPONENT_MESSAGE_QUEUE } from "../../util/Constants";
 
 interface ChatDataStorage {
   messages: Message[];
@@ -35,7 +36,7 @@ const ChatDataProvider = ({ children }: { children: any }) => {
       chat: chat
     });
     // send message to chats component queue
-    bus.emit(`/components/chats/messages`, {
+    bus.emit(CHATS_COMPONENT_MESSAGE_QUEUE, {
       message: message,
       chat: chat
     });
@@ -61,7 +62,7 @@ const ChatDataProvider = ({ children }: { children: any }) => {
       chat: chat
     });
     // send message to chats component queue
-    bus.emit(`/components/chats/messages`, {
+    bus.emit(CHATS_COMPONENT_MESSAGE_QUEUE, {
       message: message,
       chat: chat
     });
