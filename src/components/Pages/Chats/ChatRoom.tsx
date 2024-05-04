@@ -238,7 +238,9 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
             receiverId,
             type,
             messageData,
-            author);
+            author,
+            // TODO: try to get private msgs sent from current user from server too
+            chat.private ? new Date() : null);
 
         const params: IPublishParams = {
             destination: destination,
@@ -252,7 +254,7 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
         }
         stompClient?.publish(params);
         if (chat.private) {
-            // TODO: in private chats we don'r get back our messages, so we've to insert it manually
+            // TODO: in private chats we don't get back our messages, so we've to insert it manually
             setMessages((prevMessages: Message[]) =>
                 [message, ...prevMessages]);
             // send message to chats component queue

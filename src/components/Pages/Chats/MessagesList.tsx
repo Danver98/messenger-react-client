@@ -169,18 +169,11 @@ const MessageList = forwardRef(({ messages, user, lastReadMsgId, intersectionHan
     {
         messages?: Message[],
         user?: User | null,
-        lastReadMsgId?: number | string | null,
+        lastReadMsgId?: number | string | null, //lastReadMsgId on backend, before opening ChatRoom
         intersectionHandler: (message: Message) => void
     }, ref?: any) => {
     const firstMsgId = messages && messages.length ? messages[messages?.length - 1].id : null;
-    const listRef = useRef(null);
-
-    // const handleScroll = () => {
-    //     if (listRef.current) {
-    //         const { scrollTop, scrollLeft } = listRef.current;
-    //         const a = 1;
-    //     }
-    // }
+    const listRef = useRef<HTMLUListElement>(null);
 
     useEffect(() => {
         const refId = lastReadMsgId ? lastReadMsgId : firstMsgId;
@@ -197,17 +190,20 @@ const MessageList = forwardRef(({ messages, user, lastReadMsgId, intersectionHan
     }
     const listId = "chat-room-msg-list";
     const listRoot = document.getElementById(listId);
-    // Subscribe to scroll event isnide message list
 
     let listItems: any[] = [];
     let newMsgDecoratorInserted = false
     // First message'll be in the bottom of display
     messages?.forEach((message, index) => {
         if (!newMsgDecoratorInserted && message.id === lastReadMsgId && index !== 0) {
-            listItems.push([
-                <NewMessagesDecorator />
-            ]);
-            newMsgDecoratorInserted = true;
+            // Additionally check whether message ist scroll position is at the end - 
+            // in that case user sees new message and we don't need to notify him more
+            if (listRef.current && listRef.current?.scrollTop !== 0) {
+                listItems.push([
+                    <NewMessagesDecorator />
+                ]);
+                newMsgDecoratorInserted = true;
+            }
         }
         listItems.push([
             <MessageListItem
@@ -232,7 +228,6 @@ const MessageList = forwardRef(({ messages, user, lastReadMsgId, intersectionHan
                 className="chat-room-message-list"
                 id={listId}
                 ref={listRef}
-                //onScroll={handleScroll}
             >
                 {listItems}
             </ul>
