@@ -143,9 +143,7 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
     const [hasMore, setHasMore] = useState(false);
     const [intersected, setIntersected] = useState(false);
     const lastReadMsgRef = useRef<Message| null>(chat.lastReadMsg ? chat.lastReadMsg : null);
-    const msgsReadMap = useRef<{ [key: string]: any; }>({});
     const [unreadMsgCount, setUnreadMsgCount] = useState<number>(chat.unreadMsgCount || 0);
-
 
     const fetchMessages = async (params: PagingParams) => {
         const dto = {
@@ -168,7 +166,6 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
 
     const handleMsgIntersection = (message: Message, params?: any) => {
         if (message.read) return;
-        if (message.id && message.id in msgsReadMap) return;
         if (!message.id || message.id === lastReadMsgRef.current?.id) return;
         if (!lastReadMsgRef.current) {
             lastReadMsgRef.current = message;
