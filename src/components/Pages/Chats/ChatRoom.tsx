@@ -162,6 +162,8 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
         const message = new Message(data.id, data.chatId, data.receiverId, data.type, data.data, data.author, data.time);
         setMessages((prevMessages: Message[]) =>
             [message, ...prevMessages])
+        // if scrollTop !== 0
+        setUnreadMsgCount(count => count + 1);
     };
 
     const handleMsgIntersection = (message: Message, params?: any) => {
@@ -260,8 +262,11 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
             // send message to chats component queue
             bus.emit(CHATS_COMPONENT_MESSAGE_QUEUE, {
                 message: message,
-                chat: chat
+                chat: chat,
+                unreadMsgCount: unreadMsgCount,
             });
+            // if scrollTop !== 0
+            setUnreadMsgCount(count => count + 1);
         }
     }
 

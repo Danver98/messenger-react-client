@@ -4,6 +4,7 @@ export const ACCESS_TOKEN = 'access_token';
 export const REFRESH_TOKEN = 'refresh_token';
 export const CURRENT_LOGGED_USER = 'current_logged_user'
 export const CHATS_COMPONENT_MESSAGE_QUEUE = '/components/chats/messages';
+export const CHATS_COMPONENT_MSG_UNREAD_COUNT_QUEUE = '/components/chats/messages/unread/count';
 
 export const DIRECTION = {
     FUTURE: 1,
