@@ -50,6 +50,7 @@ export interface PagingParams {
 
 function MessageSender({ handleSubmit }: { handleSubmit: (event: any) => any }) {
     const fileUpload = useRef<any>();
+    const textArea = useRef<HTMLTextAreaElement | null>(null);
     const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
     
     const fileInputChanged = (event: any) => {
@@ -61,9 +62,16 @@ function MessageSender({ handleSubmit }: { handleSubmit: (event: any) => any }) 
         setSelectedFiles([]);
     }
 
+    const clearInput = (event: any) => {
+        if (textArea.current) {
+            textArea.current.value = '';
+        }
+    }
+
     const onSubmit = async (event: any) => {
         await handleSubmit(event);
         clearFileList(event);
+        clearInput(event);
     }
 
     return (
@@ -95,6 +103,7 @@ function MessageSender({ handleSubmit }: { handleSubmit: (event: any) => any }) 
                             maxRows={4}
                             placeholder="Enter your message"
                             className="chat-room-message-sender__TextArea"
+                            ref={textArea}
                         />
                         {
                             selectedFiles && selectedFiles.length > 0 &&
@@ -256,22 +265,22 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
             } as StompHeaders
         }
         stompClient?.publish(params);
-        if (chat.private) {
-            // TODO: in private chats we don't get back our messages, so we've to insert it manually
-            setMessages((prevMessages: Message[]) =>
-                [message, ...prevMessages]);
-            // send message to chats component queue
-            bus.emit(CHATS_COMPONENT_MESSAGE_QUEUE, {
-                message: message,
-                chat: chat,
-                unreadMsgCount: unreadMsgCount,
-            });
-            setUnreadMsgCount(count => count + 1);
-            // TODO: why checking scroll in onMessageREceived doesn't work?
-            if (msgListRef.current?.messageList.scrollTop !== 0) {
-                setUnreadMsgCount(count => count + 1);
-            }
-        }
+        // if (chat.private) {
+        //     // TODO: in private chats we don't get back our messages, so we've to insert it manually
+        //     setMessages((prevMessages: Message[]) =>
+        //         [message, ...prevMessages]);
+        //     // send message to chats component queue
+        //     bus.emit(CHATS_COMPONENT_MESSAGE_QUEUE, {
+        //         message: message,
+        //         chat: chat,
+        //         unreadMsgCount: unreadMsgCount,
+        //     });
+        //     setUnreadMsgCount(count => count + 1);
+        //     // TODO: why checking scroll in onMessageREceived doesn't work?
+        //     if (msgListRef.current?.messageList.scrollTop !== 0) {
+        //         setUnreadMsgCount(count => count + 1);
+        //     }
+        // }
     }
 
     // Subscribe to new messages coming to chat
