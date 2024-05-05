@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { FetchChats } from "./FetchData";
 import "./Chats.css"
 import ChatsList from "./ChatsList";
-import { CHATS_COMPONENT_MESSAGE_QUEUE, DIRECTION } from "../../../util/Constants";
+import { CHATS_COMPONENT_MESSAGE_QUEUE, CHATS_COMPONENT_MSG_UNREAD_COUNT_QUEUE, DIRECTION } from "../../../util/Constants";
 import { useAuthContextData } from "../../../middleware/AuthProvider";
 import ChatRoom from "./ChatRoom";
 import Chat from "../../../models/Chat";
@@ -104,6 +104,35 @@ export default function Chats() {
             return;
         }
         setChats([chat, ...filteredChats ]);
+    });
+
+
+    // Update chat list unread messages counter when chat room is open
+    useListener(CHATS_COMPONENT_MSG_UNREAD_COUNT_QUEUE, (dto: any) => {
+        if (!dto.chat) {
+            return;
+        }
+        //setChats((prevChats) => [newChat, ...prevChats]);
+        const newChats: Chat[] = [];
+        chats.forEach((element: Chat) => {
+            if (element.id === dto.chat?.id) {
+                const chat = new Chat(
+                    element.id,
+                    element.name,
+                    element.private,
+                    element.avatar,
+                    element.time,
+                    element.participants,
+                    element.lastMessage,
+                    element.draft,
+                    dto.unreadMsgCount === 0 ? null : dto.unreadMsgCount);
+                    newChats.push(chat);
+            } else {
+                newChats.push(element);
+            }
+        });
+
+        setChats(newChats);     
     });
 
     useEffect(() => {

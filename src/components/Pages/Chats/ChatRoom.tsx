@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import MessageList from "./MessagesList";
-import { CHATS_COMPONENT_MESSAGE_QUEUE, DIRECTION } from "../../../util/Constants";
+import { CHATS_COMPONENT_MSG_UNREAD_COUNT_QUEUE, DIRECTION } from "../../../util/Constants";
 import Chat from "../../../models/Chat";
 import Message, { MessageData, MessageDataType, MessageType } from "../../../models/Message";
 import User from "../../../models/User";
@@ -299,6 +299,10 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
         );
         return () => {
             // Shoud be run when user closes current chat or switches to another one
+            bus.emit(CHATS_COMPONENT_MSG_UNREAD_COUNT_QUEUE, {
+                chat: chat,
+                unreadMsgCount: unreadMsgCount,
+            });
             if (chat.id && lastReadMsgRef && authContext.user?.id) {
                 if ( chat.lastReadMsg?.id === lastReadMsgRef.current?.id || !lastReadMsgRef.current) {
                     return;
