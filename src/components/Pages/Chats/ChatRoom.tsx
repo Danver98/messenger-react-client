@@ -16,7 +16,6 @@ import { useBus, useListener } from 'react-bus';
 import MessengerService from "../../../services/MessengerService";
 import { getType } from "../../../util/FileUtils";
 import { Headers } from "../../../util/Constants";
-import { IMessageListRef } from "./MessagesList";
 import CloseIcon from '@mui/icons-material/Close';
 
 const Circle = ({value}: {value?: string | number | null}) => (
@@ -138,7 +137,7 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
     const authContext = useAuthContextData();
     const bus = useBus();
     const [pagingParams, setPagingParams] = useState<PagingParams>(
-        { 
+        {
             chatId: chat.id,
             userId: authContext.user?.id,
             direction: DIRECTION.PAST,
@@ -152,7 +151,6 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
     const [isLoading, setIsLoading] = useState(false);
     const [hasMore, setHasMore] = useState(false);
     const [intersected, setIntersected] = useState(false);
-    const msgListRef = useRef<IMessageListRef>(null);
     const lastReadMsgRef = useRef<Message| null>(chat.lastReadMsg ? chat.lastReadMsg : null);
     const [unreadMsgCount, setUnreadMsgCount] = useState<number>(chat.unreadMsgCount || 0);
 
@@ -251,8 +249,7 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
             type,
             messageData,
             author,
-            // TODO: try to get private msgs sent from current user from server too
-            chat.private ? new Date() : null);
+        );
 
         const params: IPublishParams = {
             destination: destination,
@@ -266,20 +263,12 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
         }
         stompClient?.publish(params);
         // if (chat.private) {
-        //     // TODO: in private chats we don't get back our messages, so we've to insert it manually
-        //     setMessages((prevMessages: Message[]) =>
-        //         [message, ...prevMessages]);
-        //     // send message to chats component queue
-        //     bus.emit(CHATS_COMPONENT_MESSAGE_QUEUE, {
+        //     // TODO: in private chats we don't get back our messages, so we've to insert it manually,
+               // if server doesn't send back private message to author
+        //     bus.emit(`/chats/${chat.id}/messages`, {
         //         message: message,
         //         chat: chat,
-        //         unreadMsgCount: unreadMsgCount,
         //     });
-        //     setUnreadMsgCount(count => count + 1);
-        //     // TODO: why checking scroll in onMessageREceived doesn't work?
-        //     if (msgListRef.current?.messageList.scrollTop !== 0) {
-        //         setUnreadMsgCount(count => count + 1);
-        //     }
         // }
     }
 
@@ -363,8 +352,7 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
                     lastReadMsgId={chat.lastReadMsg?.id}
                     intersectionHandler={handleMsgIntersection}
                     user={authContext.user}
-                    setLastElement={setLastElementRef}
-                    ref={msgListRef}
+                    ref={setLastElementRef}
                 />
                 {
                     isLoading && <CircularProgress />
