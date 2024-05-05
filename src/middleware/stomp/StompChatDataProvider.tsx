@@ -1,16 +1,13 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect } from "react";
 import { useCurrentLoggedUser } from "../../components/hooks/useToken";
 import { useStompClient } from "react-stomp-hooks";
 import Message, { MessageType } from "../../models/Message";
 import MessengerService, { ChatRequestDTO } from "../../services/MessengerService";
 import Chat from "../../models/Chat";
 import User from "../../models/User";
-import { useBus, useListener } from 'react-bus';
+import { useBus } from 'react-bus';
 import { CHATS_COMPONENT_MESSAGE_QUEUE } from "../../util/Constants";
 
-interface ChatDataStorage {
-  messages: Message[];
-}
 
 interface IChatDataContext {
   setCurrentLoggedUser?: any;
@@ -22,14 +19,13 @@ const ChatDataProvider = ({ children }: { children: any }) => {
 
   const bus = useBus();
   // Memoized value of the authentication context
-  const { currentLoggedUser, getCurrentLoggedUser, setCurrentLoggedUser } = useCurrentLoggedUser();
+  const { currentLoggedUser, setCurrentLoggedUser } = useCurrentLoggedUser();
   const stompClient = useStompClient();
 
   function OnPublicMessageReceived(payload: any): void {
     const dto = JSON.parse(payload.body);
     const data = dto.message;
     const chat = dto.chat;
-    console.log(`Public payload received: ${dto}`);
     const message = new Message(data.id, data.chatId, data.receiverId, data.type, data.data, data.author, data.time);
     bus.emit(`/chats/${data.chatId}/messages`, {
       message: message,
@@ -46,9 +42,7 @@ const ChatDataProvider = ({ children }: { children: any }) => {
     const dto = JSON.parse(payload.body);
     const data = dto.message;
     const chat = dto.chat;
-    console.log(`Private payload received: ${dto}`);
     if (data.type === MessageType.CREATION) {
-      console.log(`User's got an invitation to the new chat!`)
       if (chat != null && !chat.private) {
         // If given public chat, subscribe
         stompClient?.subscribe(`/topic/chats/${data.chatId}/messages`, (payload: any) => {
@@ -71,7 +65,6 @@ const ChatDataProvider = ({ children }: { children: any }) => {
   useEffect(() => {
     const subscribe = async (user: User | null) => {
       if (!user) return;
-      console.log(`Subscribing to private chat...`);
       stompClient?.subscribe(`/user/${user.id}/queue/chats/messages`, (payload: any) => {
         OnPrivateMessageReceived(payload);
       });
@@ -80,20 +73,17 @@ const ChatDataProvider = ({ children }: { children: any }) => {
         userId: user.id
       };
       const chats = await MessengerService.getChatsByUserLight(dto);
-      console.log(`Subscribing to public chats...`);
       chats?.forEach((chat: Chat) => {
         if (chat.private) return;
         stompClient?.subscribe(`/topic/chats/${chat.id}/messages`, (payload: any) => {
           OnPublicMessageReceived(payload);
         });
       });
-      console.log(`Subscription complete!`);
     }
 
     subscribe(currentLoggedUser);
 
     return () => {
-      console.log(`Finishing ChatDataProvider useEffect()`);
     }
 
   }, [currentLoggedUser, stompClient]);

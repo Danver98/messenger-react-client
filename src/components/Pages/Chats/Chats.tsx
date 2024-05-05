@@ -63,6 +63,7 @@ export default function Chats() {
         error
     } = FetchChats(userId ? userId : 0, time, chatId, DIRECTION.PAST);
 
+    // New message's been sent
     useListener(CHATS_COMPONENT_MESSAGE_QUEUE, (dto: any) => {
         const msg = dto.message;
         let chat = dto.chat;
@@ -76,7 +77,8 @@ export default function Chats() {
                 chat.time,
                 chat.participants,
                 message,
-                chat.draft
+                chat.draft,
+                dto.unreadMsgCount != null ? dto.unreadMsgCount + 1 : chat.unreadMsgCount,
             );
             setChats((prevChats) => [newChat, ...prevChats]);
             return;

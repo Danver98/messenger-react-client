@@ -16,6 +16,7 @@ import { useBus, useListener } from 'react-bus';
 import MessengerService from "../../../services/MessengerService";
 import { getType } from "../../../util/FileUtils";
 import { Headers } from "../../../util/Constants";
+import { IMessageListRef } from "./MessagesList";
 import CloseIcon from '@mui/icons-material/Close';
 
 const Circle = ({value}: {value?: string | number | null}) => (
@@ -142,6 +143,7 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
     const [isLoading, setIsLoading] = useState(false);
     const [hasMore, setHasMore] = useState(false);
     const [intersected, setIntersected] = useState(false);
+    const msgListRef = useRef<IMessageListRef>(null);
     const lastReadMsgRef = useRef<Message| null>(chat.lastReadMsg ? chat.lastReadMsg : null);
     const [unreadMsgCount, setUnreadMsgCount] = useState<number>(chat.unreadMsgCount || 0);
 
@@ -162,6 +164,7 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
         const message = new Message(data.id, data.chatId, data.receiverId, data.type, data.data, data.author, data.time);
         setMessages((prevMessages: Message[]) =>
             [message, ...prevMessages])
+        setUnreadMsgCount(count => count + 1);
     };
 
     const handleMsgIntersection = (message: Message, params?: any) => {
@@ -260,8 +263,14 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
             // send message to chats component queue
             bus.emit(CHATS_COMPONENT_MESSAGE_QUEUE, {
                 message: message,
-                chat: chat
+                chat: chat,
+                unreadMsgCount: unreadMsgCount,
             });
+            setUnreadMsgCount(count => count + 1);
+            // TODO: why checking scroll in onMessageREceived doesn't work?
+            if (msgListRef.current?.messageList.scrollTop !== 0) {
+                setUnreadMsgCount(count => count + 1);
+            }
         }
     }
 
@@ -345,7 +354,8 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
                     lastReadMsgId={chat.lastReadMsg?.id}
                     intersectionHandler={handleMsgIntersection}
                     user={authContext.user}
-                    ref={setLastElementRef}
+                    setLastElement={setLastElementRef}
+                    ref={msgListRef}
                 />
                 {
                     isLoading && <CircularProgress />

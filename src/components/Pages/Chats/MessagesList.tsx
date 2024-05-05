@@ -1,8 +1,12 @@
-import { forwardRef, useCallback, useEffect, useRef } from "react";
+import { forwardRef, useCallback, useEffect, useRef, useImperativeHandle } from "react";
 import Message, { MessageDataType } from "../../../models/Message";
 import FilePresentIcon from '@mui/icons-material/FilePresent';
 import User from "../../../models/User";
 import "./Chats.css";
+
+export interface IMessageListRef {
+    messageList: any;
+}
 
 const NewMessagesDecorator = () => {
     return (
@@ -124,7 +128,7 @@ const MessageListItem = forwardRef((
             isLast?: boolean,
             listRoot: HTMLElement | null,
             clickHandler?: ((id: any) => void) | null,
-            intersectionHandler: (message: Message, params?: any) => void
+            intersectionHandler: (message: Message, params?: any) => void,
         }, ref?: any) => {
     const messageId = message.id === null ? undefined : message.id;
     const itemRef = useRef(null);
@@ -165,15 +169,23 @@ const MessageListItem = forwardRef((
     )
 });
 
-const MessageList = forwardRef(({ messages, user, lastReadMsgId, intersectionHandler }:
+const MessageList = forwardRef<IMessageListRef, any>(({ messages, user, lastReadMsgId, intersectionHandler, setLastElement }:
     {
         messages?: Message[],
         user?: User | null,
         lastReadMsgId?: number | string | null, //lastReadMsgId on backend, before opening ChatRoom
-        intersectionHandler: (message: Message) => void
+        intersectionHandler: (message: Message) => void,
+        setLastElement: (element?: any) => any,
     }, ref?: any) => {
     const firstMsgId = messages && messages.length ? messages[messages?.length - 1].id : null;
     const listRef = useRef<HTMLUListElement>(null);
+
+    useImperativeHandle(ref, () => {
+        return {
+            messageList: listRef.current,
+        }
+    }
+    );
 
     useEffect(() => {
         const refId = lastReadMsgId ? lastReadMsgId : firstMsgId;
@@ -213,7 +225,7 @@ const MessageList = forwardRef(({ messages, user, lastReadMsgId, intersectionHan
                 isLast={index === messages.length - 1}
                 listRoot={listRoot}
                 intersectionHandler={intersectionHandler}
-                ref={ref}
+                ref={setLastElement}
             />
         ]);
     });
