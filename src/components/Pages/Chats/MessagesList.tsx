@@ -101,7 +101,7 @@ function useEnableIntersectionObserver(
                 const position = entries[0].target.getAttribute('data-item-index');
                 const params = {
                     id: entries[0].target.getAttribute('id'),
-                    position: position? +position : null,
+                    position: position ? +position : null,
                 }
                 callback(params);
             }
@@ -144,11 +144,10 @@ const MessageListItem = forwardRef((
                 id={messageId}
                 key={message.id}
                 data-item-index={index}
-                // ref={ref} // lastItemRef
                 onClick={() => { clickHandler?.(message.id) }}
                 className="message-list-item"
                 tabIndex={-1}
-                ref={ref}
+                ref={ref} // lastItemRef
             >
                 <MessageBody message={message} user={user} />
             </li>

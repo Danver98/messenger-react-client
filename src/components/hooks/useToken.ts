@@ -62,6 +62,13 @@ export function setToken(key: string, token: object | null): void {
   localStorage.setItem(key, JSON.stringify(token));
 }
 
+export function setCurrentLoggedUser(user: User | null): void {
+  if (user == null) {
+    localStorage.removeItem(CURRENT_LOGGED_USER);
+  }
+  localStorage.setItem(CURRENT_LOGGED_USER, JSON.stringify(user));
+}
+
 export function useCurrentLoggedUser() {
   const getCurrentLoggedUser = () => {
     const user = localStorage.getItem(CURRENT_LOGGED_USER);

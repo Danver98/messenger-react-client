@@ -1,5 +1,5 @@
 export const RANDOM_AVATAR_URL = 'https://i.pravatar.cc/'; // /{size}
-export const RANDOM_CHAT_AVATAR_URL = 'https://random.imagecdn.app/' // /{width}/{height}
+export const RANDOM_CHAT_AVATAR_URL = 'https://random.imagecdn.app/v1/image' // /{width}/{height}
 export const ACCESS_TOKEN = 'access_token';
 export const REFRESH_TOKEN = 'refresh_token';
 export const CURRENT_LOGGED_USER = 'current_logged_user'

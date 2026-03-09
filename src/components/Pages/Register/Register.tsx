@@ -14,7 +14,7 @@ export default function Register({ onRegister }: { onRegister?: (result: object)
             'surname': formData.get('surname'),
             'email': formData.get('email'),
             'password': formData.get('password'),
-            'avatar': RANDOM_CHAT_AVATAR_URL + `/${100}`
+            'avatar': RANDOM_CHAT_AVATAR_URL + `/${100}/${100}`
         };
         const result = await AuthService.register(data);
         onRegister?.(result);
