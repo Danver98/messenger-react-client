@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import MessageList from "./MessagesList";
-import { CHATS_COMPONENT_MSG_UNREAD_COUNT_QUEUE, DIRECTION, CHATS_COMPONENT_MESSAGE_QUEUE } from "../../../util/Constants";
+import { CHATS_COMPONENT_MSG_UNREAD_COUNT_QUEUE, DIRECTION,
+    CHATS_COMPONENT_MESSAGE_QUEUE } from "../../../util/Constants";
 import Chat from "../../../models/Chat";
 import Message, { MessageData, MessageDataType, MessageType } from "../../../models/Message";
 import User from "../../../models/User";
