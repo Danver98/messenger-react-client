@@ -146,6 +146,8 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
         });
     const [draft, setDraft] = useState<boolean | null | undefined>(chat.draft);
     const [lastElementRef, setLastElementRef] = useState(null);
+    // Observer of the last element in the list of messages. If it's intersected,
+    // component start fetching new nessages
     const observerRef = useRef<IntersectionObserver | null>(null);
     const stompClient = useStompClient();
     const [messages, setMessages] = useState<Message[]>([]);
@@ -282,6 +284,9 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
     // Subscribe to new messages coming to chat
     useListener(`/chats/${chat.id}/messages`, onMessageReceived);
 
+    /**
+     * Starts fetching new chunk of messages on pagingParams change
+     */
     useEffect(() => {
         if (!hasMore) return;
         const f = async () => {
@@ -296,6 +301,10 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
         f();
     }, [pagingParams]);
 
+    /**
+     * Initializes observer for last message in the list (it's reversed - the last message is at the top).
+     * If it's intersected, component starts fetching new messages
+     */
     useEffect(() => {
         observerRef.current = new IntersectionObserver(
             (entries) => {
@@ -319,6 +328,10 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
         }
     }, []); // Runs on start only
 
+    /**
+     * Starts observing new last message element (visually located at the top of viewport)
+     * to trigger fetch messages when intersected
+     */
     useEffect(() => {
         const observerCurrent = observerRef.current;
 
@@ -339,6 +352,9 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
         setPagingParams({ chatId: chat.id, userId: authContext.user?.id });
     }, [chat.id]);
 
+    /**
+     * Fires when last message is intersected. Setting new paging params triggers messages fetching
+     */
     useEffect(() => {
         if (!messages) return;
         const lastMsg = messages[messages.length - 1];
