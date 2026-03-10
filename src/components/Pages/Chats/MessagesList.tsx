@@ -90,69 +90,26 @@ const MessageBody = ({ message, user }: { message: Message, user?: User | null }
     )
 };
 
-function useEnableIntersectionObserver(
-    rootElement: any,
-    ref: any,
-    handleIntersection: (params?: any) => void) {
-    const callback = useCallback(handleIntersection, [handleIntersection]);
-    useEffect(() => {
-        const observer = new IntersectionObserver(entries => {
-            if (entries[0].isIntersecting) {
-                const position = entries[0].target.getAttribute('data-item-index');
-                const params = {
-                    id: entries[0].target.getAttribute('id'),
-                    position: position ? +position : null,
-                }
-                callback(params);
-            }
-        },
-            {
-                root: rootElement,
-                threshold: 0.95
-            }
-        );
-        if (ref.current) observer.observe(ref.current);
-        return () => {
-            observer.disconnect();
-        };
-    }, [rootElement, ref, callback]);
-}
-
 const MessageListItem = forwardRef((
-    { message, user, index, isLast, listRoot,
-        clickHandler, intersectionHandler }:
+    { message, user, index, isLast, observer,
+        clickHandler}:
         {
             message: Message,
             user?: User | null,
             index?: number | null,
             isLast?: boolean,
-            listRoot: HTMLElement | null,
+            observer?: IntersectionObserver | null
             clickHandler?: ((id: any) => void) | null,
-            intersectionHandler: (message: Message, params?: any) => void,
         }, ref?: any) => {
     const messageId = message.id === null ? undefined : message.id;
     const itemRef = useRef(null);
-    useEnableIntersectionObserver(
-        listRoot,
-        itemRef,
-        (params?: any) => { intersectionHandler(message, params) }
-    );
-    if (isLast) {
-        // TODO: fix problem with double ref: for 'read' flag and data fetching
-        return (
-            <li
-                id={messageId}
-                key={message.id}
-                data-item-index={index}
-                onClick={() => { clickHandler?.(message.id) }}
-                className="message-list-item"
-                tabIndex={-1}
-                ref={ref} // lastItemRef
-            >
-                <MessageBody message={message} user={user} />
-            </li>
-        )
-    }
+    useEffect(() => {
+        if (itemRef.current && observer) {
+            observer.observe(itemRef.current);
+        }
+    }, [observer, itemRef])
+
+    // TODO: fix problem with double ref: for 'read' flag and data fetching
     return (
         <li
             id={messageId}
@@ -161,7 +118,7 @@ const MessageListItem = forwardRef((
             onClick={() => { clickHandler?.(message.id) }}
             className="message-list-item"
             tabIndex={-1}
-            ref={itemRef}
+            ref={isLast ? ref : itemRef} // lastItemRef or itemRef
         >
             <MessageBody message={message} user={user} />
         </li>
@@ -173,16 +130,45 @@ const MessageList = forwardRef(({ messages, user, lastReadMsgId, intersectionHan
         messages?: Message[],
         user?: User | null,
         lastReadMsgId?: number | string | null, //lastReadMsgId on backend, before opening ChatRoom
-        intersectionHandler: (message: Message) => void,
+        intersectionHandler: (params?: any) => void,
     }, ref?: any) => {
     const firstMsgId = messages && messages.length ? messages[messages?.length - 1].id : null;
+    const listId = "chat-room-msg-list";
     const listRef = useRef<HTMLUListElement>(null);
+    /**
+     * Observes unread messages
+     */
+    const observerRef = useRef<IntersectionObserver | null>(null);
 
     useEffect(() => {
         const refId = lastReadMsgId ? lastReadMsgId : firstMsgId;
         if (!refId) return;
         document.getElementById(String(refId))?.focus();
     }, [lastReadMsgId, firstMsgId]);
+
+    useEffect(() => {
+        observerRef.current = new IntersectionObserver((entries) => {
+            entries.forEach((entry: IntersectionObserverEntry) => {
+                if (entry.isIntersecting) {
+                    const position = entries[0].target.getAttribute('data-item-index');
+                    const params = {
+                        id: entries[0].target.getAttribute('id'),
+                        position: position ? +position : null,
+                    };
+                    observerRef.current?.unobserve(entry.target);
+                    intersectionHandler(params);
+                }
+            })
+        },
+            {
+                root: listRef.current,
+                threshold: 0.95
+            }
+        );
+        return () => {
+            observerRef.current?.disconnect();
+        }
+    }, [listRef, intersectionHandler]);
 
     if (messages == null || messages.length === 0) {
         return (
@@ -191,11 +177,10 @@ const MessageList = forwardRef(({ messages, user, lastReadMsgId, intersectionHan
             </div>
         )
     }
-    const listId = "chat-room-msg-list";
-    const listRoot = document.getElementById(listId);
 
     let listItems: any[] = [];
     let newMsgDecoratorInserted = false
+    const lastMsgReadIndex = messages.findIndex(msg => msg.id === lastReadMsgId);
     // First message'll be in the bottom of display
     messages?.forEach((message, index) => {
         if (!newMsgDecoratorInserted && message.id === lastReadMsgId && index !== 0) {
@@ -214,8 +199,7 @@ const MessageList = forwardRef(({ messages, user, lastReadMsgId, intersectionHan
                 user={user}
                 index={index}
                 isLast={index === messages.length - 1}
-                listRoot={listRoot}
-                intersectionHandler={intersectionHandler}
+                observer={index < lastMsgReadIndex ? observerRef.current : null}
                 ref={ref}
             />
         ]);

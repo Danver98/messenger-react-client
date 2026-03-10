@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
 import MessageList from "./MessagesList";
 import { CHATS_COMPONENT_MSG_UNREAD_COUNT_QUEUE, DIRECTION,
     CHATS_COMPONENT_MESSAGE_QUEUE } from "../../../util/Constants";
@@ -154,7 +154,7 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
     const [isLoading, setIsLoading] = useState(false);
     const [hasMore, setHasMore] = useState(false);
     const [intersected, setIntersected] = useState(false);
-    const lastReadMsgRef = useRef<Message| null>(chat.lastReadMsg ? chat.lastReadMsg : null);
+    const lastReadMsgRef = useRef<string| null>(chat.lastReadMsg ? chat.lastReadMsg.id : null);
     const [unreadMsgCount, setUnreadMsgCount] = useState<number>(chat.unreadMsgCount || 0);
 
     const fetchMessages = async (params: PagingParams) => {
@@ -178,23 +178,16 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
         setUnreadMsgCount(count => count + 1);
     };
 
-    const handleMsgIntersection = (message: Message, params?: any) => {
-        if (message.read) return;
-        if (!message.id || message.id === lastReadMsgRef.current?.id) return;
-        if (!lastReadMsgRef.current) {
-            lastReadMsgRef.current = message;
-            setUnreadMsgCount(params.position - 1);
-        }
-        if (lastReadMsgRef.current?.time && message.time &&
-            (lastReadMsgRef.current.time < message.time ||
-                (lastReadMsgRef.current.time === message.time &&
-                lastReadMsgRef.current?.id &&
-                lastReadMsgRef.current.id < message.id)) 
-        ) {
-            lastReadMsgRef.current = message;
-            setUnreadMsgCount(params.position - 1);
-        }
-    }
+    /**
+     * Handles intersection of the next unread message
+     * It updates the unreadMsgCount and current lastReadMsg id.
+     * It's supposed that observer automatically unobserve element after it has intersected,
+     * so that we don't have false lastReadMsg id updates
+     */
+    const handleMsgIntersection = useCallback((params?: any) => {
+        lastReadMsgRef.current = params.id;
+        setUnreadMsgCount((prevCount) => prevCount === 0 ? prevCount : prevCount - 1);
+    }, []); // Runs only once on mount
 
     const sendMessage = async (event: any) => {
         const user = authContext.user as User;
@@ -320,10 +313,10 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
                 unreadMsgCount: unreadMsgCount,
             });
             if (chat.id && lastReadMsgRef && authContext.user?.id) {
-                if ( chat.lastReadMsg?.id === lastReadMsgRef.current?.id || !lastReadMsgRef.current) {
+                if ( chat.lastReadMsg?.id === lastReadMsgRef.current || !lastReadMsgRef.current) {
                     return;
                 }
-                MessengerService.updateLastReadMsg(chat.id, authContext.user.id, lastReadMsgRef.current.id!);
+                MessengerService.updateLastReadMsg(chat.id, authContext.user.id, lastReadMsgRef.current!);
             }
         }
     }, []); // Runs on start only
