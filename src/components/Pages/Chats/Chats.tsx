@@ -78,7 +78,8 @@ export default function Chats() {
                 chat.participants,
                 message,
                 chat.draft,
-                dto.unreadMsgCount != null ? dto.unreadMsgCount + 1 : chat.unreadMsgCount,
+                dto.unreadMsgCount != null ? dto.unreadMsgCount + 1 :
+                chat.unreadMsgCount != null ? chat.unreadMsgCount + 1 : null,
             );
             setChats((prevChats) => [newChat, ...prevChats]);
             return;
@@ -94,14 +95,20 @@ export default function Chats() {
                     element.time,
                     element.participants,
                     message,
-                    element.draft);
+                    element.draft,
+                    dto.unreadMsgCount != null ? dto.unreadMsgCount + 1 :
+                        element.unreadMsgCount != null ? element.unreadMsgCount + 1 : null
+                );
             } else {
                 filteredChats.push(element);
             }
         })
-        // TODO: check if it is a first message from a cetaion user to private chat
+        // TODO: check if it is a first message from a certain user to private chat
         if (chat == null) {
             return;
+        }
+        if ((chat instanceof Chat)) {
+            chat = chat = new Chat(chat.id, chat.name, chat.private, chat.avatar, chat.time, chat.participants, message, chat.draft, chat.unreadMsgCount);
         }
         setChats([chat, ...filteredChats ]);
     });

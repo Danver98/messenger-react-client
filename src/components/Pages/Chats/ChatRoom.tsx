@@ -155,6 +155,7 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
     const [hasMore, setHasMore] = useState(false);
     const [intersected, setIntersected] = useState(false);
     const lastReadMsgRef = useRef<string| null>(chat.lastReadMsg ? chat.lastReadMsg.id : null);
+    const messageListRef = useRef<HTMLUListElement>(null);
     const [unreadMsgCount, setUnreadMsgCount] = useState<number>(chat.unreadMsgCount || 0);
 
     const fetchMessages = async (params: PagingParams) => {
@@ -174,8 +175,13 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
         const message = new Message(data.id, data.chatId, data.receiverId, data.type, data.data, data.author, data.time);
         setMessages((prevMessages: Message[]) =>
             [message, ...prevMessages])
-        // if scrollTop !== 0
-        setUnreadMsgCount(count => count + 1);
+        if (messageListRef.current?.scrollTop === 0) {
+            // Newly added message is fully visible to user, so mark it as last read
+            lastReadMsgRef.current = message.id;
+        } else {
+            // If user is not viewing the last message, increment unreadMsgCount
+            setUnreadMsgCount(count => count + 1);  
+        }
     };
 
     /**
@@ -185,6 +191,7 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
      * so that we don't have false lastReadMsg id updates
      */
     const handleMsgIntersection = useCallback((params?: any) => {
+        // TODO: lastReadMsgRef assigning in intersection callback is flaky
         lastReadMsgRef.current = params.id;
         setUnreadMsgCount((prevCount) => prevCount === 0 ? prevCount : prevCount - 1);
     }, []); // Runs only once on mount
@@ -306,6 +313,9 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
                 }
             }
         );
+    }, []); // Runs on start only
+
+    useEffect(() => {
         return () => {
             // Shoud be run when user closes current chat or switches to another one
             bus.emit(CHATS_COMPONENT_MSG_UNREAD_COUNT_QUEUE, {
@@ -317,9 +327,9 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
                     return;
                 }
                 MessengerService.updateLastReadMsg(chat.id, authContext.user.id, lastReadMsgRef.current!);
-            }
+            }    
         }
-    }, []); // Runs on start only
+    }, [bus, chat, unreadMsgCount, authContext.user?.id]);
 
     /**
      * Starts observing new last message element (visually located at the top of viewport)
@@ -369,10 +379,12 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
                 </div>
                 <MessageList
                     messages={messages}
-                    lastReadMsgId={chat.lastReadMsg?.id}
+                    lastReadMsgIdOnOpen={chat.lastReadMsg?.id}
                     intersectionHandler={handleMsgIntersection}
                     user={authContext.user}
                     ref={setLastElementRef}
+                    listRef={messageListRef}
+                    lastReadMsgRef={lastReadMsgRef}
                 />
                 {
                     isLoading && <CircularProgress />

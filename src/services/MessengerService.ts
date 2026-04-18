@@ -174,7 +174,7 @@ class MessengerService {
         return HttpService.postJson(MessengerService.CHAT_URL + `/${message.chatId}/messages/create`, message, headers);
     }
 
-    async addUsersToChat(chatId?: number | string | null, users?: (number | string)[] | null): Promise<any> {
+    async addUsersToChat(chatId?: number | string | null, users?: ID[] | null): Promise<any> {
         const headers: HeadersInit = this.getRequestResourceObjectHeader(chatId);
         const dto = {
             chatId: chatId,

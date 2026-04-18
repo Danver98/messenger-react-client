@@ -92,7 +92,7 @@ const MessageBody = ({ message, user }: { message: Message, user?: User | null }
 
 const MessageListItem = forwardRef((
     { message, user, index, isLast, observer,
-        clickHandler}:
+        clickHandler }:
         {
             message: Message,
             user?: User | null,
@@ -125,26 +125,27 @@ const MessageListItem = forwardRef((
     )
 });
 
-const MessageList = forwardRef(({ messages, user, lastReadMsgId, intersectionHandler}:
+const MessageList = forwardRef(({ messages, user, lastReadMsgIdOnOpen, intersectionHandler, listRef, lastReadMsgRef }:
     {
         messages?: Message[],
         user?: User | null,
-        lastReadMsgId?: number | string | null, //lastReadMsgId on backend, before opening ChatRoom
+        lastReadMsgIdOnOpen?: number | string | null, //lastReadMsgIdOnOpen on backend, before opening ChatRoom
         intersectionHandler: (params?: any) => void,
+        listRef?: React.RefObject<HTMLUListElement> | null,
+        lastReadMsgRef: React.MutableRefObject<string | null>
     }, ref?: any) => {
     const firstMsgId = messages && messages.length ? messages[messages?.length - 1].id : null;
     const listId = "chat-room-msg-list";
-    const listRef = useRef<HTMLUListElement>(null);
     /**
      * Observes unread messages
      */
     const observerRef = useRef<IntersectionObserver | null>(null);
 
     useEffect(() => {
-        const refId = lastReadMsgId ? lastReadMsgId : firstMsgId;
+        const refId = lastReadMsgIdOnOpen ? lastReadMsgIdOnOpen : firstMsgId;
         if (!refId) return;
         document.getElementById(String(refId))?.focus();
-    }, [lastReadMsgId, firstMsgId]);
+    }, [lastReadMsgIdOnOpen, firstMsgId]);
 
     useEffect(() => {
         observerRef.current = new IntersectionObserver((entries) => {
@@ -161,8 +162,8 @@ const MessageList = forwardRef(({ messages, user, lastReadMsgId, intersectionHan
             })
         },
             {
-                root: listRef.current,
-                threshold: 0.95
+                root: listRef?.current,
+                threshold: 0.9
             }
         );
         return () => {
@@ -180,13 +181,21 @@ const MessageList = forwardRef(({ messages, user, lastReadMsgId, intersectionHan
 
     let listItems: any[] = [];
     let newMsgDecoratorInserted = false
-    const lastMsgReadIndex = messages.findIndex(msg => msg.id === lastReadMsgId);
+    const lastMsgReadIndex = messages.findIndex(msg => msg.id === lastReadMsgRef.current);
     // First message'll be in the bottom of display
     messages?.forEach((message, index) => {
-        if (!newMsgDecoratorInserted && message.id === lastReadMsgId && index !== 0) {
-            // Additionally check whether message ist scroll position is at the end - 
+        // if (index + 1 === lastMsgReadIndex && !newMsgDecoratorInserted) {
+        //     listItems.push([
+        //         <NewMessagesDecorator />
+        //     ]);
+        //     newMsgDecoratorInserted = true;
+        // }
+        if (!newMsgDecoratorInserted &&
+            (message.id === lastReadMsgIdOnOpen)
+            && index !== 0) {
+            // Additionally check whether message list scroll position is at the end - 
             // in that case user sees new message and we don't need to notify him more
-            if (listRef.current && listRef.current?.scrollTop !== 0) {
+            if (listRef?.current && listRef?.current?.scrollTop !== 0) {
                 listItems.push([
                     <NewMessagesDecorator />
                 ]);
@@ -204,20 +213,20 @@ const MessageList = forwardRef(({ messages, user, lastReadMsgId, intersectionHan
             />
         ]);
     });
-    if (!lastReadMsgId && messages.length) {
+    if (!lastReadMsgIdOnOpen && messages.length) {
         listItems.push([
             <NewMessagesDecorator />
         ]);
     }
 
     return (
-            <ul
-                className="chat-room-message-list"
-                id={listId}
-                ref={listRef}
-            >
-                {listItems}
-            </ul>
+        <ul
+            className="chat-room-message-list"
+            id={listId}
+            ref={listRef}
+        >
+            {listItems}
+        </ul>
     )
 });
 

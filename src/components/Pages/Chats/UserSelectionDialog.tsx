@@ -11,6 +11,7 @@ import UserService, { UserRequestDTO } from "../../../services/UserService";
 import { Avatar } from "react-lorem-ipsum";
 import Chat from "../../../models/Chat";
 import MessengerService from "../../../services/MessengerService";
+import { ID } from "../../../util/Types";
 
 const SearchBar = ({ onChange }: { onChange: (value: string) => any }) => {
     return (
@@ -34,7 +35,7 @@ const SearchBar = ({ onChange }: { onChange: (value: string) => any }) => {
     )
 }
 
-const UserList = ({ users, checked, handleToggle }: { users: User[], checked: number[], handleToggle: (value: number) => any }) => {
+const UserList = ({ users, checked, handleToggle }: { users: User[], checked: number[], handleToggle: (position: number, userId: ID) => any }) => {
     if (users == null || users.length === 0) {
         return (
             <>
@@ -52,7 +53,7 @@ const UserList = ({ users, checked, handleToggle }: { users: User[], checked: nu
                             secondaryAction={
                                 <Checkbox
                                     checked={checked.includes(index)}
-                                    onChange={(event) => handleToggle(index)}
+                                    onChange={(event) => handleToggle(index, user.id)}
                                 />
                             }
                         >
@@ -76,17 +77,23 @@ const UserSelectionDialog = ({ user, chat }: { user?: User | null, chat: Chat })
     const [users, setUsers] = useState<User[]>([]);
     const [search, setSearch] = useState("");
     const [checked, setChecked] = useState([1]);
-    const handleToggle = (position: number) => {
+    const [selectedUsers, setSelectedUsers] = useState<ID[]>([]);
+
+    const handleToggle = (position: number, userId: ID) => {
         const currentIndex = checked.indexOf(position);
         const newChecked = [...checked];
+        let newSelectedUsers = [...selectedUsers];
 
         if (currentIndex === -1) {
             newChecked.push(position);
+            newSelectedUsers.push(userId);
         } else {
             newChecked.splice(currentIndex, 1);
+            newSelectedUsers = newSelectedUsers.filter((id) => id !== userId);
         }
 
         setChecked(newChecked);
+        setSelectedUsers(newSelectedUsers);
     };
 
     const handleClickOpen = useCallback(() => {
@@ -98,9 +105,8 @@ const UserSelectionDialog = ({ user, chat }: { user?: User | null, chat: Chat })
     }, []);
 
     const addUsers = useCallback(async () => {
-        const ids = users.map((user) => user.id);
-        MessengerService.addUsersToChat(chat.id, ids);
-    }, []);
+        MessengerService.addUsersToChat(chat.id, selectedUsers);
+    }, [selectedUsers, chat.id]);
 
     const abortController = useMemo(() => {
         return new AbortController();
