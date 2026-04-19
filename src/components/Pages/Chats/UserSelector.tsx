@@ -72,11 +72,12 @@ const UserList = ({ users, checked, handleToggle }: { users: User[], checked: nu
     )
 }
 
-const UserSelector = ({ isOpen = false, completeText = 'Select', cancelText = 'Cancel', onResult }: {
+const UserSelector = ({ isOpen = false, submitText = 'Select', cancelText = 'Cancel', onResult, onCancel}: {
     isOpen: boolean
-    completeText?: string,
+    submitText?: string,
     cancelText?: string,
-    onResult: (elements: any[], params?: any | null) => any
+    onResult: (elements: any[], params?: any | null) => any,
+    onCancel?: () => any
 }) => {
     const [open, setOpen] = useState(isOpen);
     const [users, setUsers] = useState<User[]>([]);
@@ -109,7 +110,13 @@ const UserSelector = ({ isOpen = false, completeText = 'Select', cancelText = 'C
         setChecked([]);
         setSelectedUsers([]);
         handleClickClose();
-    }, [handleClickClose]);
+        onCancel?.();
+    }, [handleClickClose, onCancel]);
+
+    const submitSelection = useCallback(() => {
+        handleClickClose();
+        onResult(selectedUsers);
+    }, [handleClickClose, onResult, selectedUsers]);
 
     const abortController = useMemo(() => {
         return new AbortController();
@@ -173,16 +180,16 @@ const UserSelector = ({ isOpen = false, completeText = 'Select', cancelText = 'C
                             <div className="">
                                 <Button
                                     variant="contained"
-                                    onClick={() => { cancelSelection() }}
+                                    onClick={() => cancelSelection()}
                                 >
                                     {cancelText}
                                 </Button>
                                 <Button
                                     variant="contained"
                                     disabled={checked.length === 0}
-                                    onClick={() => { handleClickClose(); onResult(selectedUsers)}}
+                                    onClick={() => submitSelection() }
                                 >
-                                    {completeText}
+                                    {submitText}
                                 </Button>
                             </div>
                         </div>

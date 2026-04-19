@@ -77,20 +77,20 @@ export default function ChatRoomMenu({chat, user}: {chat: Chat, user?: User | nu
   };
 
   const addParticipants = React.useCallback(() => {
-    handleClose();
     setUserSelectorOpen(true);
   }, []);
 
   const addUsersToChat = React.useCallback(async (selectedUsers: ID[]) => {
     await MessengerService.addUsersToChat(chat.id, selectedUsers);
+    handleClose();
   }, [chat.id]);
 
   const leaveChat = React.useCallback(async () => {
     if (!user?.id) return;
-    await MessengerService.deleteUsersFromChat(chat.id, [user.id]);
     if (!chat.private) {
       stompClient?.unsubscribe(`/topic/chats/${chat.id}/messages`);
     }
+    await MessengerService.deleteUsersFromChat(chat.id, [user.id]);
     handleClose();
     navigate(SecuredPages.CHATS_PAGE, { replace: true });
   }, [chat.id, chat.private, user?.id, stompClient, navigate]);
@@ -124,7 +124,7 @@ export default function ChatRoomMenu({chat, user}: {chat: Chat, user?: User | nu
           Leave chat
         </MenuItem>
       </StyledMenu>
-        <UserSelector isOpen={userSelectorOpen} onResult={addUsersToChat} />
+        <UserSelector isOpen={userSelectorOpen} onResult={addUsersToChat} onCancel={handleClose}/>
     </div>
   );
 }
