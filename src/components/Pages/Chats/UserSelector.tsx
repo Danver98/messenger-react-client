@@ -9,8 +9,6 @@ import User from "../../../models/User";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import UserService, { UserRequestDTO } from "../../../services/UserService";
 import { Avatar } from "react-lorem-ipsum";
-import Chat from "../../../models/Chat";
-import MessengerService from "../../../services/MessengerService";
 import { ID } from "../../../util/Types";
 
 const SearchBar = ({ onChange }: { onChange: (value: string) => any }) => {
@@ -21,12 +19,14 @@ const SearchBar = ({ onChange }: { onChange: (value: string) => any }) => {
             variant="standard"
             fullWidth
             margin="normal"
-            InputProps={{
-                endAdornment: (
-                    <InputAdornment position="end">
-                        <SearchIcon />
-                    </InputAdornment>
-                ),
+            slotProps={{
+                input: {
+                    endAdornment: (
+                        <InputAdornment position="end">
+                            <SearchIcon />
+                        </InputAdornment>
+                    ),
+                }
             }}
             onChange={(e: any) => {
                 onChange(e.target.value)
@@ -53,7 +53,7 @@ const UserList = ({ users, checked, handleToggle }: { users: User[], checked: nu
                             secondaryAction={
                                 <Checkbox
                                     checked={checked.includes(index)}
-                                    onChange={(event) => handleToggle(index, user.id)}
+                                    onChange={(_event) => handleToggle(index, user.id)}
                                 />
                             }
                         >
@@ -72,8 +72,13 @@ const UserList = ({ users, checked, handleToggle }: { users: User[], checked: nu
     )
 }
 
-const UserSelectionDialog = ({ user, chat }: { user?: User | null, chat: Chat }) => {
-    const [open, setOpen] = useState(false);
+const UserSelector = ({ isOpen = false, completeText = 'Select', cancelText = 'Cancel', onResult }: {
+    isOpen: boolean
+    completeText?: string,
+    cancelText?: string,
+    onResult: (elements: any[], params?: any | null) => any
+}) => {
+    const [open, setOpen] = useState(isOpen);
     const [users, setUsers] = useState<User[]>([]);
     const [search, setSearch] = useState("");
     const [checked, setChecked] = useState([1]);
@@ -96,21 +101,23 @@ const UserSelectionDialog = ({ user, chat }: { user?: User | null, chat: Chat })
         setSelectedUsers(newSelectedUsers);
     };
 
-    const handleClickOpen = useCallback(() => {
-        setOpen(true);
-    }, []);
-
-    const handeClickClose = useCallback(() => {
+    const handleClickClose = useCallback(() => {
         setOpen(false)
     }, []);
 
-    const addUsers = useCallback(async () => {
-        MessengerService.addUsersToChat(chat.id, selectedUsers);
-    }, [selectedUsers, chat.id]);
+    const cancelSelection = useCallback(() => {
+        setChecked([]);
+        setSelectedUsers([]);
+        handleClickClose();
+    }, [handleClickClose]);
 
     const abortController = useMemo(() => {
         return new AbortController();
     }, []);
+
+    useEffect(() => {
+        setOpen(isOpen);
+    }, [isOpen]);
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -140,19 +147,13 @@ const UserSelectionDialog = ({ user, chat }: { user?: User | null, chat: Chat })
             //abortController.abort();
         };
 
-    }, [open, search])
+    }, [open, search, abortController])
 
     return (
         <div className="">
-            {
-                !chat.private &&
-                <Button variant="outlined" onClick={handleClickOpen}>
-                    Add participants
-                </Button>
-            }
             <Dialog
                 open={open}
-                onClose={() => handeClickClose()}
+                onClose={() => handleClickClose()}
             >
                 <div className="participant-selection-popup">
                     <div className="participant-selection-popup-content-wrapper">
@@ -172,16 +173,16 @@ const UserSelectionDialog = ({ user, chat }: { user?: User | null, chat: Chat })
                             <div className="">
                                 <Button
                                     variant="contained"
-                                    onClick={() => { }}
+                                    onClick={() => { cancelSelection() }}
                                 >
-                                    Cancel
+                                    {cancelText}
                                 </Button>
                                 <Button
                                     variant="contained"
                                     disabled={checked.length === 0}
-                                    onClick={() => addUsers()}
+                                    onClick={() => { handleClickClose(); onResult(selectedUsers)}}
                                 >
-                                    Add
+                                    {completeText}
                                 </Button>
                             </div>
                         </div>
@@ -191,4 +192,4 @@ const UserSelectionDialog = ({ user, chat }: { user?: User | null, chat: Chat })
         </div>
     )
 };
-export default UserSelectionDialog;
+export default UserSelector;

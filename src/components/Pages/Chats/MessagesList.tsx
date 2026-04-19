@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useEffect, useRef } from "react";
+import { forwardRef, useEffect, useRef } from "react";
 import Message, { MessageDataType } from "../../../models/Message";
 import FilePresentIcon from '@mui/icons-material/FilePresent';
 import User from "../../../models/User";
@@ -131,8 +131,8 @@ const MessageList = forwardRef(({ messages, user, lastReadMsgIdOnOpen, intersect
         user?: User | null,
         lastReadMsgIdOnOpen?: number | string | null, //lastReadMsgIdOnOpen on backend, before opening ChatRoom
         intersectionHandler: (params?: any) => void,
-        listRef?: React.RefObject<HTMLUListElement> | null,
-        lastReadMsgRef: React.MutableRefObject<string | null>
+        listRef?: React.RefObject<HTMLUListElement | null>,
+        lastReadMsgRef: React.RefObject<string | null>
     }, ref?: any) => {
     const firstMsgId = messages && messages.length ? messages[messages?.length - 1].id : null;
     const listId = "chat-room-msg-list";

@@ -18,12 +18,14 @@ const SearchBar = ({ onChange }: { onChange: (value: string) => any }) => {
             variant="standard"
             fullWidth
             margin="normal"
-            InputProps={{
-                endAdornment: (
-                    <InputAdornment position="end">
-                        <SearchIcon />
-                    </InputAdornment>
-                ),
+            slotProps={{
+                input: {
+                    endAdornment: (
+                        <InputAdornment position="end">
+                            <SearchIcon />
+                        </InputAdornment>
+                    ),
+                }
             }}
             onChange={(e: any) => {
                 onChange(e.target.value)
@@ -48,7 +50,7 @@ const UserList = forwardRef(({ users, checked, handleToggle, multiSelect }:
                     users.map((user, index) =>
                         <ListItem
                             key={user.id}
-                            ref={index == users.length - 1 ? ref : null}
+                            ref={index === users.length - 1 ? ref : null}
                             secondaryAction={
                                 <Checkbox
                                     disabled={!multiSelect && checked.length > 0 && !checked.includes(index)}
@@ -124,7 +126,7 @@ const UserSelection = ({ user, requestFilter, onResult }:
             chatName,
             multiSelect
         });
-    }, [users, checked]);
+    }, [users, checked, chatName, multiSelect, onResult, handeClickClose]);
 
     useEffect(() => {
         observerRef.current = new IntersectionObserver(
@@ -184,7 +186,7 @@ const UserSelection = ({ user, requestFilter, onResult }:
             //abortController.abort();
         };
 
-    }, [open, search, intersected])
+    }, [open, search, intersected, users, abortController, hasMore, requestFilter]);
 
     return (
         <div className="">

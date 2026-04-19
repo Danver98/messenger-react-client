@@ -183,6 +183,15 @@ class MessengerService {
         return HttpService.postJson(MessengerService.CHAT_URL + `/add`, dto, headers);
     }
 
+    async deleteUsersFromChat(chatId?: number | string | null, users?: ID[] | null): Promise<any> {
+        const headers: HeadersInit = this.getRequestResourceObjectHeader(chatId);
+        const dto = {
+            chatId: chatId,
+            users: users
+        } 
+        return HttpService.delete(MessengerService.CHAT_URL + `/${chatId}/users?userId=${users}`, dto, headers);
+    }
+
     async sendAttachment(attachment: File, chatId?: ID, userId?: ID): Promise<any> {
         const headers: HeadersInit = this.getRequestResourceObjectHeader(chatId);
         const dto = {

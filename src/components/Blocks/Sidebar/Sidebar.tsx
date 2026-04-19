@@ -2,7 +2,7 @@ import { Outlet, Link } from "react-router-dom";
 import "./Sidebar.css"
 import { useAuthContextData } from "../../../middleware/AuthProvider";
 
-export default function Sidebar({ children }: { children: any }) {
+export default function Sidebar({ children }: { children?: any }) {
     const { getAccessToken } = useAuthContextData();
     return (
         <>

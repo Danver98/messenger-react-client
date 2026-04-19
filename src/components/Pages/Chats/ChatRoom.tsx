@@ -5,7 +5,6 @@ import { CHATS_COMPONENT_MSG_UNREAD_COUNT_QUEUE, DIRECTION,
 import Chat from "../../../models/Chat";
 import Message, { MessageData, MessageDataType, MessageType } from "../../../models/Message";
 import User from "../../../models/User";
-import UserSelectionDialog from "./UserSelectionDialog";
 import { useAuthContextData } from "../../../middleware/AuthProvider";
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import { Button, IconButton, TextareaAutosize } from "@mui/material";
@@ -18,6 +17,7 @@ import MessengerService from "../../../services/MessengerService";
 import { getType } from "../../../util/FileUtils";
 import { Headers } from "../../../util/Constants";
 import CloseIcon from '@mui/icons-material/Close';
+import ChatRoomMenu from "./ChatRoomMenu";
 
 const Circle = ({value}: {value?: string | number | null}) => (
     <Button
@@ -49,7 +49,7 @@ export interface PagingParams {
 
 
 function MessageSender({ handleSubmit }: { handleSubmit: (event: any) => any }) {
-    const fileUpload = useRef<any>();
+    const fileUpload = useRef<any>(null);
     const textArea = useRef<HTMLTextAreaElement | null>(null);
     const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
     
@@ -241,8 +241,6 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
         let destination = chat.private ? '/app/chats/private/send-message' : '/app/chats/public/send-message';
 
         if (draft && chat.private) {
-            type = MessageType.CREATION;
-            destination = '/app/chats/create-invite';
             setDraft(false);
         }
 
@@ -375,7 +373,7 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
             <div className="chat-room-page__CentralBlock">
                 <div className="chat-room-page-header">
                     <div className="chat-room-page-header__ChatName">{chat.name}</div>
-                    <UserSelectionDialog chat={chat} />
+                    <ChatRoomMenu chat={chat} user={authContext.user} />
                 </div>
                 <MessageList
                     messages={messages}

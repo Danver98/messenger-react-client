@@ -9,12 +9,9 @@ import Chat from "../../../models/Chat";
 import { InputAdornment, TextField } from "@mui/material";
 import SearchIcon from '@mui/icons-material/Search';
 import { useListener } from 'react-bus';
-import Message, { MessageDataType, MessageType } from "../../../models/Message";
+import Message, { MessageType } from "../../../models/Message";
 import MessengerService from "../../../services/MessengerService";
 import ChatCreation from "../../Lists/UserList";
-import { useStompClient } from "react-stomp-hooks";
-import { IPublishParams } from "@stomp/stompjs";
-import User from "../../../models/User";
 
 export interface ChatCreationParams {
     chatName: string | null;
@@ -29,12 +26,14 @@ const SearchBar = ({ onChange }: { onChange: (value: string) => any }) => {
             variant="standard"
             fullWidth
             margin="none"
-            InputProps={{
-                endAdornment: (
-                    <InputAdornment position="end">
-                        <SearchIcon />
-                    </InputAdornment>
-                ),
+            slotProps={{
+                input: {
+                    endAdornment: (
+                        <InputAdornment position="end">
+                            <SearchIcon />
+                        </InputAdornment>
+                    ),
+                }
             }}
             onChange={(e: any) => {
                 onChange(e.target.value)
@@ -52,7 +51,6 @@ export default function Chats() {
     const authContext = useAuthContextData()
     const userId = authContext.user?.id;
     const [activeChat, setActiveChat] = useState<Chat | null>(null);
-    const stompClient = useStompClient();
     // TODO: direction
 
     const {
@@ -186,38 +184,6 @@ export default function Chats() {
             true //draft
         );
         const fetchedChat = await MessengerService.createChat(newChat);
-        if (params?.multiSelect) {
-            const user = authContext.user as User;
-            fetchedChat.name = params?.chatName;
-            fetchedChat.participants = [authContext.user?.id, ...users];
-            const messageData = {
-                type: MessageDataType.TEXT,
-                data: `${user.name + ' ' + user.surname} created chat "${params?.chatName}"`
-            };
-            const type = MessageType.CREATION;
-            const author: User = {
-                id: user.id,
-                name: user.name,
-                surname: user.surname,
-                avatar: user.avatar
-            };
-            const receiverId = null;
-            const message = new Message(
-                null,
-                fetchedChat.id,
-                receiverId,
-                type,
-                messageData,
-                author);
-            const publishParams: IPublishParams = {
-                destination: '/app/chats/create-invite',
-                body: JSON.stringify({
-                    message: message,
-                    chat: fetchedChat,
-                })
-            }
-            stompClient?.publish(publishParams);
-        }
         setActiveChat(fetchedChat);
     }
 
