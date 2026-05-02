@@ -95,7 +95,7 @@ const ChatsList = forwardRef(({ chats, itemClickHandler }: { chats: Chat[], item
     }
 
     const listItems = chats.map((chat, index) =>
-        <ChatListItem chat={chat} isLast={index === chats.length - 1} clickHandler={itemClickHandler} ref={ref} />
+        <ChatListItem key={chat.id} chat={chat} isLast={index === chats.length - 1} clickHandler={itemClickHandler} ref={ref} />
     )
     return (
         <ul className="chat-list">{listItems}</ul>

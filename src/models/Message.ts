@@ -19,7 +19,8 @@ export enum MessageType {
     INVITATION,
     CHAT,
     JOIN,
-    LEAVE
+    LEAVE,
+    EXCLUDE
 }
 
 

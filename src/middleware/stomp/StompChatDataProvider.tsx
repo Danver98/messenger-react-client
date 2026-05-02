@@ -22,11 +22,19 @@ const ChatDataProvider = ({ children }: { children: any }) => {
   const { currentLoggedUser, setCurrentLoggedUser } = useCurrentLoggedUser();
   const stompClient = useStompClient();
 
-  function OnPublicMessageReceived(payload: any): void {
+  function OnPublicMessageReceived(payload: any, user: User): void {
     const dto = JSON.parse(payload.body);
     const data = dto.message;
-    const chat = dto.chat;
+    const chatData = dto.chat;
     const message = new Message(data.id, data.chatId, data.receiverId, data.type, data.data, data.author, data.time);
+    const chat = new Chat(chatData.id, chatData.name, chatData.private, chatData.avatar, chatData.time,
+      chatData.participants, chatData.lastMessage, chatData.draft, chatData.unreadMsgCount, chatData.lastReadMsg,
+      chatData.authorId, chatData.canAddUsers);
+    if (message.type === MessageType.EXCLUDE && message.receiverId === user?.id) {
+      // Current user is deleted from chat, we should unsubscribe
+      stompClient?.unsubscribe(`/topic/chats/${chat.id}/messages`);
+    };
+
     bus.emit(`/chats/${data.chatId}/messages`, {
       message: message,
       chat: chat
@@ -38,7 +46,7 @@ const ChatDataProvider = ({ children }: { children: any }) => {
     });
   }
 
-  function OnPrivateMessageReceived(payload: any): void {
+  function OnPrivateMessageReceived(payload: any, user: User): void {
     const dto = JSON.parse(payload.body);
     const data = dto.message;
     const chat = dto.chat;
@@ -46,7 +54,7 @@ const ChatDataProvider = ({ children }: { children: any }) => {
       if (chat != null && !chat.private) {
         // If given public chat, subscribe
         stompClient?.subscribe(`/topic/chats/${data.chatId}/messages`, (payload: any) => {
-          OnPublicMessageReceived(payload);
+          OnPublicMessageReceived(payload, user);
         });
       }
     }
@@ -66,7 +74,7 @@ const ChatDataProvider = ({ children }: { children: any }) => {
     const subscribe = async (user: User | null) => {
       if (!user) return;
       stompClient?.subscribe(`/user/${user.id}/queue/chats/messages`, (payload: any) => {
-        OnPrivateMessageReceived(payload);
+        OnPrivateMessageReceived(payload, user);
       });
       // Subscribe to public chats
       const dto: ChatRequestDTO = {
@@ -76,7 +84,7 @@ const ChatDataProvider = ({ children }: { children: any }) => {
       chats?.forEach((chat: Chat) => {
         if (chat.private) return;
         stompClient?.subscribe(`/topic/chats/${chat.id}/messages`, (payload: any) => {
-          OnPublicMessageReceived(payload);
+          OnPublicMessageReceived(payload, user);
         });
       });
     }

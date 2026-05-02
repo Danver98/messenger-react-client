@@ -205,6 +205,7 @@ const MessageList = forwardRef(({ messages, user, lastReadMsgIdOnOpen, intersect
         }
         listItems.push([
             <MessageListItem
+                key={message.id}
                 message={message}
                 user={user}
                 index={index}

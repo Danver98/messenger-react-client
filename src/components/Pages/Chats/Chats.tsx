@@ -118,7 +118,7 @@ export default function Chats() {
         if (chat == null) {
             return;
         }
-        if ((chat instanceof Chat)) {
+        if (!(chat instanceof Chat)) {
             chat = chat = new Chat(chat.id, chat.name, chat.private, chat.avatar, chat.time, chat.participants, message, chat.draft, chat.unreadMsgCount);
         }
         setChats([chat, ...filteredChats ]);
