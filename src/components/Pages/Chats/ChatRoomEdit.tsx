@@ -92,9 +92,10 @@ export default function ChatRoomEdit({ isOpen = false, chatId, user, permissions
                             id="name"
                             name="name"
                             label="Name"
-                            variant="standard"
+                            variant="outlined"
                             disabled={readOnly}
-                            value={chat?.name}
+                            value={chat?.name ?? ''}
+                            slotProps={{ inputLabel: { shrink: !!chat?.name } }}
                             onChange={(event: any) => {
                                 handleChange(event.target.value, 'name');
                             }}
@@ -105,7 +106,7 @@ export default function ChatRoomEdit({ isOpen = false, chatId, user, permissions
                         />
                         <FormControlLabel
                             control={<Switch
-                                checked={chat?.canAddUsers}
+                                checked={chat?.canAddUsers ?? false}
                                 disabled={readOnly}
                                 onChange={(event: any) => {
                                     handleChange(event.target.checked, 'canAddUsers');
