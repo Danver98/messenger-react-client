@@ -388,26 +388,26 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
 
     return (
         <div className="chat-room-page">
-            <div className="chat-room-page__CentralBlock">
-                <div className="chat-room-page-header">
-                    <div className="chat-room-page-header__ChatName" role="button"
-                        tabIndex={0} onClick={() => {setEditMenuOpen(true)}}
-                    >
-                        {chat.name}
-                    </div>
-                    {
-                        <ChatRoomEdit isOpen={editMenuOpen} chatId={chat.id} user={authContext.user}
-                            permissions={permissions}
-                            onResult={() => {setEditMenuOpen(false)}}
-                        />
-                    }
-                    {
-                    !!permissions.length &&
-                    <ChatRoomMenu chat={chat} user={authContext.user}
-                        permissions={permissions} closeChat={closeChat}
-                    />
-                    }
+            <div className="chat-room-page-header">
+                <div className="chat-room-page-header__ChatName" role="button"
+                    tabIndex={0} onClick={() => {setEditMenuOpen(true)}}
+                >
+                    {chat.name}
                 </div>
+                {
+                    <ChatRoomEdit isOpen={editMenuOpen} chatId={chat.id} user={authContext.user}
+                        permissions={permissions}
+                        onResult={() => {setEditMenuOpen(false)}}
+                    />
+                }
+                {
+                !!permissions.length &&
+                <ChatRoomMenu chat={chat} user={authContext.user}
+                    permissions={permissions} closeChat={closeChat}
+                />
+                }
+            </div>
+            <div className="chat-room-page__CentralBlock">
                 <MessageList
                     messages={messages}
                     lastReadMsgIdOnOpen={chat.lastReadMsg?.id}
