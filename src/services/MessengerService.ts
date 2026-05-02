@@ -76,8 +76,15 @@ class MessengerService {
             data.lastMessage,
             data.draft,
             data.unreadMsgCount,
-            lastReadMsg);
+            lastReadMsg,
+            data.authorId,
+            data.canAddUsers);
         return chat;
+    }
+
+    async getChatPermissions(chatId?: ID): Promise<any> {
+        const headers: HeadersInit = this.getRequestResourceObjectHeader(chatId);
+        return HttpService.getJson(MessengerService.CHAT_URL + `/${chatId}/users/permissions`, undefined, headers);
     }
 
     async getChatsByUser(dto: ChatRequestDTO): Promise<any> {
@@ -93,17 +100,17 @@ class MessengerService {
                 chat.time,
                 chat.participants,
                 chat.lastMessage == null ? null :
-                new Message(
-                    chat.lastMessage.id, 
-                    chat.lastMessage.chatId, 
-                    chat.lastMessage.receiverId, 
-                    chat.lastMessage.type, 
-                    chat.lastMessage.data, 
-                    chat.lastMessage.author, 
-                    chat.lastMessage.time),
+                    new Message(
+                        chat.lastMessage.id,
+                        chat.lastMessage.chatId,
+                        chat.lastMessage.receiverId,
+                        chat.lastMessage.type,
+                        chat.lastMessage.data,
+                        chat.lastMessage.author,
+                        chat.lastMessage.time),
                 chat.draft,
                 chat.unreadMsgCount
-                );
+            );
         }
         )
     }
@@ -138,6 +145,11 @@ class MessengerService {
         await HttpService.putJson(MessengerService.CHAT_URL + `/${chat.id}`, chat, headers);
     }
 
+    async updateChatPatch(chat: Chat): Promise<void> {
+        const headers: HeadersInit = this.getRequestResourceObjectHeader(chat.id);
+        await HttpService.patchJson(MessengerService.CHAT_URL + `/${chat.id}`, chat, headers);
+    }
+
     async updateLastReadMsg(
         chatId: string | number,
         userId: number | string,
@@ -148,7 +160,7 @@ class MessengerService {
             userId,
             messageId
         }
-        return HttpService.patchJson(MessengerService.CHAT_URL + `/${chatId}/last-read-msg`,dto , headers);
+        return HttpService.patchJson(MessengerService.CHAT_URL + `/${chatId}/last-read-msg`, dto, headers);
     }
 
     async getMessages(dto: MessageRequestDTO): Promise<Message[]> {
@@ -165,7 +177,7 @@ class MessengerService {
                 message.author,
                 message.time,
                 message.read
-                );
+            );
         })
     }
 
@@ -179,17 +191,13 @@ class MessengerService {
         const dto = {
             chatId: chatId,
             users: users
-        } 
+        }
         return HttpService.postJson(MessengerService.CHAT_URL + `/add`, dto, headers);
     }
 
     async deleteUsersFromChat(chatId?: number | string | null, users?: ID[] | null): Promise<any> {
         const headers: HeadersInit = this.getRequestResourceObjectHeader(chatId);
-        const dto = {
-            chatId: chatId,
-            users: users
-        } 
-        return HttpService.delete(MessengerService.CHAT_URL + `/${chatId}/users?userId=${users}`, dto, headers);
+        return HttpService.delete(MessengerService.CHAT_URL + `/${chatId}/users?userId=${users}`, undefined, headers);
     }
 
     async sendAttachment(attachment: File, chatId?: ID, userId?: ID): Promise<any> {

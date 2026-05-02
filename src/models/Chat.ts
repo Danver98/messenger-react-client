@@ -1,3 +1,4 @@
+import { ID } from "../util/Types";
 import Message from "./Message";
 
 interface IChat {
@@ -11,6 +12,8 @@ interface IChat {
     draft?: boolean | null;
     unreadMsgCount?: number | null;
     lastReadMsg?: Message | null;
+    authorId: ID;
+    canAddUsers?: boolean;
 }
 
 class Chat implements IChat {
@@ -24,6 +27,8 @@ class Chat implements IChat {
     draft?: boolean | null;
     unreadMsgCount?: number | null;
     lastReadMsg?: Message | null;
+    authorId: ID;
+    canAddUsers?: boolean;
 
     constructor(
         id?: number | string | null,
@@ -35,7 +40,9 @@ class Chat implements IChat {
         lastMessage?: Message | null,
         draft?: boolean | null,
         unreadMsgCount?: number | null,
-        lastReadMsg?: Message | null) {
+        lastReadMsg?: Message | null,
+        authorId?: ID,
+        canAddUsers?: boolean) {
             this.id = id;
             this.name = name;
             this.private = _private;
@@ -46,6 +53,28 @@ class Chat implements IChat {
             this.draft = draft;
             this.unreadMsgCount = unreadMsgCount;
             this.lastReadMsg = lastReadMsg;
+            this.authorId = authorId;
+            this.canAddUsers = canAddUsers;
+    }
+
+    copy(): Chat {
+        const copyParticipants = this.participants ? [...this.participants] : undefined;
+        const copyLastMessage = this.lastMessage ? this.lastMessage.copy() : null;
+        const copylastReadMsg = this.lastReadMsg ? this.lastReadMsg.copy() : null;
+        return new Chat(
+            this.id,
+            this.name,
+            this.private,
+            this.avatar,
+            this.time,
+            copyParticipants,
+            copyLastMessage,
+            this.draft,
+            this.unreadMsgCount,
+            copylastReadMsg,
+            this.authorId,
+            this.canAddUsers
+        );
     }
 
     toString(): string {

@@ -18,6 +18,8 @@ import { getType } from "../../../util/FileUtils";
 import { Headers } from "../../../util/Constants";
 import CloseIcon from '@mui/icons-material/Close';
 import ChatRoomMenu from "./ChatRoomMenu";
+import { ID } from "../../../util/Types";
+import ChatRoomEdit from "./ChatRoomEdit";
 
 const Circle = ({value}: {value?: string | number | null}) => (
     <Button
@@ -153,10 +155,13 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
     const [messages, setMessages] = useState<Message[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [hasMore, setHasMore] = useState(false);
+    const [permissions, setPermissions] = useState<string[]>([]);
     const [intersected, setIntersected] = useState(false);
     const lastReadMsgRef = useRef<string| null>(chat.lastReadMsg ? chat.lastReadMsg.id : null);
     const messageListRef = useRef<HTMLUListElement>(null);
     const [unreadMsgCount, setUnreadMsgCount] = useState<number>(chat.unreadMsgCount || 0);
+
+    const [editMenuOpen, setEditMenuOpen] = useState(false);
 
     const fetchMessages = async (params: PagingParams) => {
         const dto = {
@@ -169,6 +174,19 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
         };
         return await MessengerService.getMessages(dto);
     }
+
+    /**
+     * Setting permissions for authenticated user for given chat.
+     */
+    useEffect(() => {
+        const fetchPermissions = async (chatId: ID) => {
+            setPermissions([]);
+            const permissions = await MessengerService.getChatPermissions(chatId);
+            setPermissions(permissions);
+        }
+        fetchPermissions(chat.id);
+    }, [chat.id]);
+
 
     const onMessageReceived = (dto: any) => {
         const data = dto.message;
@@ -372,8 +390,23 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
         <div className="chat-room-page">
             <div className="chat-room-page__CentralBlock">
                 <div className="chat-room-page-header">
-                    <div className="chat-room-page-header__ChatName">{chat.name}</div>
-                    <ChatRoomMenu chat={chat} user={authContext.user} />
+                    <div className="chat-room-page-header__ChatName" role="button"
+                        tabIndex={0} onClick={() => {setEditMenuOpen(true)}}
+                    >
+                        {chat.name}
+                    </div>
+                    {
+                        <ChatRoomEdit isOpen={editMenuOpen} chatId={chat.id} user={authContext.user}
+                            permissions={permissions}
+                            onResult={() => {setEditMenuOpen(false)}}
+                        />
+                    }
+                    {
+                    !!permissions.length &&
+                    <ChatRoomMenu chat={chat} user={authContext.user}
+                        permissions={permissions} closeChat={closeChat}
+                    />
+                    }
                 </div>
                 <MessageList
                     messages={messages}

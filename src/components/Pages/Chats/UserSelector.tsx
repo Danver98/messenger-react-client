@@ -7,7 +7,7 @@ import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import User from "../../../models/User";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import UserService, { UserRequestDTO } from "../../../services/UserService";
+import UserService, { UserFilter, UserRequestDTO } from "../../../services/UserService";
 import { Avatar } from "react-lorem-ipsum";
 import { ID } from "../../../util/Types";
 
@@ -72,10 +72,11 @@ const UserList = ({ users, checked, handleToggle }: { users: User[], checked: nu
     )
 }
 
-const UserSelector = ({ isOpen = false, submitText = 'Select', cancelText = 'Cancel', onResult, onCancel}: {
+const UserSelector = ({ isOpen = false, submitText = 'Select', cancelText = 'Cancel', filter = {}, onResult, onCancel}: {
     isOpen: boolean
     submitText?: string,
     cancelText?: string,
+    filter?: UserFilter,
     onResult: (elements: any[], params?: any | null) => any,
     onCancel?: () => any
 }) => {
@@ -144,6 +145,7 @@ const UserSelector = ({ isOpen = false, submitText = 'Select', cancelText = 'Can
         // If we've already started a new request, cancel it
         const dto: UserRequestDTO = {
             filter: {
+                ...filter,
                 search: search
             }
         }
@@ -154,7 +156,7 @@ const UserSelector = ({ isOpen = false, submitText = 'Select', cancelText = 'Can
             //abortController.abort();
         };
 
-    }, [open, search, abortController])
+    }, [open, search, abortController, filter])
 
     return (
         <div className="">

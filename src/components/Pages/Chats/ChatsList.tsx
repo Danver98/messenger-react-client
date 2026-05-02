@@ -1,7 +1,26 @@
 import { forwardRef, } from "react";
 import Chat from "../../../models/Chat";
+import { MessageType } from "../../../models/Message";
 import "./Chats.css";
 import "../../../_styles/Common.css";
+import { ID } from "../../../util/Types";
+
+const LastMessage = ({ chat }: { chat: Chat }) => {
+    const messageType = chat.lastMessage?.type;
+    if (messageType && messageType !== MessageType.CHAT) {
+        return (
+            <div className="chat-list-item__lastMessage">
+                <span className="chat-list-item__lastMessage-service">{ chat.lastMessage?.getDataText() }</span>
+            </div>
+        )
+    }
+    return (
+        <div className="chat-list-item__lastMessage">
+            <span className="chat-list-item__lastMessage-author">{chat.lastMessage?.getAuthorFullName()}</span>
+            <span>{ ': ' + chat.lastMessage?.getDataText() }</span>
+        </div>
+    )
+}
 
 const ItemBody = ({ chat }: { chat: Chat }) => {
     return (
@@ -25,10 +44,7 @@ const ItemBody = ({ chat }: { chat: Chat }) => {
                 {
                     chat.lastMessage &&
                     <div className="chat-list-item__messageInfo">
-                        <div className="chat-list-item__lastMessage">
-                            <span className="chat-list-item__lastMessage-author">{chat.lastMessage.getAuthorFullName()}</span>
-                            <span>{ ': ' + chat.lastMessage.getDataText() }</span>
-                        </div>
+                        <LastMessage chat={chat} />
                         {
                             chat.unreadMsgCount &&
                             <div className="chat-list-item__messageCounter">

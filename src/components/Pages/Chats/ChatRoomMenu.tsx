@@ -3,10 +3,11 @@ import { styled, alpha } from '@mui/material/styles';
 import Menu, { MenuProps } from '@mui/material/Menu';
 import { IconButton } from '@mui/material';
 import MenuItem from '@mui/material/MenuItem';
-import MenuIcon from '@mui/icons-material/Menu';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import Divider from '@mui/material/Divider';
 import LogoutIcon from '@mui/icons-material/Logout';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { useNavigate } from "react-router-dom";
 import { useStompClient } from "react-stomp-hooks";
 import MessengerService from '../../../services/MessengerService';
@@ -15,6 +16,8 @@ import User from '../../../models/User';
 import { SecuredPages } from '../../../util/Constants';
 import UserSelector from './UserSelector';
 import { ID } from '../../../util/Types';
+import { Permissions } from '../../../models/Permissions';
+import { UserFilter } from '../../../services/UserService';
 
 const StyledMenu = styled((props: MenuProps) => (
   <Menu
@@ -62,10 +65,13 @@ const StyledMenu = styled((props: MenuProps) => (
   },
 }));
 
-export default function ChatRoomMenu({chat, user}: {chat: Chat, user?: User | null}) {
+export default function ChatRoomMenu({ chat, user, permissions, closeChat }:
+  { chat: Chat, user?: User | null, permissions?: string[], closeChat?: () => void }) {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
   const [userSelectorOpen, setUserSelectorOpen] = React.useState(false);
+  const [action, setAction] = React.useState('');
+  const [userSelectorFilter, setUserSelectorFilter] = React.useState<UserFilter>({});
   const stompClient = useStompClient();
   const navigate = useNavigate();
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -76,14 +82,37 @@ export default function ChatRoomMenu({chat, user}: {chat: Chat, user?: User | nu
     setUserSelectorOpen(false);
   };
 
-  const addParticipants = React.useCallback(() => {
-    setUserSelectorOpen(true);
-  }, []);
-
   const addUsersToChat = React.useCallback(async (selectedUsers: ID[]) => {
     await MessengerService.addUsersToChat(chat.id, selectedUsers);
     handleClose();
   }, [chat.id]);
+
+  const deleteUsersFromChat = React.useCallback(async (selectedUsers: ID[]) => {
+    await MessengerService.deleteUsersFromChat(chat.id, selectedUsers);
+    handleClose();
+  }, [chat.id]);
+
+  const addParticipants = React.useCallback(() => {
+    setAction('add');
+    const userFilter: UserFilter = { chatId: chat.id, exclude: true };
+    setUserSelectorFilter(userFilter);
+    setUserSelectorOpen(true);
+  }, [chat.id]);
+
+  const deleteParticipants = React.useCallback(async () => {
+    setAction('delete');
+    const userFilter: UserFilter = { chatId: chat.id, exclude: false };
+    setUserSelectorFilter(userFilter);
+    setUserSelectorOpen(true);
+  }, [chat.id]);
+
+  const onUsersSelected = React.useCallback((selectedUsers: ID[]) => {
+    if (action === 'add') {
+      addUsersToChat(selectedUsers);
+    } else if (action === 'delete') {
+      deleteUsersFromChat(selectedUsers);
+    }
+  }, [action, addUsersToChat, deleteUsersFromChat]);
 
   const leaveChat = React.useCallback(async () => {
     if (!user?.id) return;
@@ -92,13 +121,27 @@ export default function ChatRoomMenu({chat, user}: {chat: Chat, user?: User | nu
     }
     await MessengerService.deleteUsersFromChat(chat.id, [user.id]);
     handleClose();
+    closeChat?.();
     navigate(SecuredPages.CHATS_PAGE, { replace: true });
-  }, [chat.id, chat.private, user?.id, stompClient, navigate]);
+  }, [chat.id, chat.private, user?.id, stompClient, navigate, closeChat]);
+
+  const deleteChat = React.useCallback(async () => {
+    if (!user?.id || !chat.id) return;
+    if (!chat.private) {
+      stompClient?.unsubscribe(`/topic/chats/${chat.id}/messages`);
+    }
+    // TODO: Should we notify others that chat is deleted?
+    await MessengerService.deleteChat(chat.id);
+    handleClose();
+    closeChat?.();
+    navigate(SecuredPages.CHATS_PAGE, { replace: true });
+  }, [chat.id, chat.private, user?.id, stompClient, navigate, closeChat]);
 
   return (
     <div>
       <IconButton onClick={handleClick}>
-        <MenuIcon />
+        <MoreVertIcon fontSize="medium"
+        />
       </IconButton>
       <StyledMenu
         id="demo-customized-menu"
@@ -113,9 +156,18 @@ export default function ChatRoomMenu({chat, user}: {chat: Chat, user?: User | nu
       >
         {
           !chat.private &&
+          (permissions?.includes(Permissions.Chat.ADMIN) || permissions?.includes(Permissions.Chat.User.ADD)) &&
           <MenuItem onClick={addParticipants} disableRipple>
             <PersonAddIcon />
             Add participants
+          </MenuItem>
+        }
+        {
+          !chat.private &&
+          permissions?.includes(Permissions.Chat.ADMIN) &&
+          <MenuItem onClick={deleteParticipants} disableRipple>
+            <PersonAddIcon />
+            Delete participants
           </MenuItem>
         }
         <Divider sx={{ my: 0.5 }} />
@@ -123,8 +175,16 @@ export default function ChatRoomMenu({chat, user}: {chat: Chat, user?: User | nu
           <LogoutIcon />
           Leave chat
         </MenuItem>
+        {
+          !chat.private &&
+          permissions?.includes(Permissions.Chat.ADMIN) &&
+          <MenuItem onClick={deleteChat} disableRipple>
+            <DeleteIcon />
+            Delete chat
+          </MenuItem>
+        }
       </StyledMenu>
-        <UserSelector isOpen={userSelectorOpen} onResult={addUsersToChat} onCancel={handleClose}/>
-    </div>
+      <UserSelector isOpen={userSelectorOpen} onResult={onUsersSelected} onCancel={handleClose} filter={userSelectorFilter}/>
+    </div >
   );
 }

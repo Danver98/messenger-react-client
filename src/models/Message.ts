@@ -63,6 +63,22 @@ class Message implements Message {
         this.read = read;
     }
 
+    copy(): Message {
+        const copyDate = this.time ? new Date(this.time) : null;
+        const copyAuthor = this.author ? User.copy(this.author) : null;
+        const copyMessageData = this.data ? { ...this.data } : null;
+        return new Message(
+            this.id,
+            this.chatId,
+            this.receiverId,
+            this.type,
+            copyMessageData,
+            copyAuthor,
+            copyDate,
+            this.read
+        );
+    }
+
     getTime(): Date | null {
         return this.time instanceof Date ? this.time : this.time == null ? null : new Date(this.time);
     }

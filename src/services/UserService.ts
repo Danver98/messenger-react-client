@@ -1,10 +1,28 @@
 import HttpService from "./HttpService";
 import User from "../models/User";
+import { ID } from "../util/Types";
+
+export interface UserFilter {
+    /**
+     * Includes name or/and surname of the user
+     */
+    search?: string;
+    /**
+     * A chat to take/exclude users from
+     */
+    chatId?: ID;
+    /**
+     * Whether to exclude users who are in chat with chatId from the search
+     */
+    exclude?: boolean;
+    /**
+     * Array of user identifiers
+     */
+    ids?: ID[];
+}
 
 export interface UserRequestDTO {
-    filter?: {
-        search?: string;
-    },
+    filter?: UserFilter,
     id?: string | number | null,
     surname?: string | null,
     direction?: number | null;

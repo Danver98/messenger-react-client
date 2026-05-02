@@ -3,6 +3,7 @@ import Message, { MessageDataType } from "../../../models/Message";
 import FilePresentIcon from '@mui/icons-material/FilePresent';
 import User from "../../../models/User";
 import "./Chats.css";
+import { ID } from "../../../util/Types";
 
 export interface IMessageListRef {
     messageList: any;
