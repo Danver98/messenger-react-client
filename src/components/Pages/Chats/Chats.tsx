@@ -23,11 +23,24 @@ const SearchBar = ({ onChange }: { onChange: (value: string) => any }) => {
         <TextField
             id="standard-basic"
             label="Search"
-            variant="standard"
-            fullWidth
-            margin="none"
+            variant="filled"
+            type="search"
+            size="small"
+            sx={{
+                mt: 1,
+                mr: 1,
+                ml: 1,
+                "& .MuiFilledInput-root": {
+                borderTopLeftRadius: "25px",
+                borderTopRightRadius: "25px",
+                borderBottomLeftRadius: "25px",
+                borderBottomRightRadius: "25px",
+                
+                },
+            }}
             slotProps={{
                 input: {
+                    disableUnderline: true,
                     endAdornment: (
                         <InputAdornment position="end">
                             <SearchIcon />
