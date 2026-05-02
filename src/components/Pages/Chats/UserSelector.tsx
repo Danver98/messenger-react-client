@@ -83,7 +83,7 @@ const UserSelector = ({ isOpen = false, submitText = 'Select', cancelText = 'Can
     const [open, setOpen] = useState(isOpen);
     const [users, setUsers] = useState<User[]>([]);
     const [search, setSearch] = useState("");
-    const [checked, setChecked] = useState([1]);
+    const [checked, setChecked] = useState<number[]>([]);
     const [selectedUsers, setSelectedUsers] = useState<ID[]>([]);
 
     const handleToggle = (position: number, userId: ID) => {
@@ -115,6 +115,8 @@ const UserSelector = ({ isOpen = false, submitText = 'Select', cancelText = 'Can
     }, [handleClickClose, onCancel]);
 
     const submitSelection = useCallback(() => {
+        setChecked([]);
+        setSelectedUsers([]);
         handleClickClose();
         onResult(selectedUsers);
     }, [handleClickClose, onResult, selectedUsers]);
