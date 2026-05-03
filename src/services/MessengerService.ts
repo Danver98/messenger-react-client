@@ -206,8 +206,18 @@ class MessengerService {
             file: attachment,
             chatId,
             userId
-        }
+        };
         return HttpService.postFile(MessengerService.CHAT_URL + '/attachment', dto, headers);
+    }
+
+    async generateChatInvitationLink(chatId: ID): Promise<string> {
+        const headers: HeadersInit = this.getRequestResourceObjectHeader(chatId);
+        return HttpService.get(MessengerService.CHAT_URL + `/${chatId}/invitation-link`, undefined, headers);
+    }
+
+    async joinChatByLink(chatId: ID, link: string): Promise<any> {
+        const headers: HeadersInit = this.getRequestResourceObjectHeader(chatId);
+        return HttpService.postByUrl(link, undefined, headers);
     }
 }
 export default MessengerService.Instance;

@@ -8,11 +8,71 @@ import Chat from '../../../models/Chat';
 import User from '../../../models/User';
 import { ID } from '../../../util/Types';
 import MessengerService from '../../../services/MessengerService';
-import { Avatar, FormControlLabel, Switch } from '@mui/material';
+import { Avatar, Box, FormControlLabel, Switch } from '@mui/material';
+import InputAdornment from '@mui/material/InputAdornment';
 import { Permissions } from '../../../models/Permissions';
 import "./Chats.css";
 
-export default function ChatRoomEdit({ isOpen = false, chatId, user, permissions, onResult = () => {} }:
+import { Snackbar, Tooltip, IconButton } from '@mui/material';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import { useState } from 'react';
+
+
+const GenerateChatInvitationLink = ({ userId, chatId }: { userId: ID, chatId: ID }) => {
+
+    const [link, setLink] = useState('');
+    const [open, setOpen] = useState(false);
+
+    const copyLink = async () => {
+        if (!link) return;
+        navigator.clipboard.writeText(link);
+        setOpen(true); // Show notification
+    };
+
+    const generateLink = async () => {
+        const invitationLink = await MessengerService.generateChatInvitationLink(chatId);
+        setLink(invitationLink);
+    };
+
+    return (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, marginTop: 1 }}>
+            <Button variant="contained" onClick={generateLink} size="small">
+                Generate Invitation Link
+            </Button>
+            <TextField
+                variant="outlined"
+                size="small"
+                value={link}
+                slotProps={{
+                    input: {
+                        readOnly: true,
+                        endAdornment: (
+                            <InputAdornment position="end">
+                                <>
+                                    <Tooltip title="Copy to clipboard">
+                                        <IconButton onClick={copyLink} size="small">
+                                            <ContentCopyIcon />
+                                        </IconButton>
+                                    </Tooltip>
+
+                                    {/* Visual Feedback Notification */}
+                                    <Snackbar
+                                        open={open}
+                                        onClose={() => setOpen(false)}
+                                        autoHideDuration={2000}
+                                        message="Link copied to clipboard!"
+                                    />
+                                </>
+                            </InputAdornment>
+                        )
+                    },
+                }}
+            />
+        </Box>
+    );
+};
+
+export default function ChatRoomEdit({ isOpen = false, chatId, user, permissions, onResult = () => { } }:
     { isOpen: boolean, chatId: ID, user?: User | null, permissions?: string[], onResult?: () => void }) {
     const [open, setOpen] = React.useState(isOpen);
     const [readOnly, setReadOnly] = React.useState(true);
@@ -114,6 +174,10 @@ export default function ChatRoomEdit({ isOpen = false, chatId, user, permissions
                             />}
                             label="Users can add members"
                         />
+                        {
+                            (chat?.canAddUsers || permissions?.includes(Permissions.Chat.ADMIN)) &&
+                            <GenerateChatInvitationLink chatId={chatId} userId={user?.id} />
+                        }
                     </form>
                 </DialogContent>
                 <DialogActions className="chat-room-edit--dialogActions"

@@ -1,8 +1,10 @@
-import { forwardRef, useEffect, useRef } from "react";
+import { forwardRef, useEffect, useRef, useState } from "react";
 import Message, { MessageDataType } from "../../../models/Message";
 import FilePresentIcon from '@mui/icons-material/FilePresent';
 import User from "../../../models/User";
 import "./Chats.css";
+import { Box, Button } from "@mui/material";
+import MessengerService from "../../../services/MessengerService";
 import { ID } from "../../../util/Types";
 
 export interface IMessageListRef {
@@ -12,6 +14,46 @@ export interface IMessageListRef {
 const NewMessagesDecorator = () => {
     return (
         <div className="chat-room__newMsgDecorator" data-content="New Messages" />
+    )
+}
+
+
+const JoinChatLink = ({ chatId, link }: { chatId: ID, link: string }) => {
+    const [chatName, setChatName] = useState('');
+
+    useEffect(() => {
+        const url = new URL(link);
+        const newChatName = decodeURIComponent(url.searchParams.get('chatName') || '');
+        setChatName(newChatName);
+    }, [link]);
+    const handleClick = async (event: any) => {
+        event.stopPropagation();
+        await MessengerService.joinChatByLink(chatId, link);
+    };
+    return (
+        <Box 
+            sx={{ 
+                display: 'flex',
+                width: '30%',
+                justifyContent: 'center',
+                flexDirection: 'column',
+                alignItems: 'center', gap: 1,
+                border: '2px solid #ffffff',
+                backgroundColor: '#f0ebeb',
+                borderRadius: '25px',
+                padding: '10px'
+            }}
+        >
+            <span>{chatName}</span>
+            <Button
+                variant="contained"
+                size="small"
+                onClick={handleClick}
+            >
+                Join chat
+            </Button>
+        </Box>
+
     )
 }
 
@@ -37,6 +79,10 @@ const MessageBody = ({ message, user }: { message: Message, user?: User | null }
                     {
                         (message.data?.type === MessageDataType.TEXT ||
                             message.data?.type === MessageDataType.DEFAULT) && message.data?.data
+                    }
+                    {
+                        (message.data?.type === MessageDataType.JOIN_LINK) && message.data?.data &&
+                        <JoinChatLink chatId={message.chatId} link={message.data?.data} />
                     }
                     {
                         message.data?.type === MessageDataType.IMAGE && message.data?.data &&

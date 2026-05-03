@@ -50,7 +50,7 @@ const ChatDataProvider = ({ children }: { children: any }) => {
     const dto = JSON.parse(payload.body);
     const data = dto.message;
     const chat = dto.chat;
-    if (data.type === MessageType.CREATION) {
+    if (data.type === MessageType.CREATION || data.type === MessageType.INVITATION || data.type === MessageType.JOIN) {
       if (chat != null && !chat.private) {
         // If given public chat, subscribe
         stompClient?.subscribe(`/topic/chats/${data.chatId}/messages`, (payload: any) => {

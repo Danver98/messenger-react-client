@@ -95,6 +95,7 @@
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+    min-width: 0px;
     margin-right: 2px;
     margin-left: 8px;
 }
@@ -106,6 +107,11 @@
 .chat-list-item__lastMessage-service {
     color: #787878;
 }
+
+/* .chat-list-item__lastMessage-text {
+    display: inline-block;
+    min-width: 0;
+} */
 
 .chat-list-item__messageCounter {
     display: flex;

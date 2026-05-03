@@ -7,6 +7,7 @@ export enum MessageDataType {
     VIDEO,
     FILE,
     AUDIO,
+    JOIN_LINK
 }
 
 export interface MessageData {

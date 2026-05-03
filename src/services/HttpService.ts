@@ -1,7 +1,7 @@
 import RequestInterceptor from "../middleware/RequestInterceptor";
 import ResponseInterceptor from "../middleware/ResponseInterceptor";
 import { Headers } from "../util/Constants";
-import { getToken } from "../components/hooks/useToken";
+import { getToken, setToken, setCurrentLoggedUser } from "../components/hooks/useToken";
 import { ACCESS_TOKEN, ServiceUrl } from "../util/Constants";
 import { showNotification } from "../util/Notifications";
 
@@ -72,6 +72,10 @@ class HttpService {
     protected async _fetch(input: URL | RequestInfo, init?: RequestInit | undefined): Promise<any> {
         try {
             const response = await fetch(input, init);
+            if (response.status === 401) {
+                setToken(ACCESS_TOKEN, null);
+                setCurrentLoggedUser(null);
+            }
             if (!response.ok) {
                 throw new Error(`Request failed: status code - ${response.status}`);
             }
@@ -156,6 +160,11 @@ class HttpService {
     async post(url: string = '', data: object = {}, headers?: HeadersInit, signal?: AbortSignal | null): Promise<any> {
         const info: RequestInit = this._prepareRequest('POST', data, headers, signal);
         return this._fetch(ServiceUrl.BACKEND_SERVICE_BASE_URL + url, info);
+    }
+
+    async postByUrl(fullUrl: string, data: object = {}, headers?: HeadersInit, signal?: AbortSignal | null): Promise<any> {
+        const info: RequestInit = this._prepareRequest('POST', data, headers, signal);
+        return this._fetch(fullUrl, info);
     }
 
     async put(url: string = '', data: object = {}, headers?: HeadersInit, signal?: AbortSignal | null): Promise<any> {

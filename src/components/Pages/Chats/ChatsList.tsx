@@ -1,9 +1,8 @@
 import { forwardRef, } from "react";
 import Chat from "../../../models/Chat";
-import { MessageType } from "../../../models/Message";
+import { MessageDataType, MessageType } from "../../../models/Message";
 import "./Chats.css";
 import "../../../_styles/Common.css";
-import { ID } from "../../../util/Types";
 
 const LastMessage = ({ chat }: { chat: Chat }) => {
     const messageType = chat.lastMessage?.type;
@@ -14,10 +13,19 @@ const LastMessage = ({ chat }: { chat: Chat }) => {
             </div>
         )
     }
+    const messageDataType = chat.lastMessage?.data?.type;
+    if (messageDataType === MessageDataType.JOIN_LINK) {
+        return (
+            <div className="chat-list-item__lastMessage">
+                <span className="chat-list-item__lastMessage-author">{chat.lastMessage?.getAuthorFullName()}</span>
+                <span className="chat-list-item__lastMessage-text">{ ': ' + 'link' }</span>
+            </div>
+        )
+    }
     return (
         <div className="chat-list-item__lastMessage">
             <span className="chat-list-item__lastMessage-author">{chat.lastMessage?.getAuthorFullName()}</span>
-            <span>{ ': ' + chat.lastMessage?.getDataText() }</span>
+            <span className="chat-list-item__lastMessage-text">{ ': ' + chat.lastMessage?.getDataText() }</span>
         </div>
     )
 }
