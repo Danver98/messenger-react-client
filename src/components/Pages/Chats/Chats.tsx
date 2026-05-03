@@ -75,11 +75,11 @@ export default function Chats() {
     } = FetchChats(userId ? userId : 0, time, chatId, DIRECTION.PAST);
 
     // New message's been sent
-    useListener(CHATS_COMPONENT_MESSAGE_QUEUE, (dto: any) => {
+    useListener(CHATS_COMPONENT_MESSAGE_QUEUE, async (dto: any) => {
         const msg = dto.message;
         let chat = dto.chat;
         const message = new Message(msg.id, msg.chatId, msg.receiverId, msg.type, msg.data, msg.author, msg.time);
-        if (msg.type === MessageType.CREATION && chat != null) {
+        if ((msg.type === MessageType.CREATION || msg.type === MessageType.JOIN) && chat != null) {
             const newChat = new Chat(
                 chat.id,
                 chat.name,
@@ -91,8 +91,13 @@ export default function Chats() {
                 chat.draft,
                 dto.unreadMsgCount != null ? dto.unreadMsgCount + 1 :
                 chat.unreadMsgCount != null ? chat.unreadMsgCount + 1 : null,
+                message // last read message
             );
             setChats((prevChats) => [newChat, ...prevChats]);
+            if (msg.type === MessageType.JOIN) {
+                chat = await MessengerService.getChat(chat.id, userId);
+                setActiveChat(chat);
+            }
             return;
         }
         const filteredChats: Chat[] = [];
