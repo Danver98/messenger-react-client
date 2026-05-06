@@ -31,11 +31,11 @@ const SearchBar = ({ onChange }: { onChange: (value: string) => any }) => {
                 mr: 1,
                 ml: 1,
                 "& .MuiFilledInput-root": {
-                borderTopLeftRadius: "25px",
-                borderTopRightRadius: "25px",
-                borderBottomLeftRadius: "25px",
-                borderBottomRightRadius: "25px",
-                
+                    borderTopLeftRadius: "25px",
+                    borderTopRightRadius: "25px",
+                    borderBottomLeftRadius: "25px",
+                    borderBottomRightRadius: "25px",
+
                 },
             }}
             slotProps={{
@@ -79,7 +79,9 @@ export default function Chats() {
         const msg = dto.message;
         let chat = dto.chat;
         const message = new Message(msg.id, msg.chatId, msg.receiverId, msg.type, msg.data, msg.author, msg.time);
-        if ((msg.type === MessageType.CREATION || msg.type === MessageType.JOIN) && chat != null) {
+        if ((msg.type === MessageType.CREATION || (msg.type === MessageType.JOIN && message.author?.id === userId))
+            && chat != null) {
+            // User is new for this chat, we need to create it for chat list
             const newChat = new Chat(
                 chat.id,
                 chat.name,
@@ -90,11 +92,12 @@ export default function Chats() {
                 message,
                 chat.draft,
                 dto.unreadMsgCount != null ? dto.unreadMsgCount + 1 :
-                chat.unreadMsgCount != null ? chat.unreadMsgCount + 1 : null,
+                    chat.unreadMsgCount != null ? chat.unreadMsgCount + 1 : null,
                 message // last read message
             );
             setChats((prevChats) => [newChat, ...prevChats]);
             if (msg.type === MessageType.JOIN) {
+                // User joins chat
                 chat = await MessengerService.getChat(chat.id, userId);
                 setActiveChat(chat);
             }
@@ -126,7 +129,7 @@ export default function Chats() {
         if (!(chat instanceof Chat)) {
             chat = chat = new Chat(chat.id, chat.name, chat.private, chat.avatar, chat.time, chat.participants, message, chat.draft, chat.unreadMsgCount);
         }
-        setChats([chat, ...filteredChats ]);
+        setChats([chat, ...filteredChats]);
     });
 
 
@@ -149,13 +152,13 @@ export default function Chats() {
                     element.lastMessage,
                     element.draft,
                     dto.unreadMsgCount === 0 ? null : dto.unreadMsgCount);
-                    newChats.push(chat);
+                newChats.push(chat);
             } else {
                 newChats.push(element);
             }
         });
 
-        setChats(newChats);     
+        setChats(newChats);
     });
 
     useEffect(() => {
@@ -189,12 +192,12 @@ export default function Chats() {
         setActiveChat(fetchedChat);
     }
 
-    const handleChatCreation = async(users: any[], params?: ChatCreationParams | null) => {
+    const handleChatCreation = async (users: any[], params?: ChatCreationParams | null) => {
         // Create private chat if doesn't exist or redirect to it
         const newChat = new Chat(
             null,
             params?.chatName || null,
-            !params?.multiSelect , //private
+            !params?.multiSelect, //private
             null,
             null,
             [authContext.user?.id, ...users], // participants
@@ -212,27 +215,27 @@ export default function Chats() {
                 <div className="chat-dashboard">
                     <div className="chat-dashboard__left">
                         <SearchBar
-                            onChange={() => {}}
+                            onChange={() => { }}
                         />
                         <ChatsList
                             chats={chats}
                             ref={setLastElementRef}
-                            itemClickHandler={handleClick} 
+                            itemClickHandler={handleClick}
                         />
-                        <ChatCreation 
+                        <ChatCreation
                             user={authContext.user}
-                            onResult={(elements: any[], params?: ChatCreationParams | null) => {handleChatCreation(elements, params)}}
+                            onResult={(elements: any[], params?: ChatCreationParams | null) => { handleChatCreation(elements, params) }}
                         />
                     </div>
                     <div className="chat-dashboard__right">
                         {
                             activeChat &&
-                            <ChatRoom chat={activeChat} closeChat={() => {setActiveChat(null)}}/>
+                            <ChatRoom chat={activeChat} closeChat={() => { setActiveChat(null) }} />
                         }
                         {
                             activeChat == null &&
                             <div className="chat-room__empty">
-                                    Select chat to start messaging
+                                Select chat to start messaging
                             </div>
                         }
                     </div>

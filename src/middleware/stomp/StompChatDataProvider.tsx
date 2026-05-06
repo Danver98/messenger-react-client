@@ -27,6 +27,12 @@ const ChatDataProvider = ({ children }: { children: any }) => {
     const data = dto.message;
     const chatData = dto.chat;
     const message = new Message(data.id, data.chatId, data.receiverId, data.type, data.data, data.author, data.time);
+    if (data.type === MessageType.JOIN && message.author?.id === user?.id) {
+      // Current user has joined the chat. This message should have already been processed by private message handler
+      // TODO: why this happens? User should only get message in his private queue,
+      // but it seems he also gets it in public queue he just subscribed to
+      return;
+    }
     const chat = new Chat(chatData.id, chatData.name, chatData.private, chatData.avatar, chatData.time,
       chatData.participants, chatData.lastMessage, chatData.draft, chatData.unreadMsgCount, chatData.lastReadMsg,
       chatData.authorId, chatData.canAddUsers);
