@@ -1,4 +1,4 @@
-import { Headers } from "../util/Constants";
+import { DEVICE_ID, Headers } from "../util/Constants";
 import { getToken } from "../components/hooks/useToken";
 import { ACCESS_TOKEN } from "../util/Constants";
 
@@ -21,6 +21,7 @@ class RequestInterceptor {
 
     process(request: Request): Request {
         this._setTokens(request);
+        this._setDeviceID(request);
         return request;
     }
 
@@ -29,6 +30,13 @@ class RequestInterceptor {
         // Store as object for future changes
         if (accessToken) {
             request.headers.set(Headers.AUTHORIZATION, `Bearer ${accessToken}`);
+        }
+    }
+
+    private _setDeviceID(request: Request): void {
+        const deviceID = localStorage.getItem(DEVICE_ID);
+        if (deviceID) {
+            request.headers.set(Headers.X_USER_DEVICE_ID, deviceID);
         }
     }
 

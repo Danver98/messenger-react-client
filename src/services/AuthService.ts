@@ -1,4 +1,11 @@
+import User from "../models/User";
 import HttpService from "./HttpService";
+
+export interface AuthData {
+    user: User;
+    accessToken: string;
+    refreshToken: string;
+}
 
 export class AuthService {
 
@@ -18,7 +25,7 @@ export class AuthService {
         return HttpService.postJson(AuthService.URL + '/register', data);
     }
 
-    async login(data: object): Promise<any> {
+    async login(data: object): Promise<AuthData> {
         return HttpService.postJson(AuthService.URL + '/login', data);
     }
 
@@ -26,8 +33,12 @@ export class AuthService {
         return HttpService.get(AuthService.URL + `/logout/${userId}`);
     }
 
-    async refreshToken(): Promise<any> {
+    async getRefreshToken(): Promise<any> {
+        return HttpService.get(AuthService.URL + `/refreshToken`); 
+    }
 
+    async getAccessToken(): Promise<any> {
+        return HttpService.get(AuthService.URL + `/accessToken`);
     }
 }
 

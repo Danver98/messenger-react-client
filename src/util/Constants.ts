@@ -2,6 +2,7 @@ export const RANDOM_AVATAR_URL = 'https://i.pravatar.cc/'; // /{size}
 export const RANDOM_CHAT_AVATAR_URL = 'https://random.imagecdn.app/v1/image' // /{width}/{height}
 export const ACCESS_TOKEN = 'access_token';
 export const REFRESH_TOKEN = 'refresh_token';
+export const DEVICE_ID = 'device_id';
 export const CURRENT_LOGGED_USER = 'current_logged_user'
 export const CHATS_COMPONENT_MESSAGE_QUEUE = '/components/chats/messages';
 export const CHATS_COMPONENT_MSG_UNREAD_COUNT_QUEUE = '/components/chats/messages/unread/count';
@@ -23,6 +24,7 @@ export class ServiceUrl {
 export class Headers {
     static readonly AUTHORIZATION = 'Authorization';
     static readonly X_REQUEST_RESOURCE_OBJECT = 'X-request-resource-object';
+    static readonly X_USER_DEVICE_ID = 'X-user-device-id';
 };
 
 export class Pages {

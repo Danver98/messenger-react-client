@@ -72,13 +72,15 @@ export default function UserInfo() {
     const navigate = useNavigate();
 
     const logout = async () => {
-        // At least clear token in storage;
-        setToken?.(null);
-        setUser?.(null);
         if (!user) {
+            // At least clear token in storage;
+            setToken?.(null);
+            setUser?.(null);
             return;
         }
         await AuthService.logout(user.id);
+        setToken?.(null);
+        setUser?.(null);
         navigate(Pages.LOGIN_PAGE, { replace: true })
     }
 

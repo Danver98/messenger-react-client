@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useMemo } from "react";
 import AuthContextData from "../contexts/AuthContextData";
 import { useAccessToken, useCurrentLoggedUser, useRefreshToken } from "../components/hooks/useToken";
 

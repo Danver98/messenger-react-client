@@ -61,7 +61,7 @@ const ChatDataProvider = ({ children }: { children: any }) => {
         // If given public chat, subscribe
         stompClient?.subscribe(`/topic/chats/${data.chatId}/messages`, (payload: any) => {
           OnPublicMessageReceived(payload, user);
-        });
+        }, { userId: user.id.toString(), customHeader: 'CUSTOM_HEADER_VALUE' });
       }
     }
     const message = new Message(data.id, data.chatId, data.receiverId, data.type, data.data, data.author, data.time);
@@ -81,7 +81,7 @@ const ChatDataProvider = ({ children }: { children: any }) => {
       if (!user) return;
       stompClient?.subscribe(`/user/${user.id}/queue/chats/messages`, (payload: any) => {
         OnPrivateMessageReceived(payload, user);
-      });
+      }, { userId: user.id.toString(), customHeader: 'CUSTOM_HEADER_VALUE' });
       // Subscribe to public chats
       const dto: ChatRequestDTO = {
         userId: user.id
@@ -91,7 +91,7 @@ const ChatDataProvider = ({ children }: { children: any }) => {
         if (chat.private) return;
         stompClient?.subscribe(`/topic/chats/${chat.id}/messages`, (payload: any) => {
           OnPublicMessageReceived(payload, user);
-        });
+        }, { userId: user.id.toString(), customHeader: 'CUSTOM_HEADER_VALUE' });
       });
     }
 

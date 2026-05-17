@@ -1,30 +1,49 @@
-import { StompSessionProvider } from 'react-stomp-hooks';
 import './App.css';
+import { Toaster } from 'react-hot-toast';
 import AuthProvider from './middleware/AuthProvider';
 import Routing from './routing/Routing';
-import { ServiceUrl } from './util/Constants';
 import { Provider as BusProvider } from 'react-bus';
 import ChatDataProvider from './middleware/stomp/StompChatDataProvider';
+import StompSessionProvider from './middleware/stomp/StompSessionWrapper';
 
 function App() {
   return (
-    <StompSessionProvider
-      url={ServiceUrl.BACKEND_SERVICE_WEB_SOCKET_URL}
-      onConnect={(frame: any) => {
-        console.log(`Successfully connected to server websocket!`);
-      }}
-      onDisconnect={(frame: any) => {
-        console.log(`Successfully disconnected from server websocket!`);
-      }}
-    >
+    <>
+      <Toaster
+        position="bottom-right"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: '#1e293b',
+            color: '#f1f5f9',
+            borderRadius: '12px',
+            padding: '12px 20px',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+          },
+          success: {
+            iconTheme: {
+              primary: '#22c55e',
+              secondary: '#ffffff',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#ffffff',
+            },
+          },
+        }}
+      />
       <BusProvider>
-        <ChatDataProvider>
-          <AuthProvider>
-            <Routing />
-          </AuthProvider>
-        </ChatDataProvider>
+        <AuthProvider>
+          <StompSessionProvider>
+            <ChatDataProvider>
+              <Routing />
+            </ChatDataProvider>
+          </StompSessionProvider>
+        </AuthProvider>
       </BusProvider>
-    </StompSessionProvider>
+    </>
   )
 }
 

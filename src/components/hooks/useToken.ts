@@ -69,6 +69,11 @@ export function setCurrentLoggedUser(user: User | null): void {
   localStorage.setItem(CURRENT_LOGGED_USER, JSON.stringify(user));
 }
 
+export function getCurrentLoggedUser(): User | null {
+    const user = localStorage.getItem(CURRENT_LOGGED_USER);
+    return user ? JSON.parse(user) : null;
+  }
+
 export function useCurrentLoggedUser() {
   const getCurrentLoggedUser = () => {
     const user = localStorage.getItem(CURRENT_LOGGED_USER);
