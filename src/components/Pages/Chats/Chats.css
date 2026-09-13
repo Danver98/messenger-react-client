@@ -179,6 +179,11 @@
     justify-content: center;
 }
 
+.chat-room-page__unreadMsgCounter_Box {
+    display: flex;
+    flex-direction: column;
+}
+
 .chat-room__empty {
     display: flex;
     flex: 1 1 auto;
@@ -210,6 +215,7 @@
     flex-direction: column-reverse;
     flex: 1 1 auto;
     justify-content: center;
+    align-items: center;
 }
 
 .message-list-item {

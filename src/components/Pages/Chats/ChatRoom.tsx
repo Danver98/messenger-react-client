@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect, useRef } from "react";
+import { useCallback, useState, useEffect, useEffectEvent, useRef } from "react";
 import MessageList from "./MessagesList";
 import { CHATS_COMPONENT_MSG_UNREAD_COUNT_QUEUE, DIRECTION,
     CHATS_COMPONENT_MESSAGE_QUEUE } from "../../../util/Constants";
@@ -7,7 +7,7 @@ import Message, { MessageData, MessageDataType, MessageType } from "../../../mod
 import User from "../../../models/User";
 import { useAuthContextData } from "../../../middleware/AuthProvider";
 import AttachFileIcon from '@mui/icons-material/AttachFile';
-import { Button, IconButton, TextareaAutosize } from "@mui/material";
+import { Box, Button, IconButton, TextareaAutosize } from "@mui/material";
 import CircularProgress from '@mui/material/CircularProgress';
 import ClearIcon from '@mui/icons-material/Clear';
 import { IPublishParams, StompHeaders } from '@stomp/stompjs';
@@ -21,22 +21,44 @@ import ChatRoomMenu from "./ChatRoomMenu";
 import { ID } from "../../../util/Types";
 import ChatRoomEdit from "./ChatRoomEdit";
 
-const Circle = ({value}: {value?: string | number | null}) => (
-    <Button
-        type="submit"
-        variant="contained"
-        color="secondary"
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+
+export interface MessageListHandle {
+    getSentinelNode: () => HTMLLIElement | null;
+}
+
+const Circle = ({value, clickHandler }: {value?: string | number | null, clickHandler: () => void}) => (
+    <Box
+        className='chat-room-page__unreadMsgCounter_Box'
         sx={{
             position: "absolute",
             bottom: 80,
-            right: 5,
-
-            aspectRatio:"1/1",
-            borderRadius: '50%',
+            right: 5
         }}
     >
-        {value}
-    </Button>
+        <Button
+            type="submit"
+            variant="contained"
+            color="secondary"
+            sx={{
+                aspectRatio:"1/1",
+                borderRadius: '50%',
+            }}
+        >
+            {value}
+        </Button>
+        <IconButton
+            className='chat-room-page__unreadMsgCounter_arrowDown'
+            onClick={clickHandler}
+        >
+            <KeyboardArrowDownIcon
+                fontSize="small"
+                sx={{
+                    boxShadow: 'none', filter: 'none'
+                }}
+                />
+        </IconButton>
+    </Box>
 );
 
 export interface PagingParams {
@@ -147,16 +169,13 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
             count: 50,
         });
     const [draft, setDraft] = useState<boolean | null | undefined>(chat.draft);
-    const [lastElementRef, setLastElementRef] = useState(null);
-    // Observer of the last element in the list of messages. If it's intersected,
-    // component start fetching new nessages
-    const observerRef = useRef<IntersectionObserver | null>(null);
+    const messageListHandleRef = useRef<MessageListHandle | null>(null);
     const stompClient = useStompClient();
     const [messages, setMessages] = useState<Message[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [hasMore, setHasMore] = useState(false);
     const [permissions, setPermissions] = useState<string[]>([]);
-    const [intersected, setIntersected] = useState(false);
+    const [intersected, setIntersected] = useState<number>(0);
     const lastReadMsgRef = useRef<string| null>(chat.lastReadMsg ? chat.lastReadMsg.id : null);
     const messageListRef = useRef<HTMLUListElement>(null);
     const [unreadMsgCount, setUnreadMsgCount] = useState<number>(chat.unreadMsgCount || 0);
@@ -187,32 +206,52 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
         fetchPermissions(chat.id);
     }, [chat.id]);
 
-
-    const onMessageReceived = (dto: any) => {
+    const onMessageReceived = useCallback((dto: any) => {
         const data = dto.message;
-        const message = new Message(data.id, data.chatId, data.receiverId, data.type, data.data, data.author, data.time);
+        const isLastMessageVisible = messageListRef.current?.scrollTop === 0;
+        const message = new Message(data.id, data.chatId, data.receiverId, data.type, data.data, data.author, data.time, isLastMessageVisible);
         setMessages((prevMessages: Message[]) =>
             [message, ...prevMessages])
-        if (messageListRef.current?.scrollTop === 0) {
+        if (isLastMessageVisible) {
             // Newly added message is fully visible to user, so mark it as last read
             lastReadMsgRef.current = message.id;
         } else {
             // If user is not viewing the last message, increment unreadMsgCount
-            setUnreadMsgCount(count => count + 1);  
+            setUnreadMsgCount(count => count + 1);
         }
-    };
+    }, []);
 
     /**
      * Handles intersection of the next unread message
      * It updates the unreadMsgCount and current lastReadMsg id.
-     * It's supposed that observer automatically unobserve element after it has intersected,
-     * so that we don't have false lastReadMsg id updates
+     * It's supposed handler is only fired on unread messages not to move pointer
+     * to earlier read messages
      */
-    const handleMsgIntersection = useCallback((params?: any) => {
-        // TODO: lastReadMsgRef assigning in intersection callback is flaky
+    const handleMsgIntersection = useEffectEvent((params?: any) => {
+        const lastReadMsgIndex = messages.findIndex(m => m.id === lastReadMsgRef.current);
+        const msgIndex = params.position ?? messages.findIndex(m => m.id === params.id);
+        if (msgIndex === -1) return;
+        if (lastReadMsgIndex === -1) {
+            // User has opened chat for the first time and there are brand new messages or
+            // current message portion doesn't include any unread messages
+            lastReadMsgRef.current = params.id;
+            const decrement = messages.length - msgIndex;
+            setUnreadMsgCount((prevCount) => prevCount === 0 ? prevCount : Math.max(0, prevCount - decrement));
+            setMessages((prevMessages) => prevMessages.map((message) => message.id === params.id ?
+                    new Message(message.id, message.chatId, message.receiverId, message.type, message.data,
+                        message.author, message.time, true)
+                    : message));
+            return;
+        }
+        // If message has already been read, do nothing
+        if (msgIndex >= lastReadMsgIndex) return;
         lastReadMsgRef.current = params.id;
         setUnreadMsgCount((prevCount) => prevCount === 0 ? prevCount : prevCount - 1);
-    }, []); // Runs only once on mount
+        setMessages((prevMessages) => prevMessages.map((message) => message.id === params.id ?
+                new Message(message.id, message.chatId, message.receiverId, message.type, message.data,
+                    message.author, message.time, true) 
+                : message));
+    });
 
     const sendMessage = async (event: any) => {
         const user = authContext.user as User;
@@ -289,11 +328,8 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
             // send message to chats component queue
             bus.emit(CHATS_COMPONENT_MESSAGE_QUEUE, {
                 message: message,
-                chat: chat,
-                unreadMsgCount: unreadMsgCount,
+                chat: chat
             });
-            // if scrollTop !== 0
-            setUnreadMsgCount(count => count + 1);
         }
     }
 
@@ -315,61 +351,70 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
             setHasMore(newMessages && newMessages.length > 0);
         };
         f();
-    }, [pagingParams]);
+    }, [pagingParams, hasMore]);
 
-    /**
-     * Initializes observer for last message in the list (it's reversed - the last message is at the top).
-     * If it's intersected, component starts fetching new messages
-     */
+    const pagingObserverRef = useRef<IntersectionObserver | null>(null);
+
     useEffect(() => {
-        observerRef.current = new IntersectionObserver(
-            (entries) => {
-                if (entries[0].isIntersecting) {
-                    setIntersected((prev) => !prev);
+        pagingObserverRef.current = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    setIntersected((n) => n + 1); // counter instead of toggle
                 }
-            }
-        );
-    }, []); // Runs on start only
+            });
+        });
+        return () => {
+            pagingObserverRef.current?.disconnect();
+            pagingObserverRef.current = null;
+        };
+    }, []);
+
+    useEffect(() => {
+        const observer = pagingObserverRef.current;
+        const node = messageListHandleRef.current?.getSentinelNode() ?? null;
+        if (!observer || !node) return;
+
+        observer.observe(node);
+        return () => {
+            observer.unobserve(node);
+        };
+    }, [messages, chat.id]);
+
+
+    useEffect(() => {
+        bus.emit(CHATS_COMPONENT_MSG_UNREAD_COUNT_QUEUE, {
+            chatId: chat.id,
+            unreadMsgCount,
+        });
+    }, [bus, chat.id, unreadMsgCount]);
 
     useEffect(() => {
         return () => {
-            // Shoud be run when user closes current chat or switches to another one
-            bus.emit(CHATS_COMPONENT_MSG_UNREAD_COUNT_QUEUE, {
-                chat: chat,
-                unreadMsgCount: unreadMsgCount,
-            });
             if (chat.id && lastReadMsgRef && authContext.user?.id) {
-                if ( chat.lastReadMsg?.id === lastReadMsgRef.current || !lastReadMsgRef.current) {
+                if (chat.lastReadMsg?.id === lastReadMsgRef.current || !lastReadMsgRef.current) {
                     return;
                 }
-                MessengerService.updateLastReadMsg(chat.id, authContext.user.id, lastReadMsgRef.current!);
-            }    
-        }
-    }, [bus, chat, unreadMsgCount, authContext.user?.id]);
-
-    /**
-     * Starts observing new last message element (visually located at the top of viewport)
-     * to trigger fetch messages when intersected
-     */
-    useEffect(() => {
-        const observerCurrent = observerRef.current;
-
-        if (lastElementRef) {
-            observerCurrent?.observe(lastElementRef);
-        }
-
-        return () => {
-            if (lastElementRef) {
-                observerCurrent?.disconnect();
+                MessengerService.updateLastReadMsg(
+                    chat.id,
+                    authContext.user.id,
+                    lastReadMsgRef.current!
+                );
             }
         };
-    }, [lastElementRef]);
-
+    }, [bus, chat.id, chat.lastReadMsg?.id, authContext?.user?.id]);
 
     useEffect(() => {
+        setMessages([]);
         setHasMore(true);
-        setPagingParams({ chatId: chat.id, userId: authContext.user?.id });
-    }, [chat.id]);
+        setUnreadMsgCount(chat.unreadMsgCount || 0);
+        lastReadMsgRef.current = chat.lastReadMsg ? chat.lastReadMsg.id : null;
+        setPagingParams({
+            chatId: chat.id,
+            userId: authContext.user?.id,
+            direction: DIRECTION.PAST,
+            count: 50,
+        });
+    }, [chat.id, authContext.user?.id]);
 
     /**
      * Fires when last message is intersected. Setting new paging params triggers messages fetching
@@ -385,6 +430,30 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
             include: true
         })
     }, [intersected]);
+
+    const scrollToLatestMessage = async () => {
+        if (!chat.id || !messages || !messages.length || !authContext.user?.id ||
+            !messageListRef.current || !lastReadMsgRef.current) return;
+        
+        const handleScrollFinished = () => {
+            if (! chat.id || !messages || !messages.length || !authContext?.user?.id) return;
+            setUnreadMsgCount(0);
+            lastReadMsgRef.current = messages[0].id;
+            MessengerService.updateLastReadMsg(
+                chat.id,
+                authContext.user.id,
+                messages[0].id!
+            );
+            // Clean up the listener so it doesn't trigger on normal user scrolling later
+            messageListRef.current?.removeEventListener('scrollend', handleScrollFinished);
+        };
+
+        messageListRef.current?.addEventListener('scrollend', handleScrollFinished);
+        messageListRef.current?.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    }
 
     return (
         <div className="chat-room-page">
@@ -409,11 +478,12 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
             </div>
             <div className="chat-room-page__CentralBlock">
                 <MessageList
+                    chatId={chat.id}
                     messages={messages}
                     lastReadMsgIdOnOpen={chat.lastReadMsg?.id}
                     intersectionHandler={handleMsgIntersection}
                     user={authContext.user}
-                    ref={setLastElementRef}
+                    ref={messageListHandleRef}
                     listRef={messageListRef}
                     lastReadMsgRef={lastReadMsgRef}
                 />
@@ -422,7 +492,7 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
                 }
                 {
                     unreadMsgCount > 0 &&
-                    <Circle value={unreadMsgCount}/>
+                    <Circle value={unreadMsgCount} clickHandler={scrollToLatestMessage}/>
                 }
                 <MessageSender handleSubmit={sendMessage} />
                 <IconButton

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useEffectEvent, useState, useRef } from "react";
 import { FetchChats } from "./FetchData";
 import "./Chats.css"
 import ChatsList from "./ChatsList";
@@ -74,14 +74,26 @@ export default function Chats() {
         error
     } = FetchChats(userId ? userId : 0, time, chatId, DIRECTION.PAST);
 
+    const activeChatIdRef = useRef<number | string | null>(activeChat?.id);
+    useEffect(() => {
+        activeChatIdRef.current = activeChat?.id;
+    });
+
     // New message's been sent
-    useListener(CHATS_COMPONENT_MESSAGE_QUEUE, async (dto: any) => {
+    const onMessageReceived = useCallback(async (dto: any) => {
         const msg = dto.message;
         let chat = dto.chat;
-        const message = new Message(msg.id, msg.chatId, msg.receiverId, msg.type, msg.data, msg.author, msg.time);
-        if ((msg.type === MessageType.CREATION || (msg.type === MessageType.JOIN && message.author?.id === userId))
-            && chat != null) {
-            // User is new for this chat, we need to create it for chat list
+        const message = new Message(
+            msg.id, msg.chatId, msg.receiverId,
+            msg.type, msg.data, msg.author, msg.time
+        );
+
+        // Case 1: user is being added to a chat they don't yet have in their list.
+        if (
+            (msg.type === MessageType.CREATION ||
+                (msg.type === MessageType.JOIN && message.author?.id === userId)) &&
+            chat != null
+        ) {
             const newChat = new Chat(
                 chat.id,
                 chat.name,
@@ -96,53 +108,68 @@ export default function Chats() {
                 message // last read message
             );
             setChats((prevChats) => [newChat, ...prevChats]);
+
             if (msg.type === MessageType.JOIN) {
-                // User joins chat
-                chat = await MessengerService.getChat(chat.id, userId);
-                setActiveChat(chat);
+                // Server-side fetch to get the fully-hydrated chat object.
+                const joinedChat = await MessengerService.getChat(chat.id, userId);
+                setActiveChat(joinedChat);
             }
             return;
         }
-        const filteredChats: Chat[] = [];
-        chats.forEach((element: Chat) => {
-            if (element.id === msg.chatId) {
-                chat = new Chat(
-                    element.id,
-                    element.name,
-                    element.private,
-                    element.avatar,
-                    element.time,
-                    element.participants,
-                    message,
-                    element.draft,
-                    dto.unreadMsgCount != null ? dto.unreadMsgCount + 1 :
-                        element.unreadMsgCount != null ? element.unreadMsgCount + 1 : null
-                );
-            } else {
-                filteredChats.push(element);
+
+        // Case 2: the message belongs to an existing chat in the list.
+        // Everything is computed inside the functional updater so `prevChats`
+        // is guaranteed to be the latest committed state.
+        setChats((prevChats) => {
+            const filteredChats: Chat[] = [];
+            let updatedChat: Chat | null = null;
+
+            for (const element of prevChats) {
+                if (element.id === msg.chatId) {
+                    updatedChat = new Chat(
+                        element.id,
+                        element.name,
+                        element.private,
+                        element.avatar,
+                        element.time,
+                        element.participants,
+                        message,
+                        element.draft,
+                        dto.unreadMsgCount != null
+                            ? dto.unreadMsgCount + 1
+                            : element.unreadMsgCount != null
+                                ? element.unreadMsgCount + 1
+                                : element.id !== activeChatIdRef.current
+                                    ? 1
+                                    : null
+                    );
+                } else {
+                    filteredChats.push(element);
+                }
             }
-        })
-        // TODO: check if it is a first message from a certain user to private chat
-        if (chat == null) {
+
+            // Chat isn't in the list and isn't a CREATION/JOIN → nothing to do.
+            if (updatedChat == null) {
+                return prevChats;
+            }
+
+            return [updatedChat, ...filteredChats];
+        });
+    }, [userId]);
+
+    // New message's been sent
+    useListener(CHATS_COMPONENT_MESSAGE_QUEUE, onMessageReceived);
+
+    const handleUnreadCount = useCallback((dto: any) => {
+        if (dto.chatId == null) {
             return;
         }
-        if (!(chat instanceof Chat)) {
-            chat = chat = new Chat(chat.id, chat.name, chat.private, chat.avatar, chat.time, chat.participants, message, chat.draft, chat.unreadMsgCount);
-        }
-        setChats([chat, ...filteredChats]);
-    });
-
-
-    // Update chat list unread messages counter when chat room is open
-    useListener(CHATS_COMPONENT_MSG_UNREAD_COUNT_QUEUE, (dto: any) => {
-        if (!dto.chat) {
-            return;
-        }
-        //setChats((prevChats) => [newChat, ...prevChats]);
-        const newChats: Chat[] = [];
-        chats.forEach((element: Chat) => {
-            if (element.id === dto.chat?.id) {
-                const chat = new Chat(
+        setChats((prevChats) =>
+            prevChats.map((element: Chat) => {
+                if (element.id !== dto.chatId) {
+                    return element;
+                }
+                return new Chat(
                     element.id,
                     element.name,
                     element.private,
@@ -151,15 +178,14 @@ export default function Chats() {
                     element.participants,
                     element.lastMessage,
                     element.draft,
-                    dto.unreadMsgCount === 0 ? null : dto.unreadMsgCount);
-                newChats.push(chat);
-            } else {
-                newChats.push(element);
-            }
-        });
+                    dto.unreadMsgCount === 0 ? null : dto.unreadMsgCount
+                );
+            })
+        );  
+    }, []);
 
-        setChats(newChats);
-    });
+    // Update chat list unread messages counter when chat room is open
+    useListener(CHATS_COMPONENT_MSG_UNREAD_COUNT_QUEUE, handleUnreadCount);
 
     useEffect(() => {
         observerRef.current = new IntersectionObserver(

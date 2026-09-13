@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useRef, useState } from "react";
+import { forwardRef, useCallback, useImperativeHandle, useEffect, useRef, useState } from "react";
 import Message, { MessageDataType } from "../../../models/Message";
 import FilePresentIcon from '@mui/icons-material/FilePresent';
 import User from "../../../models/User";
@@ -16,7 +16,6 @@ const NewMessagesDecorator = () => {
         <div className="chat-room__newMsgDecorator" data-content="New Messages" />
     )
 }
-
 
 const JoinChatLink = ({ chatId, link }: { chatId: ID, link: string }) => {
     const [chatName, setChatName] = useState('');
@@ -137,43 +136,49 @@ const MessageBody = ({ message, user }: { message: Message, user?: User | null }
     )
 };
 
-const MessageListItem = forwardRef((
-    { message, user, index, isLast, observer,
-        clickHandler }:
+const MessageListItem = forwardRef(( { message, user, index, observer, clickHandler }:
         {
             message: Message,
             user?: User | null,
             index?: number | null,
-            isLast?: boolean,
             observer?: IntersectionObserver | null
             clickHandler?: ((id: any) => void) | null,
         }, ref?: any) => {
     const messageId = message.id === null ? undefined : message.id;
-    const itemRef = useRef(null);
-    useEffect(() => {
-        if (itemRef.current && observer) {
-            observer.observe(itemRef.current);
-        }
-    }, [observer, itemRef])
+    const itemRef = useRef<HTMLLIElement | null>(null);
 
-    // TODO: fix problem with double ref: for 'read' flag and data fetching
+    // Merge internal itemRef + forwarded ref
+    const setRef = useCallback((node: HTMLLIElement | null) => {
+        itemRef.current = node;
+        if (typeof ref === "function") ref(node);
+        else if (ref) ref.current = node;
+    }, [ref]);
+
+    // Observe only if this item has its own observer
+    useEffect(() => {
+        const el = itemRef.current;
+        if (!el || !observer) return;
+        observer.observe(el);
+        return () => observer.unobserve(el);
+    }, [observer]);
+
     return (
         <li
             id={messageId}
-            key={message.id}
             data-item-index={index}
-            onClick={() => { clickHandler?.(message.id) }}
+            onClick={clickHandler ? () => clickHandler(message.id) : undefined}
             className="message-list-item"
             tabIndex={-1}
-            ref={isLast ? ref : itemRef} // lastItemRef or itemRef
+            ref={setRef}
         >
             <MessageBody message={message} user={user} />
         </li>
-    )
+    );
 });
 
-const MessageList = forwardRef(({ messages, user, lastReadMsgIdOnOpen, intersectionHandler, listRef, lastReadMsgRef }:
+const MessageList = forwardRef(({ chatId, messages, user, lastReadMsgIdOnOpen, intersectionHandler, listRef, lastReadMsgRef }:
     {
+        chatId: ID,
         messages?: Message[],
         user?: User | null,
         lastReadMsgIdOnOpen?: number | string | null, //lastReadMsgIdOnOpen on backend, before opening ChatRoom
@@ -181,91 +186,120 @@ const MessageList = forwardRef(({ messages, user, lastReadMsgIdOnOpen, intersect
         listRef?: React.RefObject<HTMLUListElement | null>,
         lastReadMsgRef: React.RefObject<string | null>
     }, ref?: any) => {
-    const firstMsgId = messages && messages.length ? messages[messages?.length - 1].id : null;
+
+    const topMessageId = messages && messages.length ? messages[messages.length - 1].id : null;
+    let lastMsgReadIndex = messages?.findIndex(m => m.id === lastReadMsgRef.current) ?? -1;
+    if ( messages?.length && lastMsgReadIndex === -1 && lastReadMsgIdOnOpen == null) {
+        // User hasn't visited chat yet and there are brand new messages for him - mark'em all as unread
+        lastMsgReadIndex = messages.length;
+    }
+
+    const [firstUnreadMsgId, setFirstUnreadMsgId] = useState<ID>(null);
+    const firstUnreadSetForChatRef = useRef<ID | null>(null);
+    useEffect(() => {
+        if (!messages || messages.length === 0) return;
+
+        // New chat → reset and re-evaluate from scratch.
+        if (firstUnreadSetForChatRef.current !== chatId) {
+            firstUnreadSetForChatRef.current = chatId;
+
+            if (lastReadMsgIdOnOpen == null) {
+                setFirstUnreadMsgId(messages[messages.length - 1].id);
+                return;
+            }
+            const onOpenIndex = messages.findIndex(m => m.id === lastReadMsgIdOnOpen);
+            if (onOpenIndex === -1) {
+                return;
+            }
+            // Case 1: there's a recorded last-read message and it's not the newest.
+            if (lastReadMsgIdOnOpen && onOpenIndex !== 0) {
+                setFirstUnreadMsgId(messages[onOpenIndex - 1].id);
+                return;
+            }
+        }
+
+        // Same chat, decorator not yet set → check the "new message while scrolled away" case.
+        // React runs effects after commiting the DOM, so the scroll position should be right
+        if (firstUnreadMsgId == null) {
+            const atNewest = listRef?.current == null || listRef.current.scrollTop === 0;
+            if (!atNewest) {
+                // The newest message is the first unread.
+                setFirstUnreadMsgId(messages[0].id);
+            }
+        }
+    }, [chatId, messages, lastReadMsgIdOnOpen, lastMsgReadIndex, listRef, firstUnreadMsgId]);
+
     const listId = "chat-room-msg-list";
     /**
      * Observes unread messages
      */
     const observerRef = useRef<IntersectionObserver | null>(null);
+    const [observerReady, setObserverReady] = useState(false);
 
+    const hasFocusedRef = useRef(false);
     useEffect(() => {
-        const refId = lastReadMsgIdOnOpen ? lastReadMsgIdOnOpen : firstMsgId;
+        if (hasFocusedRef.current) return;
+        const refId = lastReadMsgIdOnOpen ?? topMessageId;
         if (!refId) return;
         document.getElementById(String(refId))?.focus();
-    }, [lastReadMsgIdOnOpen, firstMsgId]);
+        hasFocusedRef.current = true;
+    }, [lastReadMsgIdOnOpen, topMessageId, chatId]);
 
     useEffect(() => {
-        observerRef.current = new IntersectionObserver((entries) => {
-            entries.forEach((entry: IntersectionObserverEntry) => {
-                if (entry.isIntersecting) {
-                    const position = entries[0].target.getAttribute('data-item-index');
-                    const params = {
-                        id: entries[0].target.getAttribute('id'),
-                        position: position ? +position : null,
-                    };
-                    observerRef.current?.unobserve(entry.target);
-                    intersectionHandler(params);
-                }
-            })
-        },
-            {
-                root: listRef?.current,
-                threshold: 0.9
-            }
-        );
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (!entry.isIntersecting) return;
+                const target = entry.target;
+                const id = target.getAttribute('id');
+                if (!id) return;
+                observer.unobserve(target);
+                const position = target.getAttribute('data-item-index');
+                intersectionHandler({ id, position: position ? +position : null });
+            });
+        }, { root: listRef?.current, threshold: 0.9 });
+
+        observerRef.current = observer;
+        setObserverReady(true);
+
         return () => {
-            observerRef.current?.disconnect();
-        }
+            observer.disconnect();
+            observerRef.current = null;
+            setObserverReady(false);
+        };
     }, [listRef, intersectionHandler]);
 
-    if (messages == null || messages.length === 0) {
-        return (
-            <div className="chat-room-message-list-empty">
-                No messages!
-            </div>
-        )
-    }
+    const sentinelNodeRef = useRef<HTMLLIElement | null>(null);
+    // Expose the sentinel to the parent via the forwarded ref
+    useImperativeHandle(ref, () => ({
+        getSentinelNode: () => sentinelNodeRef.current,
+    }), []);
 
     let listItems: any[] = [];
-    let newMsgDecoratorInserted = false
-    const lastMsgReadIndex = messages.findIndex(msg => msg.id === lastReadMsgRef.current);
+    let newMsgDecoratorInserted = false;
     // First message'll be in the bottom of display
     messages?.forEach((message, index) => {
-        // if (index + 1 === lastMsgReadIndex && !newMsgDecoratorInserted) {
-        //     listItems.push([
-        //         <NewMessagesDecorator />
-        //     ]);
-        //     newMsgDecoratorInserted = true;
-        // }
-        if (!newMsgDecoratorInserted &&
-            (message.id === lastReadMsgIdOnOpen)
-            && index !== 0) {
-            // Additionally check whether message list scroll position is at the end - 
-            // in that case user sees new message and we don't need to notify him more
-            if (listRef?.current && listRef?.current?.scrollTop !== 0) {
-                listItems.push([
-                    <NewMessagesDecorator />
-                ]);
-                newMsgDecoratorInserted = true;
-            }
-        }
-        listItems.push([
+        const isSentinel = index === messages.length - 1; // oldest message
+        listItems.push(
             <MessageListItem
-                key={message.id}
+                key={message.id ?? `local-${index}`}
                 message={message}
                 user={user}
                 index={index}
-                isLast={index === messages.length - 1}
-                observer={index < lastMsgReadIndex ? observerRef.current : null}
-                ref={ref}
+                observer={observerReady && index < lastMsgReadIndex ? observerRef.current : null}
+                // Attach the sentinel ref only to the oldest message
+                ref={isSentinel ? sentinelNodeRef : undefined}
             />
-        ]);
+        );
+        if (!newMsgDecoratorInserted && firstUnreadMsgId === message.id) {
+            if (!(lastReadMsgIdOnOpen == null && firstUnreadMsgId === topMessageId)) {
+                // We don't insert decorator if it's very first visit of che chat
+                listItems.push(
+                    <NewMessagesDecorator key="new-msg-decorator"/>
+                );
+                newMsgDecoratorInserted = true;
+            }
+        }
     });
-    if (!lastReadMsgIdOnOpen && messages.length) {
-        listItems.push([
-            <NewMessagesDecorator />
-        ]);
-    }
 
     return (
         <ul
@@ -273,9 +307,12 @@ const MessageList = forwardRef(({ messages, user, lastReadMsgIdOnOpen, intersect
             id={listId}
             ref={listRef}
         >
+            {listItems.length === 0 && (
+                <div className="chat-room-message-list-empty">No messages!</div>
+            )}
             {listItems}
         </ul>
-    )
+    );
 });
 
 export default MessageList;

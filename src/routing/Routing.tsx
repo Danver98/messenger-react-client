@@ -1,5 +1,5 @@
 // router.ts
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, RouterNavigateOptions, RouterProvider } from "react-router-dom";
 import { useEffect } from "react";
 import Layout from "../components/Layout/Layout";
 import ProtectedRoute from "../middleware/ProtectedRoute";
@@ -89,9 +89,9 @@ class RouterManager {
   }
 
   // Navigation methods for utility/API classes
-  navigate(path: string) {
+  navigate(path: string, options?: RouterNavigateOptions) {
     if (this.router) {
-      this.router.navigate(path);
+      this.router.navigate(path, options);
     } else {
       console.warn('Router not initialized yet');
     }

@@ -6,6 +6,7 @@ import { useAuthContextData } from "../../../../middleware/AuthProvider";
 import { Box, Button, List, ListItem, ListItemButton, ListItemText, } from "@mui/material";
 import User from '../../../../models/User';
 import { useState } from 'react';
+import { routerManager } from '../../../../routing/Routing';
 
 interface UserInfoOptions {
     id: number | string;
@@ -78,10 +79,10 @@ export default function UserInfo() {
             setUser?.(null);
             return;
         }
-        await AuthService.logout(user.id);
+        AuthService.logout(user.id);
         setToken?.(null);
         setUser?.(null);
-        navigate(Pages.LOGIN_PAGE, { replace: true })
+        navigate(Pages.LOGIN_PAGE, { replace: true });
     }
 
     const optionClick = (option: UserInfoOptions) => {
