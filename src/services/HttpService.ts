@@ -5,7 +5,7 @@ import { getToken, setToken, getCurrentLoggedUser, setCurrentLoggedUser } from "
 import { ACCESS_TOKEN, ServiceUrl } from "../util/Constants";
 import AuthService from "./AuthService";
 import { getDeviceId } from "../util/Functions";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { routerManager } from "../routing/Routing";
 
 class HttpService {

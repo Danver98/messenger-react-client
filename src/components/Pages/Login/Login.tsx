@@ -5,7 +5,7 @@ import AuthService, { AuthData } from "../../../services/AuthService"
 import { SecuredPages } from "../../../util/Constants";
 import "./Login.css";
 import { useNavigate } from "react-router-dom";
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 
 export default function Login() {
     const navigate = useNavigate();

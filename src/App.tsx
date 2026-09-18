@@ -1,5 +1,5 @@
 import './App.css';
-import { Toaster } from 'react-hot-toast';
+import { Toaster } from 'sonner';
 import AuthProvider from './middleware/AuthProvider';
 import Routing from './routing/Routing';
 import { Provider as BusProvider } from 'react-bus';
