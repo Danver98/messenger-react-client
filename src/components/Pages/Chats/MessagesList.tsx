@@ -87,7 +87,7 @@ const MessageBody = ({ message, user }: { message: Message, user?: User | null }
                         message.data?.type === MessageDataType.IMAGE && message.data?.data &&
                         <img
                             src={message.data?.data}
-                            alt=''
+                            alt="Couldn't load image"
                             className="message-list-item_image"
                         />
                     }
