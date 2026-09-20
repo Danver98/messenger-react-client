@@ -210,16 +210,24 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
         const data = dto.message;
         const isLastMessageVisible = messageListRef.current?.scrollTop === 0;
         const message = new Message(data.id, data.chatId, data.receiverId, data.type, data.data, data.author, data.time, isLastMessageVisible);
+        const currentUserIsAuthor = message.author?.id === authContext.user?.id;
         setMessages((prevMessages: Message[]) =>
             [message, ...prevMessages])
-        if (isLastMessageVisible) {
+        if (isLastMessageVisible || currentUserIsAuthor) {
             // Newly added message is fully visible to user, so mark it as last read
             lastReadMsgRef.current = message.id;
-        } else {
-            // If user is not viewing the last message, increment unreadMsgCount
+        } else if (!currentUserIsAuthor) {
+            // If user is not viewing the last message and he is not the author of the message,
+            // increment unreadMsgCount
             setUnreadMsgCount(count => count + 1);
         }
     }, []);
+
+    /** Scroll down to the top of messages list, when current user sends a new message */
+    useEffect(() => {
+        if (messageListRef.current?.scrollTop === 0 || messages.length && messages[0].author?.id !== authContext.user?.id) return;
+        scrollToLatestMessage(false, 'instant');
+    }, [messages, authContext.user?.id]);
 
     /**
      * Handles intersection of the next unread message
@@ -236,21 +244,25 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
             // current message portion doesn't include any unread messages
             lastReadMsgRef.current = params.id;
             const decrement = messages.length - msgIndex;
-            setUnreadMsgCount((prevCount) => prevCount === 0 ? prevCount : Math.max(0, prevCount - decrement));
-            setMessages((prevMessages) => prevMessages.map((message) => message.id === params.id ?
+            setMessages((prevMessages) => prevMessages.map((message, index) => message.id === params.id || index > msgIndex ?
                     new Message(message.id, message.chatId, message.receiverId, message.type, message.data,
                         message.author, message.time, true)
                     : message));
+            setUnreadMsgCount((prevCount) => prevCount === 0 ? prevCount : Math.max(0, prevCount - decrement));
             return;
         }
         // If message has already been read, do nothing
         if (msgIndex >= lastReadMsgIndex) return;
         lastReadMsgRef.current = params.id;
-        setUnreadMsgCount((prevCount) => prevCount === 0 ? prevCount : prevCount - 1);
-        setMessages((prevMessages) => prevMessages.map((message) => message.id === params.id ?
+        setMessages((prevMessages) => prevMessages.map((message, index) => message.id === params.id || index > msgIndex?
                 new Message(message.id, message.chatId, message.receiverId, message.type, message.data,
                     message.author, message.time, true) 
                 : message));
+        const decrement = lastReadMsgIndex - msgIndex;
+        if (messages[msgIndex].author?.id !== authContext.user?.id) {
+            // If current user is not the author of the message, decrement unreadMsgCount
+            setUnreadMsgCount((prevCount) => prevCount === 0 ? prevCount : Math.max(0, prevCount - decrement));
+        };
     });
 
     const sendMessage = async (event: any) => {
@@ -309,6 +321,7 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
             messageData,
             author,
         );
+        message.read = true;
 
         const params: IPublishParams = {
             destination: destination,
@@ -431,7 +444,7 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
         })
     }, [intersected]);
 
-    const scrollToLatestMessage = async () => {
+    const scrollToLatestMessage = async (updateLastReadMsgOnServer: boolean = true, behavior: ScrollBehavior = 'smooth') => {
         if (!chat.id || !messages || !messages.length || !authContext.user?.id ||
             !messageListRef.current || !lastReadMsgRef.current) return;
         
@@ -439,11 +452,13 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
             if (! chat.id || !messages || !messages.length || !authContext?.user?.id) return;
             setUnreadMsgCount(0);
             lastReadMsgRef.current = messages[0].id;
-            MessengerService.updateLastReadMsg(
-                chat.id,
-                authContext.user.id,
-                messages[0].id!
-            );
+            if (updateLastReadMsgOnServer) {
+                MessengerService.updateLastReadMsg(
+                    chat.id,
+                    authContext.user.id,
+                    messages[0].id!
+                );
+            };
             // Clean up the listener so it doesn't trigger on normal user scrolling later
             messageListRef.current?.removeEventListener('scrollend', handleScrollFinished);
         };
@@ -451,7 +466,7 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
         messageListRef.current?.addEventListener('scrollend', handleScrollFinished);
         messageListRef.current?.scrollTo({
             top: 0,
-            behavior: 'smooth'
+            behavior
         });
     }
 

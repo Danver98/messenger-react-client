@@ -222,7 +222,8 @@ const MessageList = forwardRef(({ chatId, messages, user, lastReadMsgIdOnOpen, i
         // React runs effects after commiting the DOM, so the scroll position should be right
         if (firstUnreadMsgId == null) {
             const atNewest = listRef?.current == null || listRef.current.scrollTop === 0;
-            if (!atNewest) {
+            const currentUserIsAuthor =messages[0].author?.id === user?.id;
+            if (!atNewest && !currentUserIsAuthor) {
                 // The newest message is the first unread.
                 setFirstUnreadMsgId(messages[0].id);
             }
@@ -236,14 +237,45 @@ const MessageList = forwardRef(({ chatId, messages, user, lastReadMsgIdOnOpen, i
     const observerRef = useRef<IntersectionObserver | null>(null);
     const [observerReady, setObserverReady] = useState(false);
 
-    const hasFocusedRef = useRef(false);
+    const focusDoneForChatRef = useRef<ID | null>(null);
     useEffect(() => {
-        if (hasFocusedRef.current) return;
-        const refId = lastReadMsgIdOnOpen ?? topMessageId;
-        if (!refId) return;
-        document.getElementById(String(refId))?.focus();
-        hasFocusedRef.current = true;
-    }, [lastReadMsgIdOnOpen, topMessageId, chatId]);
+        // Already handled for this chat
+        if (focusDoneForChatRef.current === chatId) return;
+
+        // Wait until messages are loaded
+        if (!messages || messages.length === 0) return;
+
+        // Wait until loaded messages belong to this chat
+        // (on chat switch, child effects run before ChatRoom clears `messages`)
+        if (messages[0].chatId !== chatId) return;
+
+        // No last-read message recorded → nothing to focus
+        if (lastReadMsgIdOnOpen == null) {
+            focusDoneForChatRef.current = chatId;
+            return;
+        }
+
+        const idx = messages.findIndex(m => m.id === lastReadMsgIdOnOpen);
+
+        // Last-read message isn't in the loaded window → can't focus it
+        if (idx === -1) {
+            focusDoneForChatRef.current = chatId;
+            return;
+        }
+
+        // Last-read message is the newest → no unread messages → skip
+        if (idx === 0) {
+            focusDoneForChatRef.current = chatId;
+            return;
+        }
+
+        // Unread messages exist → focus last-read message
+        const el = document.getElementById(String(lastReadMsgIdOnOpen));
+        if (!el) return; // not in DOM yet, retry on next render
+
+        el.focus();
+        focusDoneForChatRef.current = chatId;
+    }, [chatId, messages, lastReadMsgIdOnOpen]);
 
     useEffect(() => {
         const observer = new IntersectionObserver((entries) => {
