@@ -1,6 +1,5 @@
 import { DEVICE_ID, Headers } from "../util/Constants";
-import { getToken } from "../components/hooks/useToken";
-import { ACCESS_TOKEN } from "../util/Constants";
+import { useAuthStore } from "../stores/authStore";
 
 class RequestInterceptor {
     private static _instance: RequestInterceptor;
@@ -26,7 +25,7 @@ class RequestInterceptor {
     }
 
     private _setTokens(request: Request): void {
-        const accessToken = getToken(ACCESS_TOKEN);
+        const accessToken = useAuthStore.getState().accessToken;
         // Store as object for future changes
         if (accessToken) {
             request.headers.set(Headers.AUTHORIZATION, `Bearer ${accessToken}`);

@@ -1,6 +1,5 @@
 import { Headers } from "../util/Constants";
-import { setToken } from "../components/hooks/useToken";
-import { ACCESS_TOKEN } from "../util/Constants";
+import { useAuthStore } from "../stores/authStore";
 
 class ResponseInterceptor {
     private static _instance: ResponseInterceptor;
@@ -15,7 +14,6 @@ class ResponseInterceptor {
     }
 
     process(response: Response): Response {
-        this._processTokens(response);
         return response;
     }
 
@@ -26,7 +24,7 @@ class ResponseInterceptor {
         }
         const accessToken = bearer.split(' ')[1].trim();
         // Store as object for future changes
-        setToken(ACCESS_TOKEN, {'token': accessToken});
+        useAuthStore.getState().setAccessToken(accessToken);
     }
 
 }

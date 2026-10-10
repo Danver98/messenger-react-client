@@ -5,11 +5,9 @@ import { CHATS_COMPONENT_MSG_UNREAD_COUNT_QUEUE, DIRECTION,
 import Chat from "../../../models/Chat";
 import Message, { MessageData, MessageDataType, MessageType } from "../../../models/Message";
 import User from "../../../models/User";
-import { useAuthContextData } from "../../../middleware/AuthProvider";
-import AttachFileIcon from '@mui/icons-material/AttachFile';
-import { Box, Button, IconButton, TextareaAutosize } from "@mui/material";
+import { useAuthStore } from "../../../stores/authStore";;
+import { Box, Button, IconButton } from "@mui/material";
 import CircularProgress from '@mui/material/CircularProgress';
-import ClearIcon from '@mui/icons-material/Clear';
 import { IPublishParams, StompHeaders } from '@stomp/stompjs';
 import { useStompClient } from "react-stomp-hooks";
 import { useBus, useListener } from 'react-bus';
@@ -20,8 +18,10 @@ import CloseIcon from '@mui/icons-material/Close';
 import ChatRoomMenu from "./ChatRoomMenu";
 import { ID } from "../../../util/Types";
 import ChatRoomEdit from "./ChatRoomEdit";
+import MessageSender from "./MessageSender";
 
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import MessageMenu, { MENU_ACTIONS, MenuAction } from "./MessageMenu";
 
 export interface MessageListHandle {
     getSentinelNode: () => HTMLLIElement | null;
@@ -71,100 +71,13 @@ export interface PagingParams {
     include?: boolean | null;
 }
 
-
-function MessageSender({ handleSubmit }: { handleSubmit: (event: any) => any }) {
-    const fileUpload = useRef<any>(null);
-    const textArea = useRef<HTMLTextAreaElement | null>(null);
-    const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
-    
-    const fileInputChanged = (event: any) => {
-        setSelectedFiles((prev) => [...prev, event.target.value])
-    }
-
-    const clearFileList = (event: any) => {
-        fileUpload.current.value = null;
-        setSelectedFiles([]);
-    }
-
-    const clearInput = (event: any) => {
-        if (textArea.current) {
-            textArea.current.value = '';
-        }
-    }
-
-    const onSubmit = async (event: any) => {
-        await handleSubmit(event);
-        clearFileList(event);
-        clearInput(event);
-    }
-
-    return (
-        <div className="chat-room-message-sender">
-            <form
-                method="POST"
-                onSubmit={onSubmit}
-                className="chat-room-message-sender__FormContainer"
-            >
-                <div className="chat-room-message-sender__Form">
-                    <IconButton
-                        color="primary"
-                        onClick={() => { fileUpload.current.click() }}
-                    >
-                        <AttachFileIcon />
-                    </IconButton>
-                    <input
-                        name="fileData"
-                        type="file"
-                        hidden
-                        ref={fileUpload}
-                        onChange={(event) => { fileInputChanged(event) }}
-                    />
-                    <div className="chat-room-message-sender__TextArea-container">
-                        <TextareaAutosize
-                            aria-label="minimum height"
-                            name="messageData"
-                            minRows={4}
-                            maxRows={4}
-                            placeholder="Enter your message"
-                            className="chat-room-message-sender__TextArea"
-                            ref={textArea}
-                        />
-                        {
-                            selectedFiles && selectedFiles.length > 0 &&
-                            <div>
-                                {
-                                    selectedFiles.join(', ')
-                                }
-                                <IconButton
-                                    onClick={clearFileList}
-                                >
-                                    <ClearIcon />
-                                </IconButton>
-
-                            </div>
-                        }
-                    </div>
-                    <Button
-                        variant="contained"
-                        type="submit"
-                        size="medium"
-                        className=""
-                    >
-                        Send
-                    </Button>
-                </div>
-            </form>
-        </div>
-    )
-}
-
 export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: () => void }) {
-    const authContext = useAuthContextData();
+    const currentUser: User | null = useAuthStore((state) => state.currentLoggedUser);
     const bus = useBus();
     const [pagingParams, setPagingParams] = useState<PagingParams>(
         {
             chatId: chat.id,
-            userId: authContext.user?.id,
+            userId: currentUser?.id,
             direction: DIRECTION.PAST,
             count: 50,
         });
@@ -181,6 +94,12 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
     const [unreadMsgCount, setUnreadMsgCount] = useState<number>(chat.unreadMsgCount || 0);
 
     const [editMenuOpen, setEditMenuOpen] = useState(false);
+
+    const [contextMenuAnchorElement, setContextMenuAnchorElement] = useState<null | HTMLElement>(null);
+    const [contextMenuMessage, setContextMenuMessage] = useState<Message | null>(null);
+    const [contextMenuAnchorPosition, setContextMenuAnchorPosition] = useState<object|null>(null);
+
+    const [replyMessage, setReplyMessage] = useState<Message | null>(null);
 
     const fetchMessages = async (params: PagingParams) => {
         const dto = {
@@ -209,8 +128,9 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
     const onMessageReceived = useCallback((dto: any) => {
         const data = dto.message;
         const isLastMessageVisible = messageListRef.current?.scrollTop === 0;
-        const message = new Message(data.id, data.chatId, data.receiverId, data.type, data.data, data.author, data.time, isLastMessageVisible);
-        const currentUserIsAuthor = message.author?.id === authContext.user?.id;
+        const message = new Message(data.id, data.chatId, data.receiverId, data.type, data.data,
+            data.author, data.time, isLastMessageVisible, data.replyTo, data.repliedMessage);
+        const currentUserIsAuthor = message.author?.id === currentUser?.id;
         setMessages((prevMessages: Message[]) =>
             [message, ...prevMessages])
         if (isLastMessageVisible || currentUserIsAuthor) {
@@ -225,9 +145,9 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
 
     /** Scroll down to the top of messages list, when current user sends a new message */
     useEffect(() => {
-        if (messageListRef.current?.scrollTop === 0 || messages.length && messages[0].author?.id !== authContext.user?.id) return;
+        if (messageListRef.current?.scrollTop === 0 || messages.length && messages[0].author?.id !== currentUser?.id) return;
         scrollToLatestMessage(false, 'instant');
-    }, [messages, authContext.user?.id]);
+    }, [messages, currentUser?.id]);
 
     /**
      * Handles intersection of the next unread message
@@ -246,7 +166,7 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
             const decrement = messages.length - msgIndex;
             setMessages((prevMessages) => prevMessages.map((message, index) => message.id === params.id || index > msgIndex ?
                     new Message(message.id, message.chatId, message.receiverId, message.type, message.data,
-                        message.author, message.time, true)
+                        message.author, message.time, true, message.replyTo, message.repliedMessage)
                     : message));
             setUnreadMsgCount((prevCount) => prevCount === 0 ? prevCount : Math.max(0, prevCount - decrement));
             return;
@@ -256,17 +176,17 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
         lastReadMsgRef.current = params.id;
         setMessages((prevMessages) => prevMessages.map((message, index) => message.id === params.id || index > msgIndex?
                 new Message(message.id, message.chatId, message.receiverId, message.type, message.data,
-                    message.author, message.time, true) 
+                    message.author, message.time, true, message.replyTo, message.repliedMessage) 
                 : message));
         const decrement = lastReadMsgIndex - msgIndex;
-        if (messages[msgIndex].author?.id !== authContext.user?.id) {
+        if (messages[msgIndex].author?.id !== currentUser?.id) {
             // If current user is not the author of the message, decrement unreadMsgCount
             setUnreadMsgCount((prevCount) => prevCount === 0 ? prevCount : Math.max(0, prevCount - decrement));
         };
     });
 
     const sendMessage = async (event: any) => {
-        const user = authContext.user as User;
+        const user = currentUser as User;
         const formData = new FormData(event.currentTarget);
         event.preventDefault();
         const file = formData.get('fileData')
@@ -294,8 +214,8 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
     }
 
     const _sendMessage = async (messageData: MessageData) => {
-        const user = authContext.user as User;
-        let type = MessageType.CHAT;
+        const user = currentUser as User;
+        const type = MessageType.CHAT;
         const author: User = {
             id: user.id,
             name: user.name,
@@ -307,7 +227,7 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
                 chat.participants[1]
                 : chat.participants[0]
             : null;
-        let destination = chat.private ? '/app/chats/private/send-message' : '/app/chats/public/send-message';
+        const destination = chat.private ? '/app/chats/private/send-message' : '/app/chats/public/send-message';
 
         if (draft && chat.private) {
             setDraft(false);
@@ -322,6 +242,8 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
             author,
         );
         message.read = true;
+        message.replyTo = replyMessage?.id;
+        message.repliedMessage = replyMessage;
 
         const params: IPublishParams = {
             destination: destination,
@@ -343,6 +265,9 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
                 message: message,
                 chat: chat
             });
+        }
+        if (replyMessage) {
+            setReplyMessage(null);
         }
     }
 
@@ -403,18 +328,18 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
 
     useEffect(() => {
         return () => {
-            if (chat.id && lastReadMsgRef && authContext.user?.id) {
+            if (chat.id && lastReadMsgRef && currentUser?.id) {
                 if (chat.lastReadMsg?.id === lastReadMsgRef.current || !lastReadMsgRef.current) {
                     return;
                 }
                 MessengerService.updateLastReadMsg(
                     chat.id,
-                    authContext.user.id,
+                    currentUser.id,
                     lastReadMsgRef.current!
                 );
             }
         };
-    }, [bus, chat.id, chat.lastReadMsg?.id, authContext?.user?.id]);
+    }, [bus, chat.id, chat.lastReadMsg?.id, currentUser?.id]);
 
     useEffect(() => {
         setMessages([]);
@@ -423,11 +348,11 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
         lastReadMsgRef.current = chat.lastReadMsg ? chat.lastReadMsg.id : null;
         setPagingParams({
             chatId: chat.id,
-            userId: authContext.user?.id,
+            userId: currentUser?.id,
             direction: DIRECTION.PAST,
             count: 50,
         });
-    }, [chat.id, authContext.user?.id]);
+    }, [chat.id, currentUser?.id]);
 
     /**
      * Fires when last message is intersected. Setting new paging params triggers messages fetching
@@ -445,17 +370,17 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
     }, [intersected]);
 
     const scrollToLatestMessage = async (updateLastReadMsgOnServer: boolean = true, behavior: ScrollBehavior = 'smooth') => {
-        if (!chat.id || !messages || !messages.length || !authContext.user?.id ||
+        if (!chat.id || !messages || !messages.length || !currentUser?.id ||
             !messageListRef.current || !lastReadMsgRef.current) return;
         
         const handleScrollFinished = () => {
-            if (! chat.id || !messages || !messages.length || !authContext?.user?.id) return;
+            if (! chat.id || !messages || !messages.length || !currentUser?.id) return;
             setUnreadMsgCount(0);
             lastReadMsgRef.current = messages[0].id;
             if (updateLastReadMsgOnServer) {
                 MessengerService.updateLastReadMsg(
                     chat.id,
-                    authContext.user.id,
+                    currentUser.id,
                     messages[0].id!
                 );
             };
@@ -470,6 +395,36 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
         });
     }
 
+    const onContextMenu = useCallback((event: React.MouseEvent<HTMLLIElement>, message: Message) => {
+        event.preventDefault();
+        setContextMenuAnchorElement(event.currentTarget as HTMLElement);
+        setContextMenuMessage(message);
+        setContextMenuAnchorPosition({
+            top: event.clientY,
+            left: event.clientX
+        })
+    }, []);
+
+    const handleClose = useCallback(() => {
+        setContextMenuAnchorElement(null);
+        setContextMenuAnchorPosition(null);
+        setContextMenuMessage(null);
+    }, []);
+
+    const onContextMenuActionSelected = useCallback((action: MenuAction, message: Message) => {
+        handleClose();
+        switch (action) {
+            case MENU_ACTIONS.DELETE:
+                console.log('DELETE');
+                break;
+            case MENU_ACTIONS.REPLY:
+                setReplyMessage(message);
+                break;
+            default:
+                break;
+        }
+    }, [handleClose]);
+
     return (
         <div className="chat-room-page">
             <div className="chat-room-page-header">
@@ -479,14 +434,14 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
                     {chat.name}
                 </div>
                 {
-                    <ChatRoomEdit isOpen={editMenuOpen} chatId={chat.id} user={authContext.user}
+                    <ChatRoomEdit isOpen={editMenuOpen} chatId={chat.id} user={currentUser}
                         permissions={permissions}
                         onResult={() => {setEditMenuOpen(false)}}
                     />
                 }
                 {
                 !!permissions.length &&
-                <ChatRoomMenu chat={chat} user={authContext.user}
+                <ChatRoomMenu chat={chat} user={currentUser}
                     permissions={permissions} closeChat={closeChat}
                 />
                 }
@@ -497,19 +452,24 @@ export default function ChatRoom({ chat, closeChat }: { chat: Chat, closeChat?: 
                     messages={messages}
                     lastReadMsgIdOnOpen={chat.lastReadMsg?.id}
                     intersectionHandler={handleMsgIntersection}
-                    user={authContext.user}
+                    user={currentUser}
                     ref={messageListHandleRef}
                     listRef={messageListRef}
                     lastReadMsgRef={lastReadMsgRef}
+                    onContextMenu={onContextMenu}
                 />
                 {
                     isLoading && <CircularProgress />
                 }
+                <MessageMenu user={currentUser} chat={chat} message={contextMenuMessage}
+                    anchorPosition={contextMenuAnchorPosition} onAction={onContextMenuActionSelected}
+                    handleClose={handleClose}
+                />
                 {
                     unreadMsgCount > 0 &&
                     <Circle value={unreadMsgCount} clickHandler={scrollToLatestMessage}/>
                 }
-                <MessageSender handleSubmit={sendMessage} />
+                <MessageSender handleSubmit={sendMessage} replyMessage={replyMessage} setReplyMessage={setReplyMessage}/>
                 <IconButton
                     onClick={() => { closeChat?.() }}
                     sx={{

@@ -1,11 +1,15 @@
 import User from "../models/User";
 import HttpService from "./HttpService";
+import { ServiceUrl } from "../util/Constants";
+import { useAuthStore } from "../stores/authStore";
 
 export interface AuthData {
     user: User;
     accessToken: string;
     refreshToken: string;
 }
+
+const LOGOUT_URL = ServiceUrl.BACKEND_SERVICE_BASE_URL + ServiceUrl.AUTH_BASE + '/logout';
 
 export class AuthService {
 
@@ -29,8 +33,15 @@ export class AuthService {
         return HttpService.postJson(AuthService.URL + '/login', data);
     }
 
-    async logout(userId: number | string): Promise<any> {
-        return HttpService.get(AuthService.URL + `/logout/${userId}`);
+    async logout(_userId: number | string): Promise<any|void> {
+        const info: RequestInit = await HttpService.prepareRequest('GET');
+        try {
+            await fetch(LOGOUT_URL, info);
+        } catch {
+            // ignore — we're logging out anyway
+        } finally {
+            useAuthStore.getState().clearAuth();
+        }
     }
 
     async getRefreshToken(): Promise<any> {

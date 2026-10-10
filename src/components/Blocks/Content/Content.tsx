@@ -4,10 +4,8 @@ import "./Content.css"
 export default function Content() {
 
     return (
-        <>
-            <div className="content">
-                <Outlet />
-            </div>
-        </>
+        <div className="content">
+            <Outlet />
+        </div>
     )
 }

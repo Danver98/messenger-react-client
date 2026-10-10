@@ -1,14 +1,14 @@
-import { Outlet, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import "./Sidebar.css"
-import { useAuthContextData } from "../../../middleware/AuthProvider";
+import { useAuthStore } from "../../../stores/authStore";
 
-export default function Sidebar({ children }: { children?: any }) {
-    const { getAccessToken } = useAuthContextData();
+export default function Sidebar() {
+    const accessToken = useAuthStore((state) => state.accessToken);
     return (
         <>
             <nav className="sidebar">
                 {
-                    getAccessToken?.() &&
+                    accessToken &&
                     <ul>
                         <li>
                             <Link to="/intro">Intro</Link>
@@ -22,7 +22,7 @@ export default function Sidebar({ children }: { children?: any }) {
                     </ul>
                 }
                 {
-                    !getAccessToken?.() &&
+                    !accessToken &&
                     <ul>
                         <li>
                             <Link to="/intro">Intro</Link>

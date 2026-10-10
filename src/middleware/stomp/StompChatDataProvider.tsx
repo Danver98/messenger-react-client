@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect } from "react";
-import { useCurrentLoggedUser } from "../../components/hooks/useToken";
+import { useAuthStore } from "../../stores/authStore";
 import { useStompClient } from "react-stomp-hooks";
+import { StompSubscription } from "@stomp/stompjs";
 import Message, { MessageType } from "../../models/Message";
 import MessengerService, { ChatRequestDTO } from "../../services/MessengerService";
 import Chat from "../../models/Chat";
@@ -9,17 +10,24 @@ import { useBus } from 'react-bus';
 import { CHATS_COMPONENT_MESSAGE_QUEUE } from "../../util/Constants";
 
 
-interface IChatDataContext {
-  setCurrentLoggedUser?: any;
-}
+const StompChatDataProvider = ({ children }: { children: any }) => {
+  const currentUser = useAuthStore((state) => state.currentLoggedUser);
+  const hasToken = useAuthStore((state) => !!state.accessToken);
 
-const ChatDataContext = createContext<IChatDataContext>({});
+  if (!hasToken || !currentUser) {
+    return <>{children}</>;
+  }
 
-const ChatDataProvider = ({ children }: { children: any }) => {
+  return (
+    <StompChatDataProviderInner currentUser={currentUser}>
+      {children}
+    </StompChatDataProviderInner>
+  );
+};
 
-  const bus = useBus();
-  // Memoized value of the authentication context
-  const { currentLoggedUser, setCurrentLoggedUser } = useCurrentLoggedUser();
+const StompChatDataProviderInner = ({ children, currentUser }: { children: any, currentUser: User | null }) => {
+
+  const bus = useBus();;
   const stompClient = useStompClient();
 
   function OnPublicMessageReceived(payload: any, user: User): void {
@@ -27,6 +35,12 @@ const ChatDataProvider = ({ children }: { children: any }) => {
     const data = dto.message;
     const chatData = dto.chat;
     const message = new Message(data.id, data.chatId, data.receiverId, data.type, data.data, data.author, data.time);
+    message.replyTo = data.replyTo;
+    if (data.replyTo && data.repliedMessage) {
+      message.repliedMessage = new Message(data.repliedMessage.id, data.repliedMessage.chatId,
+        data.repliedMessage.receiverId, data.repliedMessage.type, data.repliedMessage.data,
+        data.repliedMessage.author, data.repliedMessage.time);
+    }
     if (data.type === MessageType.JOIN && message.author?.id === user?.id) {
       // Current user has joined the chat. This message should have already been processed by private message handler
       // TODO: why this happens? User should only get message in his private queue,
@@ -65,6 +79,12 @@ const ChatDataProvider = ({ children }: { children: any }) => {
       }
     }
     const message = new Message(data.id, data.chatId, data.receiverId, data.type, data.data, data.author, data.time);
+    message.replyTo = data.replyTo;
+    if (data.replyTo && data.repliedMessage) {
+      message.repliedMessage = new Message(data.repliedMessage.id, data.repliedMessage.chatId,
+        data.repliedMessage.receiverId, data.repliedMessage.type, data.repliedMessage.data,
+        data.repliedMessage.author, data.repliedMessage.time);
+    }
     bus.emit(`/chats/${data.chatId}/messages`, {
       message: message,
       chat: chat
@@ -77,11 +97,13 @@ const ChatDataProvider = ({ children }: { children: any }) => {
   }
 
   useEffect(() => {
+    const subscriptions: (StompSubscription|undefined)[] = [];
     const subscribe = async (user: User | null) => {
       if (!user) return;
-      stompClient?.subscribe(`/user/${user.id}/queue/chats/messages`, (payload: any) => {
+      const subId = stompClient?.subscribe(`/user/${user.id}/queue/chats/messages`, (payload: any) => {
         OnPrivateMessageReceived(payload, user);
       }, { userId: user.id.toString(), customHeader: 'CUSTOM_HEADER_VALUE' });
+      subscriptions.push(subId);
       // Subscribe to public chats
       const dto: ChatRequestDTO = {
         userId: user.id
@@ -89,31 +111,21 @@ const ChatDataProvider = ({ children }: { children: any }) => {
       const chats = await MessengerService.getChatsByUserLight(dto);
       chats?.forEach((chat: Chat) => {
         if (chat.private) return;
-        stompClient?.subscribe(`/topic/chats/${chat.id}/messages`, (payload: any) => {
+        const subId = stompClient?.subscribe(`/topic/chats/${chat.id}/messages`, (payload: any) => {
           OnPublicMessageReceived(payload, user);
         }, { userId: user.id.toString(), customHeader: 'CUSTOM_HEADER_VALUE' });
+        subscriptions.push(subId);
       });
     }
 
-    subscribe(currentLoggedUser);
-
+    subscribe(currentUser);
     return () => {
+      subscriptions.forEach((s) => s?.unsubscribe());
     }
 
-  }, [currentLoggedUser, stompClient]);
+  }, [currentUser, stompClient]);
 
-  const contextValue = {
-    setCurrentLoggedUser
-  }
-
-  // Provide the ChatData context to the children components
-  return (
-    <ChatDataContext.Provider value={contextValue}>{children}</ChatDataContext.Provider>
-  );
+  return <>{children}</>;
 };
 
-export const useChatData = () => {
-  return useContext(ChatDataContext);
-};
-
-export default ChatDataProvider;
+export default StompChatDataProvider;

@@ -1,33 +1,27 @@
 // StompSessionWrapper.tsx
-import React, { useMemo } from 'react';
 import { StompSessionProvider } from 'react-stomp-hooks';
-import { useAuthContextData } from '../../middleware/AuthProvider';
 import { ServiceUrl, Headers } from '../../util/Constants';
+import { useAuthStore } from '../../stores/authStore';
 
 interface StompSessionWrapperProps {
   children: React.ReactNode;
 }
 
 const StompSessionWrapper: React.FC<StompSessionWrapperProps> = ({ children }) => {
-  const { getAccessToken } = useAuthContextData();
-  
-  // Get token and prepare connection headers
-  const connectHeaders = useMemo(() => {
-    const token = getAccessToken?.();
-    return {
-      [Headers.AUTHORIZATION]: token ? `Bearer ${token}` : '',
-    };
-  }, [getAccessToken]);
-
-  // Always render StompSessionProvider, but it won't connect without a token
-  // Use a dummy URL or disable connection when no token
-  const shouldConnect = !!connectHeaders.Authorization;
-  
+  const hasToken = useAuthStore((state) => !!state.accessToken);
+  if (!hasToken) return <>{children}</>
 
   return (
     <StompSessionProvider
       url={ServiceUrl.BACKEND_SERVICE_WEB_SOCKET_URL}
-      connectHeaders={connectHeaders}
+      beforeConnect={(client) => {
+        const token = useAuthStore.getState().accessToken;
+        client.configure({
+          connectHeaders: token
+            ? { [Headers.AUTHORIZATION]: `Bearer ${token}` }
+            : {},
+        });
+      }}
       onConnect={(frame: any) => {
         console.log(`Successfully connected to server websocket with auth!`);
       }}

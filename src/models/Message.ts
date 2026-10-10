@@ -1,3 +1,4 @@
+import { ID } from "../util/Types";
 import User from "./User";
 
 export enum MessageDataType {
@@ -34,6 +35,8 @@ interface Message {
     data?: MessageData | null;
     author?: User | null;
     read?: boolean | null;
+    replyTo?: ID | null;
+    repliedMessage?: Message | null;
 }
 
 class Message implements Message {
@@ -45,6 +48,8 @@ class Message implements Message {
     data?: MessageData | null;
     author?: User | null;
     read?: boolean | null;
+    replyTo?: ID | null;
+    repliedMessage?: Message | null;
 
     constructor(
         id: string | null,
@@ -54,7 +59,9 @@ class Message implements Message {
         data?: MessageData | null,
         author?: User | null,
         time?: Date | null,
-        read?: boolean | null) {
+        read?: boolean | null,
+        replyTo?: ID | null,
+        repliedMessage?: Message | null) {
         this.id = id;
         this.chatId = chatId;
         this.receiverId = receiverId;
@@ -63,12 +70,15 @@ class Message implements Message {
         this.data = data;
         this.author = author;
         this.read = read;
+        this.replyTo = replyTo;
+        this.repliedMessage = repliedMessage;
     }
 
     copy(): Message {
         const copyDate = this.time ? new Date(this.time) : null;
         const copyAuthor = this.author ? User.copy(this.author) : null;
         const copyMessageData = this.data ? { ...this.data } : null;
+        const repliedMessage = this.replyTo && this.repliedMessage? this.repliedMessage.copy() : null;
         return new Message(
             this.id,
             this.chatId,
@@ -77,7 +87,9 @@ class Message implements Message {
             copyMessageData,
             copyAuthor,
             copyDate,
-            this.read
+            this.read,
+            this.replyTo,
+            repliedMessage
         );
     }
 

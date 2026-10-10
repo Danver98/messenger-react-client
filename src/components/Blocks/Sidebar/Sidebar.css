@@ -1,11 +1,12 @@
 .sidebar {
     display: flex;
     flex-direction: column;
+    flex-shrink: 0;
     min-width: 150px;
     background-color: #8C8C8C;
     color: white;
 }
 
-li a {
+.sidebar li a {
     color: white;
 }

@@ -159,7 +159,7 @@ class MessengerService {
             chatId,
             userId,
             messageId
-        }
+        };
         return HttpService.patchJson(MessengerService.CHAT_URL + `/${chatId}/last-read-msg`, dto, headers);
     }
 
@@ -168,6 +168,17 @@ class MessengerService {
         const messages: Message[] = await HttpService.postJson(
             MessengerService.CHAT_URL + `/${dto.chatId}/messages`, dto, headers);
         return messages?.map((message: Message, index) => {
+            const repliedMessage = message.replyTo && message.repliedMessage ?
+            new Message(
+                message.repliedMessage.id,
+                message.repliedMessage.chatId,
+                message.repliedMessage.receiverId,
+                message.repliedMessage.type,
+                message.repliedMessage.data,
+                message.repliedMessage.author,
+                message.repliedMessage.time,
+                message.repliedMessage.read)
+            : null;
             return new Message(
                 message.id,
                 message.chatId,
@@ -176,7 +187,9 @@ class MessengerService {
                 message.data,
                 message.author,
                 message.time,
-                message.read
+                message.read,
+                message.replyTo,
+                repliedMessage
             );
         })
     }

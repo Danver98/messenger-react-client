@@ -1,9 +1,11 @@
 import { forwardRef, useCallback, useImperativeHandle, useEffect, useRef, useState } from "react";
 import Message, { MessageDataType } from "../../../models/Message";
 import FilePresentIcon from '@mui/icons-material/FilePresent';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
 import User from "../../../models/User";
 import "./Chats.css";
-import { Box, Button } from "@mui/material";
+import { Button } from "@mui/material";
 import MessengerService from "../../../services/MessengerService";
 import { ID } from "../../../util/Types";
 
@@ -16,6 +18,43 @@ const NewMessagesDecorator = () => {
         <div className="chat-room__newMsgDecorator" data-content="New Messages" />
     )
 }
+
+function ReplyBlock({user, message}: {user: string, message: string}) {
+  return (
+    <Box
+      component="blockquote"
+      sx={{
+        pt: 1,
+        pl: 1,
+        my: 0,
+        mx: 0,
+        mb: 1,
+        borderLeft: '4px solid',
+        borderColor: 'primary.main',
+        bgcolor: 'action.hover',
+        borderRadius: '0 4px 4px 0',
+        display: 'flex',
+        flexDirection: 'column',
+        minWidth: 0,
+        maxWidth: '100%',
+        boxSizing: 'border-box',
+      }}
+    >
+      <Typography variant="caption" color="text.secondary">
+        {user}
+      </Typography>
+      <Typography
+        variant="body1" 
+        sx={{ fontStyle: 'italic',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%'
+        }}
+      >
+        {message}
+      </Typography>
+    </Box>
+  );
+}
+
 
 const JoinChatLink = ({ chatId, link }: { chatId: ID, link: string }) => {
     const [chatName, setChatName] = useState('');
@@ -74,6 +113,13 @@ const MessageBody = ({ message, user }: { message: Message, user?: User | null }
                     {/* {message.author?.name + ' ' + message.author?.surname} */}
                     {message.id}
                 </div>
+                {
+                    message.replyTo && message.repliedMessage &&
+                    <ReplyBlock
+                        user={message.repliedMessage.author?.name + ' ' + message.repliedMessage.author?.surname}
+                        message={message.repliedMessage.data?.data}
+                    />
+                }
                 <p className="message-list-item__messageData">
                     {
                         (message.data?.type === MessageDataType.TEXT ||
@@ -136,13 +182,14 @@ const MessageBody = ({ message, user }: { message: Message, user?: User | null }
     )
 };
 
-const MessageListItem = forwardRef(( { message, user, index, observer, clickHandler }:
+const MessageListItem = forwardRef(( { message, user, index, observer, clickHandler, onContextMenu }:
         {
             message: Message,
             user?: User | null,
             index?: number | null,
             observer?: IntersectionObserver | null
             clickHandler?: ((id: any) => void) | null,
+            onContextMenu?: (event: React.MouseEvent<HTMLLIElement>, message: Message) => void
         }, ref?: any) => {
     const messageId = message.id === null ? undefined : message.id;
     const itemRef = useRef<HTMLLIElement | null>(null);
@@ -170,13 +217,14 @@ const MessageListItem = forwardRef(( { message, user, index, observer, clickHand
             className="message-list-item"
             tabIndex={-1}
             ref={setRef}
+            onContextMenu={onContextMenu ? (e) => onContextMenu(e, message) : undefined}
         >
             <MessageBody message={message} user={user} />
         </li>
     );
 });
 
-const MessageList = forwardRef(({ chatId, messages, user, lastReadMsgIdOnOpen, intersectionHandler, listRef, lastReadMsgRef }:
+const MessageList = forwardRef(({ chatId, messages, user, lastReadMsgIdOnOpen, intersectionHandler, listRef, lastReadMsgRef, onContextMenu }:
     {
         chatId: ID,
         messages?: Message[],
@@ -184,7 +232,8 @@ const MessageList = forwardRef(({ chatId, messages, user, lastReadMsgIdOnOpen, i
         lastReadMsgIdOnOpen?: number | string | null, //lastReadMsgIdOnOpen on backend, before opening ChatRoom
         intersectionHandler: (params?: any) => void,
         listRef?: React.RefObject<HTMLUListElement | null>,
-        lastReadMsgRef: React.RefObject<string | null>
+        lastReadMsgRef: React.RefObject<string | null>,
+        onContextMenu?: (event: React.MouseEvent<HTMLLIElement>, message: Message) => void
     }, ref?: any) => {
 
     const topMessageId = messages && messages.length ? messages[messages.length - 1].id : null;
@@ -306,7 +355,7 @@ const MessageList = forwardRef(({ chatId, messages, user, lastReadMsgIdOnOpen, i
         getSentinelNode: () => sentinelNodeRef.current,
     }), []);
 
-    let listItems: any[] = [];
+    const listItems: typeof MessageListItem[] = [];
     let newMsgDecoratorInserted = false;
     // First message'll be in the bottom of display
     messages?.forEach((message, index) => {
@@ -320,6 +369,7 @@ const MessageList = forwardRef(({ chatId, messages, user, lastReadMsgIdOnOpen, i
                 observer={observerReady && index < lastMsgReadIndex ? observerRef.current : null}
                 // Attach the sentinel ref only to the oldest message
                 ref={isSentinel ? sentinelNodeRef : undefined}
+                onContextMenu={onContextMenu}
             />
         );
         if (!newMsgDecoratorInserted && firstUnreadMsgId === message.id) {

@@ -13,12 +13,11 @@ export const DIRECTION = {
 }
 
 export class ServiceUrl {
-    static readonly BACKEND_SERVICE_BASE_URL = 'https://localhost:8443/messenger/api/v1';
-    static readonly BACKEND_SERVICE_WEB_SOCKET_URL = 'wss://localhost:8443/messenger/api/v1/ws';
+    static readonly BACKEND_SERVICE_BASE_URL = import.meta.env.VITE_API_URL;
+    static readonly BACKEND_SERVICE_WEB_SOCKET_URL = import .meta.env.VITE_WEB_SOCKET_API_URL;
     static readonly AUTH_BASE = '/auth';
     static readonly MESSENGER_BASE = '/chats';
     static readonly USER_BASE = '/users';
-    static readonly WEB_SOCKETS = ServiceUrl.BACKEND_SERVICE_BASE_URL + '/ws'
 }
 
 export class Headers {

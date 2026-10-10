@@ -1,43 +1,57 @@
 @import "/src/index.css";
 
+/* min-width: 0 lets this flex item shrink below its content's
+    min-content width. Without it, long nowrap text in the chat
+    list forces the whole layout wider than the viewport. */
 .chat-page {
     display: flex;
     flex-direction: column;
     flex: 1 1 auto;
+    min-width: 0;
     height: 100%;
+    width: 100%;
     background-color: #ffffff;
 }
 
 .chat-dashboard {
     display: flex;
     min-height: 0px;
+    min-width: 0;
     height: 100%;
+    width: 100%;
+    overflow: hidden;
 }
 
 .chat-dashboard__left {
     display: flex;
     flex-direction: column;
     position: relative;
-    min-height: 0px;
+    min-width: 0;
     height: 100%;
     width: 30%;
+    max-width: 30%;
+    overflow: hidden;
     border-right: 1px solid rgb(213, 218, 217);
 }
 
 .chat-dashboard__right {
     display: flex;
     min-height: 0px;
+    min-width: 0;
     height: 100%;
     width: 70%;
+    max-width: 70%;
+    overflow: hidden;
 }
 
 .chat-list {
     display: flex;
     flex: 1 1 auto;
     flex-direction: column;
-    align-items: center;
     min-height: 0px;
+    min-width: 0;
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 0px;
     background-color: #ffffff;
 }
@@ -46,8 +60,11 @@
     display: flex;
     align-items: center;
     box-sizing: border-box;
+    min-width: 0;
     width: 100%;
-    padding: 4px 4px 4px 4px;
+    max-width: 100%;
+    overflow: hidden;
+    padding: 4px;
     background-color: rgb(255, 255, 255);
     box-shadow: 0px 0px 1px 1px rgb(213, 218, 217);
 }
@@ -61,7 +78,7 @@
 
 .chat-list-item__info {
     display: flex;
-    flex: 1 1 auto;
+    flex: 1 1 0;
     flex-direction: column;
     height: 100%;
     min-width: 0;
@@ -71,17 +88,23 @@
     display: flex;
     align-items: center;
     margin-bottom: 4px;
+    min-width: 0;
 }
 
 .chat-list-item__name {
-    display: flex;
+    display: block;
     flex-grow: 1;
     margin-left: 8px;
     color: #333333;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .chat-list-item__date {
     font-size: small;
+    flex-shrink: 0;
 }
 
 .chat-list-item__messageInfo {
@@ -89,9 +112,12 @@
     min-width: 0;
     justify-content: space-between;
     align-items: center;
+    overflow: hidden;
 }
 
 .chat-list-item__lastMessage {
+    display: block;
+    flex: 1 1 0;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -108,14 +134,10 @@
     color: #787878;
 }
 
-/* .chat-list-item__lastMessage-text {
-    display: inline-block;
-    min-width: 0;
-} */
-
 .chat-list-item__messageCounter {
     display: flex;
     height: 100%;
+    flex-shrink: 0;
 }
 
 .chat-list-item__messageCounter-round {
@@ -197,7 +219,9 @@
     flex-direction: column-reverse;
     flex: 1 1 auto;
     min-height: 0px;
+    min-width: 0;
     overflow-y: auto;
+    overflow-x: hidden;
     margin-bottom: 0px;
     width: 100%;
     /* padding-left: 0px; */
@@ -221,6 +245,7 @@
 .message-list-item {
     display: flex;
     padding: 0px 16px 0px 0px;
+    min-width: 0;
     box-shadow: 3px 0px 5px 1px rgb(213, 218, 217);
 
     &:focus-visible {
@@ -230,7 +255,8 @@
 
 .message-list-item_container {
     display: flex;
-    flex: 1 1 auto;
+    flex: 1 1 0;
+    min-width: 0;
     padding: 8px 0px 8px 0px;
 }
 
@@ -261,7 +287,9 @@
 .message-list-item__messageBlock {
     display: flex;
     flex-direction: column;
-    flex: 1 1 auto;
+    flex: 1 1 0;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .message-list-item__messageBlock-date {
@@ -300,30 +328,10 @@
     width: 30px;
 }
 
-.chat-room-message-sender {
-    display: flex;
-    width: 100%;
-    justify-content: center;
-    padding: 8px 0px 8px 16px;
-}
-
 .chat-room-message-sender__FormContainer {
     display: flex;
     width: 100%;
     justify-content: center;
-}
-
-.chat-room-message-sender__Form {
-    display: flex;
-    flex: 1 1 auto;
-    justify-content: center;
-    align-items: center;
-}
-
-.chat-room-message-sender__TextArea-container {
-    display: flex;
-    flex: 1 1 auto;
-    flex-direction: column;
 }
 
 .chat-room-message-sender__TextArea {

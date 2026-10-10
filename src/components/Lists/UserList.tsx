@@ -8,7 +8,7 @@ import UserService, { UserRequestDTO } from "../../services/UserService";
 import { forwardRef, useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { DIRECTION } from "../../util/Constants";
 import "./UserList.css";
-import { showNotification } from "../../util/Notifications";
+import { toast } from 'sonner';
 
 const SearchBar = ({ onChange }: { onChange: (value: string) => any }) => {
     return (
@@ -117,7 +117,7 @@ const UserSelection = ({ user, requestFilter, onResult }:
 
     const handleClickOk = useCallback(() => {
         if (multiSelect && (chatName == null || chatName === '')) {
-            showNotification(`You'd set a chat name!`, 'info');
+            toast.warning(`You'd set a chat name!`);
             return;
         }
         const ids = checked.map((position) => users[position].id);

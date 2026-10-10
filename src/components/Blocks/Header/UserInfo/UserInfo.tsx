@@ -2,11 +2,10 @@ import './UserInfo.css';
 import { useNavigate } from "react-router-dom";
 import { Pages, SecuredPages } from "../../../../util/Constants";
 import AuthService from "../../../../services/AuthService";
-import { useAuthContextData } from "../../../../middleware/AuthProvider";
 import { Box, Button, List, ListItem, ListItemButton, ListItemText, } from "@mui/material";
 import User from '../../../../models/User';
 import { useState } from 'react';
-import { routerManager } from '../../../../routing/Routing';
+import { useAuthStore } from '../../../../stores/authStore';
 
 interface UserInfoOptions {
     id: number | string;
@@ -67,22 +66,19 @@ const OptionsList = ({ navTo, optionClickHandler, user }:
 }
 
 export default function UserInfo() {
-    //const authContext = useAuthContextData();
-    const { user, setUser, getAccessToken, setToken } = useAuthContextData();
+    const user = useAuthStore((state) => state.currentLoggedUser);
+    const accessToken = useAuthStore((state) => state.accessToken);
     const [optionsOpen, setOptionsOpen] = useState(false);
     const navigate = useNavigate();
 
     const logout = async () => {
         if (!user) {
             // At least clear token in storage;
-            setToken?.(null);
-            setUser?.(null);
+            useAuthStore.getState().clearAuth();
             return;
         }
         AuthService.logout(user.id);
-        setToken?.(null);
-        setUser?.(null);
-        navigate(Pages.LOGIN_PAGE, { replace: true });
+        useAuthStore.getState().clearAuth();
     }
 
     const optionClick = (option: UserInfoOptions) => {
@@ -93,7 +89,7 @@ export default function UserInfo() {
     return (
         <>
             {
-                user && getAccessToken?.() ?
+                user && accessToken ?
                     <div className="UserInfo__block">
                         {/* Logged in */}
                         <img

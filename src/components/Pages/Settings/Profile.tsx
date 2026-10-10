@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useAuthContextData } from "../../../middleware/AuthProvider";
+import { useAuthStore } from "../../../stores/authStore";
 import User from "../../../models/User";
 import UserService from "../../../services/UserService";
 import { useFilePicker } from 'use-file-picker';
@@ -8,7 +8,7 @@ import { Avatar, Box, Button, List, ListItem } from "@mui/material";
 
 
 export default function Profile() {
-    const authContext = useAuthContextData();
+    const currentLoggedUser = useAuthStore(state => state.currentLoggedUser);
     const [user, setUser] = useState<User | null>();
     const [readOnly, setReadOnly] = useState(true);
     const [imageFile, setImageFile] = useState<File|null>(null);
@@ -45,7 +45,7 @@ export default function Profile() {
         if (!readOnly) {
             // Save user
             await UserService.update(user);
-            authContext.setUser?.(user);
+            useAuthStore.getState().setCurrentLoggedUser(user ?? null);
         }
         setReadOnly(!readOnly);
     }
@@ -55,8 +55,8 @@ export default function Profile() {
             const u = await UserService.get(id);
             setUser(u);
         };
-        if (authContext.user?.id) {
-            fetchUserData(authContext.user?.id);
+        if (currentLoggedUser?.id) {
+            fetchUserData(currentLoggedUser.id);
         }
     }, []);
 

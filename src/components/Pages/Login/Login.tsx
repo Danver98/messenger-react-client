@@ -1,16 +1,13 @@
-import { useAuthContextData } from "../../../middleware/AuthProvider";
-import { useChatData } from "../../../middleware/stomp/StompChatDataProvider";
 import User from "../../../models/User";
 import AuthService, { AuthData } from "../../../services/AuthService"
 import { SecuredPages } from "../../../util/Constants";
 import "./Login.css";
 import { useNavigate } from "react-router-dom";
 import { toast } from 'sonner';
+import { useAuthStore } from "../../../stores/authStore";
 
 export default function Login() {
     const navigate = useNavigate();
-    const authContext = useAuthContextData();
-    const chatDataContext = useChatData();
 
     const handleSubmit = async (event: any) => {
         const formData = new FormData(event.currentTarget);
@@ -22,9 +19,9 @@ export default function Login() {
         const authData: AuthData = await AuthService.login(data);
         const user: User = authData?.user;
         if (user) {
-            authContext.setUser?.(user);
+            useAuthStore.getState().setCurrentLoggedUser(user);
+            useAuthStore.getState().setAccessToken(authData.accessToken);
             navigate(SecuredPages.HOME_PAGE, {replace: true});
-            chatDataContext?.setCurrentLoggedUser(user);
         } else {
             // Something's gone wrong. Show notification
             toast.error('Something went wrong. Please try again.');

@@ -1,10 +1,9 @@
 import './App.css';
 import { Toaster } from 'sonner';
-import AuthProvider from './middleware/AuthProvider';
 import Routing from './routing/Routing';
 import { Provider as BusProvider } from 'react-bus';
-import ChatDataProvider from './middleware/stomp/StompChatDataProvider';
-import StompSessionProvider from './middleware/stomp/StompSessionWrapper';
+import StompChatDataProvider from './middleware/stomp/StompChatDataProvider';
+import StompSessionWrapper from './middleware/stomp/StompSessionWrapper';
 
 function App() {
   return (
@@ -20,28 +19,14 @@ function App() {
             padding: '12px 20px',
             boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
           },
-          success: {
-            iconTheme: {
-              primary: '#22c55e',
-              secondary: '#ffffff',
-            },
-          },
-          error: {
-            iconTheme: {
-              primary: '#ef4444',
-              secondary: '#ffffff',
-            },
-          },
         }}
       />
       <BusProvider>
-        <AuthProvider>
-          <StompSessionProvider>
-            <ChatDataProvider>
+          <StompSessionWrapper>
+            <StompChatDataProvider>
               <Routing />
-            </ChatDataProvider>
-          </StompSessionProvider>
-        </AuthProvider>
+            </StompChatDataProvider>
+          </StompSessionWrapper>
       </BusProvider>
     </>
   )

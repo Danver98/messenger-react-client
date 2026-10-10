@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useEffectEvent, useState, useRef } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { FetchChats } from "./FetchData";
 import "./Chats.css"
 import ChatsList from "./ChatsList";
 import { CHATS_COMPONENT_MESSAGE_QUEUE, CHATS_COMPONENT_MSG_UNREAD_COUNT_QUEUE, DIRECTION } from "../../../util/Constants";
-import { useAuthContextData } from "../../../middleware/AuthProvider";
 import ChatRoom from "./ChatRoom";
 import Chat from "../../../models/Chat";
 import { InputAdornment, TextField } from "@mui/material";
@@ -12,6 +11,7 @@ import { useListener } from 'react-bus';
 import Message, { MessageType } from "../../../models/Message";
 import MessengerService from "../../../services/MessengerService";
 import ChatCreation from "../../Lists/UserList";
+import { useAuthStore } from "../../../stores/authStore";
 
 export interface ChatCreationParams {
     chatName: string | null;
@@ -61,8 +61,8 @@ export default function Chats() {
     const [lastElementRef, setLastElementRef] = useState(null);
     const observerRef = useRef<IntersectionObserver | null>(null);
     const [counter, setCounter] = useState(0);
-    const authContext = useAuthContextData()
-    const userId = authContext.user?.id;
+    const currentUser = useAuthStore(state => state.currentLoggedUser);
+    const userId = currentUser?.id;
     const [activeChat, setActiveChat] = useState<Chat | null>(null);
     // TODO: direction
 
@@ -82,7 +82,7 @@ export default function Chats() {
     // New message's been sent
     const onMessageReceived = useCallback(async (dto: any) => {
         const msg = dto.message;
-        let chat = dto.chat;
+        const chat = dto.chat;
         const message = new Message(
             msg.id, msg.chatId, msg.receiverId,
             msg.type, msg.data, msg.author, msg.time
@@ -226,7 +226,7 @@ export default function Chats() {
             !params?.multiSelect, //private
             null,
             null,
-            [authContext.user?.id, ...users], // participants
+            [currentUser?.id, ...users], // participants
             null,
             true //draft
         );
@@ -249,7 +249,7 @@ export default function Chats() {
                             itemClickHandler={handleClick}
                         />
                         <ChatCreation
-                            user={authContext.user}
+                            user={currentUser}
                             onResult={(elements: any[], params?: ChatCreationParams | null) => { handleChatCreation(elements, params) }}
                         />
                     </div>
